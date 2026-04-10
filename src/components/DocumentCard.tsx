@@ -7,14 +7,22 @@ export interface DocumentCardProps {
   onClick?: (id: number) => void;
 }
 
-const mimeIcon: Record<string, { label: string; color: string }> = {
-  'application/pdf': { label: 'PDF', color: 'bg-red-100 text-red-700' },
-  'image/jpeg': { label: 'IMG', color: 'bg-emerald-100 text-emerald-700' },
-  'image/png': { label: 'IMG', color: 'bg-emerald-100 text-emerald-700' },
-  'image/tiff': { label: 'IMG', color: 'bg-emerald-100 text-emerald-700' },
+const mimeColors: Record<string, string> = {
+  'application/pdf': 'bg-red-50 border-red-200',
+  'image/jpeg': 'bg-emerald-50 border-emerald-200',
+  'image/png': 'bg-emerald-50 border-emerald-200',
+  'image/tiff': 'bg-emerald-50 border-emerald-200',
 };
 
-const fallbackIcon = { label: 'DOC', color: 'bg-blue-100 text-blue-700' };
+const mimeLineColors: Record<string, string> = {
+  'application/pdf': 'bg-red-200',
+  'image/jpeg': 'bg-emerald-200',
+  'image/png': 'bg-emerald-200',
+  'image/tiff': 'bg-emerald-200',
+};
+
+const fallbackColor = 'bg-blue-50 border-blue-200';
+const fallbackLineColor = 'bg-blue-200';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -32,18 +40,29 @@ export function DocumentCard({
   mimeType,
   onClick,
 }: DocumentCardProps) {
-  const icon = mimeIcon[mimeType] ?? fallbackIcon;
+  const bgColor = mimeColors[mimeType] ?? fallbackColor;
+  const lineColor = mimeLineColors[mimeType] ?? fallbackLineColor;
 
   return (
     <button
       type="button"
       onClick={() => onClick?.(id)}
-      className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4 text-left shadow-sm transition-shadow hover:shadow-md"
+      className="flex flex-col items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4 text-left shadow-sm transition-shadow hover:shadow-md"
     >
       <div
-        className={`flex h-20 w-full items-center justify-center rounded-lg text-sm font-semibold ${icon.color}`}
+        className={`flex aspect-[3/4] w-full flex-col gap-1.5 rounded-lg border p-3 ${bgColor}`}
       >
-        {icon.label}
+        <div className={`h-1.5 w-3/5 rounded-sm ${lineColor}`} />
+        <div className={`h-1 w-2/5 rounded-sm ${lineColor} opacity-60`} />
+        <div className="mt-2 flex flex-col gap-1">
+          <div className={`h-1 w-full rounded-sm ${lineColor} opacity-40`} />
+          <div className={`h-1 w-full rounded-sm ${lineColor} opacity-40`} />
+          <div className={`h-1 w-4/5 rounded-sm ${lineColor} opacity-40`} />
+        </div>
+        <div className="mt-1.5 flex flex-col gap-1">
+          <div className={`h-1 w-full rounded-sm ${lineColor} opacity-40`} />
+          <div className={`h-1 w-3/4 rounded-sm ${lineColor} opacity-40`} />
+        </div>
       </div>
       <div className="flex flex-col gap-1">
         <h3 className="line-clamp-2 text-sm font-medium text-neutral-900">

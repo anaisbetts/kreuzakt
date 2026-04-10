@@ -8,11 +8,13 @@ export interface DocumentViewerProps {
   mimeType: string;
   fileSize: number;
   pageCount?: number;
+  currentPage?: number;
   content: string;
   showExtractedText?: boolean;
   onBack?: () => void;
   onDownload?: (id: number) => void;
   onToggleText?: () => void;
+  onPageChange?: (page: number) => void;
   onStatusClick?: () => void;
 }
 
@@ -30,7 +32,15 @@ function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function PDFPreview({ filename }: { filename: string }) {
+function PDFPreview({
+  filename,
+  currentPage = 1,
+  pageCount,
+}: {
+  filename: string;
+  currentPage?: number;
+  pageCount?: number;
+}) {
   return (
     <div className="flex h-full flex-col rounded-lg border border-neutral-200 bg-neutral-800 overflow-hidden">
       <div className="flex items-center gap-2 bg-neutral-700 px-4 py-2">
@@ -49,7 +59,11 @@ function PDFPreview({ filename }: { filename: string }) {
           />
         </svg>
         <span className="text-xs text-neutral-300">{filename}</span>
-        <span className="ml-auto text-xs text-neutral-500">1 / 2</span>
+        {pageCount != null && (
+          <span className="ml-auto text-xs text-neutral-500">
+            {currentPage} / {pageCount}
+          </span>
+        )}
       </div>
       <div className="flex flex-1 items-center justify-center p-8">
         <div className="flex aspect-[8.5/11] w-full max-w-md flex-col rounded bg-white shadow-2xl">
@@ -98,7 +112,7 @@ function ImagePreview({ filename }: { filename: string }) {
         </div>
       </div>
       <div className="flex flex-1 items-center justify-center p-8">
-        <div className="relative flex h-80 w-full max-w-lg items-center justify-center overflow-hidden rounded bg-neutral-800 shadow-2xl ring-1 ring-white/10">
+        <div className="relative flex aspect-[3/4] max-h-[80%] w-auto items-center justify-center overflow-hidden rounded shadow-2xl ring-1 ring-white/10">
           <div className="absolute inset-0 bg-gradient-to-br from-neutral-200 via-neutral-100 to-neutral-200" />
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -116,6 +130,75 @@ function ImagePreview({ filename }: { filename: string }) {
           </svg>
         </div>
       </div>
+    </div>
+  );
+}
+
+const pageSkeletonVariants = [
+  { heading: 'w-2/5', sub: 'w-1/4', lines: ['w-full', 'w-full', 'w-3/4'] },
+  { heading: 'w-1/3', sub: 'w-2/5', lines: ['w-full', 'w-5/6', 'w-full'] },
+  { heading: 'w-3/5', sub: 'w-1/3', lines: ['w-4/5', 'w-full', 'w-2/3'] },
+  { heading: 'w-1/2', sub: 'w-1/4', lines: ['w-full', 'w-full', 'w-4/5'] },
+  { heading: 'w-2/5', sub: 'w-1/3', lines: ['w-full', 'w-3/4', 'w-full'] },
+];
+
+function PageThumbnailStrip({
+  pageCount,
+  currentPage = 1,
+  onPageChange,
+}: {
+  pageCount: number;
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
+}) {
+  return (
+    <div className="flex w-20 shrink-0 flex-col gap-3 overflow-y-auto rounded-lg border border-neutral-200 bg-neutral-100 p-2">
+      {Array.from({ length: pageCount }, (_, i) => {
+        const page = i + 1;
+        const variant = pageSkeletonVariants[i % pageSkeletonVariants.length];
+        const isActive = page === currentPage;
+        return (
+          <button
+            key={page}
+            type="button"
+            onClick={() => onPageChange?.(page)}
+            className={[
+              'flex flex-col items-center gap-1',
+              isActive ? 'opacity-100' : 'opacity-60 hover:opacity-80',
+            ].join(' ')}
+          >
+            <div
+              className={[
+                'flex aspect-[3/4] w-full flex-col gap-0.5 rounded border bg-white p-1.5 shadow-sm transition-all',
+                isActive
+                  ? 'ring-2 ring-blue-500 border-blue-300'
+                  : 'border-neutral-200 hover:border-neutral-300',
+              ].join(' ')}
+            >
+              <div className={`h-0.5 ${variant.heading} rounded-sm bg-neutral-300`} />
+              <div className={`h-0.5 ${variant.sub} rounded-sm bg-neutral-200`} />
+              <div className="mt-1 flex flex-col gap-px">
+                {variant.lines.map((w, li) => (
+                  <div
+                    key={li}
+                    className={`h-px ${w} rounded-sm bg-neutral-200`}
+                  />
+                ))}
+              </div>
+            </div>
+            <span
+              className={[
+                'text-[10px]',
+                isActive
+                  ? 'font-medium text-blue-600'
+                  : 'text-neutral-500',
+              ].join(' ')}
+            >
+              {page}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -157,15 +240,19 @@ export function DocumentViewerPage({
   mimeType,
   fileSize,
   pageCount,
+  currentPage = 1,
   content,
   showExtractedText = false,
   onBack,
   onDownload,
   onToggleText,
+  onPageChange,
   onStatusClick,
 }: DocumentViewerProps) {
   const isImage = mimeType.startsWith('image/');
   const isPdf = mimeType === 'application/pdf';
+  const showPageStrip =
+    !showExtractedText && pageCount != null && pageCount > 1;
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50">
@@ -220,16 +307,29 @@ export function DocumentViewerPage({
       </header>
 
       <main className="mx-auto flex w-full max-w-6xl flex-1 gap-6 px-6 py-6">
-        <div className="flex-1 min-h-[600px]">
-          {showExtractedText ? (
-            <TextPreview content={content} />
-          ) : isPdf ? (
-            <PDFPreview filename={originalFilename} />
-          ) : isImage ? (
-            <ImagePreview filename={originalFilename} />
-          ) : (
-            <TextPreview content={content} />
+        <div className="flex flex-1 gap-3 min-h-[600px]">
+          {showPageStrip && (
+            <PageThumbnailStrip
+              pageCount={pageCount!}
+              currentPage={currentPage}
+              onPageChange={onPageChange}
+            />
           )}
+          <div className="flex-1">
+            {showExtractedText ? (
+              <TextPreview content={content} />
+            ) : isPdf ? (
+              <PDFPreview
+                filename={originalFilename}
+                currentPage={currentPage}
+                pageCount={pageCount}
+              />
+            ) : isImage ? (
+              <ImagePreview filename={originalFilename} />
+            ) : (
+              <TextPreview content={content} />
+            )}
+          </div>
         </div>
 
         <aside className="w-80 shrink-0">

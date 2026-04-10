@@ -1,21 +1,13 @@
 import { SearchBar } from './SearchBar';
 import { DocumentCard, type DocumentCardProps } from './DocumentCard';
-import {
-  SearchResultCard,
-  type SearchResultCardProps,
-} from './SearchResultCard';
-import { Pagination } from './Pagination';
 
 export interface SearchPageProps {
   query?: string;
   recentDocuments?: DocumentCardProps[];
-  searchResults?: SearchResultCardProps[];
+  searchResults?: DocumentCardProps[];
   totalResults?: number;
-  currentPage?: number;
-  totalPages?: number;
   onSearch?: (query: string) => void;
   onDocumentClick?: (id: number) => void;
-  onPageChange?: (page: number) => void;
   onStatusClick?: () => void;
 }
 
@@ -50,15 +42,35 @@ function StatusIcon({ onClick }: { onClick?: () => void }) {
   );
 }
 
-function EmptyState({
+function DocumentGrid({
+  documents,
+  onDocumentClick,
+}: {
+  documents: DocumentCardProps[];
+  onDocumentClick?: (id: number) => void;
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-4">
+      {documents.map((doc) => (
+        <DocumentCard key={doc.id} {...doc} onClick={onDocumentClick} />
+      ))}
+    </div>
+  );
+}
+
+export function SearchPage({
+  query,
   recentDocuments,
+  searchResults,
+  totalResults,
   onSearch,
   onDocumentClick,
   onStatusClick,
-}: Pick<
-  SearchPageProps,
-  'recentDocuments' | 'onSearch' | 'onDocumentClick' | 'onStatusClick'
->) {
+}: SearchPageProps) {
+  const hasQuery = Boolean(query);
+  const documents = hasQuery ? searchResults : recentDocuments;
+  const hasDocuments = documents && documents.length > 0;
+
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50">
       <header className="flex justify-end px-6 py-4">
@@ -71,127 +83,41 @@ function EmptyState({
         </h1>
         <SearchBar
           size="lg"
+          defaultValue={query}
           onSearch={onSearch}
           className="w-full max-w-xl"
         />
 
-        {recentDocuments && recentDocuments.length > 0 && (
-          <div className="mt-16 w-full max-w-3xl">
-            <h2 className="mb-4 text-center text-xs font-semibold uppercase tracking-widest text-neutral-400">
+        <div className="mt-12 w-full max-w-3xl pb-16">
+          {hasQuery && totalResults != null && (
+            <p className="mb-4 text-center text-xs font-semibold uppercase tracking-widest text-neutral-400">
+              {totalResults} {totalResults === 1 ? 'result' : 'results'}
+            </p>
+          )}
+
+          {!hasQuery && hasDocuments && (
+            <p className="mb-4 text-center text-xs font-semibold uppercase tracking-widest text-neutral-400">
               Recent Documents
-            </h2>
-            <div className="grid grid-cols-3 gap-4">
-              {recentDocuments.map((doc) => (
-                <DocumentCard key={doc.id} {...doc} onClick={onDocumentClick} />
-              ))}
+            </p>
+          )}
+
+          {hasDocuments ? (
+            <DocumentGrid
+              documents={documents}
+              onDocumentClick={onDocumentClick}
+            />
+          ) : hasQuery ? (
+            <div className="flex flex-col items-center gap-2 py-16 text-center">
+              <p className="text-lg font-medium text-neutral-700">
+                No documents found
+              </p>
+              <p className="text-sm text-neutral-500">
+                Try a different search term or check the spelling.
+              </p>
             </div>
-          </div>
-        )}
+          ) : null}
+        </div>
       </div>
     </div>
-  );
-}
-
-function ActiveSearch({
-  query,
-  searchResults,
-  totalResults,
-  currentPage = 1,
-  totalPages = 1,
-  onSearch,
-  onDocumentClick,
-  onPageChange,
-  onStatusClick,
-}: Omit<SearchPageProps, 'recentDocuments'> & { query: string }) {
-  return (
-    <div className="flex min-h-screen flex-col bg-zinc-50">
-      <header className="flex items-center gap-4 border-b border-neutral-200 bg-white px-6 py-3">
-        <span className="text-lg font-bold text-neutral-900">Docs-AI</span>
-        <SearchBar
-          size="sm"
-          defaultValue={query}
-          onSearch={onSearch}
-          className="flex-1 max-w-xl"
-        />
-        <StatusIcon onClick={onStatusClick} />
-      </header>
-
-      <main className="mx-auto w-full max-w-3xl px-6 py-6">
-        {totalResults != null && (
-          <p className="mb-4 text-sm text-neutral-500">
-            {totalResults} {totalResults === 1 ? 'result' : 'results'}
-          </p>
-        )}
-
-        {searchResults && searchResults.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            {searchResults.map((result) => (
-              <SearchResultCard
-                key={result.id}
-                {...result}
-                onClick={onDocumentClick}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-2 py-20 text-center">
-            <p className="text-lg font-medium text-neutral-700">
-              No documents found
-            </p>
-            <p className="text-sm text-neutral-500">
-              Try a different search term or check the spelling.
-            </p>
-          </div>
-        )}
-
-        {searchResults && searchResults.length > 0 && totalPages > 1 && (
-          <div className="mt-8">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={onPageChange}
-            />
-          </div>
-        )}
-      </main>
-    </div>
-  );
-}
-
-export function SearchPage({
-  query,
-  recentDocuments,
-  searchResults,
-  totalResults,
-  currentPage,
-  totalPages,
-  onSearch,
-  onDocumentClick,
-  onPageChange,
-  onStatusClick,
-}: SearchPageProps) {
-  if (query) {
-    return (
-      <ActiveSearch
-        query={query}
-        searchResults={searchResults}
-        totalResults={totalResults}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onSearch={onSearch}
-        onDocumentClick={onDocumentClick}
-        onPageChange={onPageChange}
-        onStatusClick={onStatusClick}
-      />
-    );
-  }
-
-  return (
-    <EmptyState
-      recentDocuments={recentDocuments}
-      onSearch={onSearch}
-      onDocumentClick={onDocumentClick}
-      onStatusClick={onStatusClick}
-    />
   );
 }

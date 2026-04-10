@@ -45,6 +45,7 @@ const meta = {
     onBack: fn(),
     onDownload: fn(),
     onToggleText: fn(),
+    onPageChange: fn(),
     onStatusClick: fn(),
   },
 } satisfies Meta<typeof DocumentViewerPage>;
@@ -81,6 +82,23 @@ export const ImageDocument: Story = {
     fileSize: 1843200,
     content:
       'BAUHAUS\nFachcentren GmbH & Co. KG\nFiliale Berlin-Tempelhof\nGermaniastr. 36, 12099 Berlin\n\nKASSENBON\n\n20.02.2026   14:23    Kasse 07\n\nGranitplatte Küche 240x60cm\n  Art.-Nr. 294.837.221         890,00\nMontageservice pauschal\n  Art.-Nr. 900.100.003         350,00\nSilikon Sanitär transp. 310ml\n  Art.-Nr. 112.449.008     2x   1,75\n                               -----\nSumme                       1.243,50 EUR\nMwSt 19%                      198,66 EUR\n\nEC-Kartenzahlung             1.243,50 EUR\nKartennr. ****4821\n\nVielen Dank für Ihren Einkauf!',
+  },
+};
+
+export const MultiPagePDF: Story = {
+  args: {
+    id: 41,
+    title: 'Apartment Lease Agreement',
+    description:
+      'Rental contract for the apartment at Berliner Str. 42, signed December 2024.',
+    documentDate: '2024-12-01',
+    addedAt: '2024-12-05T10:00:00Z',
+    originalFilename: 'mietvertrag_berliner_str_42.pdf',
+    mimeType: 'application/pdf',
+    fileSize: 524288,
+    pageCount: 5,
+    currentPage: 3,
+    content: extractedText,
   },
 };
 
