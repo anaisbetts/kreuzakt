@@ -33,16 +33,3 @@ export const Large: Story = {
 export const CustomPlaceholder: Story = {
   args: { placeholder: 'Search invoices, receipts, letters…' },
 };
-
-export const Dark: Story = {
-  parameters: {
-    backgrounds: { default: 'dark' },
-  },
-  decorators: [
-    (Story) => (
-      <div className="dark" style={{ width: 480 }}>
-        <Story />
-      </div>
-    ),
-  ],
-};

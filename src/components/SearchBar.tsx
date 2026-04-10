@@ -40,7 +40,6 @@ export function SearchBar({
         className={[
           'w-full rounded-lg border border-neutral-300 bg-white pl-10 shadow-sm',
           'transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20',
-          'dark:border-neutral-700 dark:bg-neutral-900 dark:text-white dark:placeholder-neutral-500',
           sizeStyles[size],
         ].join(' ')}
         onKeyDown={(e) => {
