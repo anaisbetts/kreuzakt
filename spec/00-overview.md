@@ -52,14 +52,14 @@ Document titles, descriptions, and dates are derived by an LLM from the extracte
 
 ### One container, one database
 
-SQLite in WAL mode handles concurrent reads (search) and writes (ingest) without external infrastructure. The entire application — web server, API, MCP server, file watcher, background processor — runs in a single Node.js process. Deployment is `docker compose up`.
+SQLite in WAL mode handles concurrent reads (search) and writes (ingest) without external infrastructure. The entire application — web server, API, MCP server, file watcher, background processor — runs in a single Bun process. Deployment is `docker compose up`.
 
 ## Technical Foundation
 
 The application is built on:
 
 - **Next.js** for the web UI and API routes
-- **Kysely** as a type-safe SQL query builder over SQLite (via `better-sqlite3`)
+- **Kysely** as a type-safe SQL query builder over SQLite (via `bun:sqlite` and a Bun SQLite dialect)
 - **SQLite FTS5** for full-text search with BM25 ranking
 - **Kreuzberg** (`@kreuzberg/node`) for document text extraction, with a VLM backend for scanned documents
 - **Chokidar** for watching the ingest folder

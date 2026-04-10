@@ -8,7 +8,7 @@
 
 ### Deliverables
 
-- [ ] Initialize Next.js project with TypeScript, Tailwind CSS, Kysely, better-sqlite3
+- [ ] Initialize Next.js project with TypeScript, Tailwind CSS, Kysely, Bun SQLite dialect (`bun:sqlite`)
 - [ ] SQLite schema: `documents` table, `documents_fts` virtual table (FTS5, porter tokenizer), `processing_queue` table
 - [ ] FTS sync triggers (insert, update, delete)
 - [ ] Kysely type definitions matching the schema
@@ -99,7 +99,7 @@ An AI assistant configured with the Docs-AI MCP server can: search for documents
 - [ ] Search UI polish: highlighted snippets, keyboard navigation (arrow keys + Enter), responsive layout
 - [ ] Search debounce and URL query parameter sync (`?q=invoice+telekom`)
 - [ ] Error handling polish: friendly error states, retry UX, empty state messaging
-- [ ] Dockerfile: single container with Node.js, Tesseract (fallback), and Kreuzberg system dependencies
+- [ ] Dockerfile: single container with Bun, Tesseract (fallback), and Kreuzberg system dependencies
 - [ ] `docker-compose.yml`: volume mounts for `/data/`, environment variable configuration, health check
 - [ ] Verify the full loop: ingest → search → view → download → MCP access, all running from Docker
 
@@ -118,13 +118,12 @@ The existing paperless-ngx archive is fully migrated, searchable, and accessible
 | `next` | Web framework, UI, API routes | 0 |
 | `react`, `react-dom` | UI rendering | 0 |
 | `kysely` | Type-safe SQL query builder | 0 |
-| `better-sqlite3` | SQLite driver (native, synchronous) | 0 |
+| `kysely-bun-sqlite` | Kysely dialect for Bun's native `bun:sqlite` driver | 0 |
 | `tailwindcss` | CSS framework | 0 |
 | `@kreuzberg/node` | Document text extraction + VLM OCR | 1 |
 | `chokidar` | File system watching | 1 |
 | `openai` | LLM calls for metadata generation via an OpenAI-compatible endpoint | 1 |
 | `@modelcontextprotocol/sdk` | MCP server SDK | 2 |
-| `tsx` | TypeScript execution for eval scripts and import tooling | 0 |
 
 ### System Dependencies (Docker)
 
@@ -145,5 +144,6 @@ Kreuzberg's VLM backend needs no system dependencies — it makes HTTP calls to 
 4. **Two-model strategy.** OCR (VLM, vision model on images) and metadata generation (text model on extracted text) are separate pipeline steps with independently configurable models, and metadata calls go through a configurable OpenAI-compatible endpoint.
 5. **File stays in ingest until success.** The original is only moved to originals/ after all processing succeeds. This makes failure recovery trivial.
 6. **FTS5 over vector search.** BM25 full-text search is sufficient for a personal archive of this size. Vector search is not planned.
-7. **Kreuzberg over Docling/LlamaParse.** Native Node.js bindings, 91+ formats, VLM backend support, no Python sidecar.
+7. **Kreuzberg over Docling/LlamaParse.** Native JavaScript bindings, 91+ formats, VLM backend support, no Python sidecar.
 8. **Qwen 3.5 122B A10B as default VLM.** Best cost/accuracy ratio for OCR. Configurable via environment variable. Decision validated (or overridden) by the OCR evaluation framework in Phase 0.
+9. **Bun for everything.** Bun is the runtime, package manager, and TypeScript runner. SQLite access uses `bun:sqlite` through a Bun-specific Kysely dialect.

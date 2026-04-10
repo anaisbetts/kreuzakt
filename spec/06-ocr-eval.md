@@ -226,19 +226,19 @@ Cached extractions and judge responses are in results/cache/.
 
 ```bash
 # Run full evaluation (extract + judge + report)
-npx tsx eval/evaluate.ts
+bun run eval/evaluate.ts
 
 # Only specific backends
-npx tsx eval/evaluate.ts --backends tesseract,vlm:qwen,vlm:gpt4o
+bun run eval/evaluate.ts --backends tesseract,vlm:qwen,vlm:gpt4o
 
 # Re-judge without re-extracting (uses cached extractions)
-npx tsx eval/evaluate.ts --judge-only
+bun run eval/evaluate.ts --judge-only
 
 # Only extract, skip judging (useful for caching before a long judge run)
-npx tsx eval/evaluate.ts --extract-only
+bun run eval/evaluate.ts --extract-only
 
 # Specify output directory
-npx tsx eval/evaluate.ts --output ./eval/results
+bun run eval/evaluate.ts --output ./eval/results
 ```
 
 ### Environment Variables

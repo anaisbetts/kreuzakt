@@ -254,17 +254,18 @@ WAL mode allows the search API to serve read queries while the ingest pipeline w
 ### Kysely Configuration
 
 ```typescript
-import Database from 'better-sqlite3';
-import { Kysely, SqliteDialect } from 'kysely';
+import { Database } from 'bun:sqlite';
+import { Kysely } from 'kysely';
+import { BunSqliteDialect } from 'kysely-bun-sqlite';
 
 const db = new Kysely<DB>({
-    dialect: new SqliteDialect({
+    dialect: new BunSqliteDialect({
         database: new Database(process.env.DB_PATH ?? './data/docs-ai.db'),
     }),
 });
 ```
 
-Kysely provides type-safe queries without the overhead of a full ORM. Database types are defined manually to match the schema, keeping the dependency footprint minimal.
+Kysely provides type-safe queries without the overhead of a full ORM. In a Bun-only deployment, SQLite access goes through `bun:sqlite` using a Bun-specific Kysely dialect. Database types are defined manually to match the schema, keeping the dependency footprint minimal.
 
 ---
 
