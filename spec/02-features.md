@@ -74,7 +74,7 @@ Text extraction via Kreuzberg with intelligent backend routing.
 - **Office documents** (DOCX, XLSX, etc.): native Kreuzberg extractors
 - **Hybrid PDFs** (mix of text and scanned pages): Kreuzberg OCRs only the pages that lack a text layer
 - Page count is extracted where applicable
-- The VLM model is configurable via `OCR_VLM_MODEL` environment variable (default: Gemini 2.5 Flash)
+- The VLM model is configurable via `OCR_VLM_MODEL` environment variable (default: `qwen/qwen3.5-122b-a10b`)
 
 ### F-08: LLM Metadata Generation
 
@@ -86,7 +86,8 @@ AI-derived metadata from the extracted text.
   - **Document Date** — the date the document pertains to (not the ingest date), nullable if unclear
 - The LLM receives plain text, not images — this is a separate concern from OCR
 - Uses structured JSON output for reliable parsing
-- Model is configurable via `METADATA_LLM_MODEL` (default: Gemini 2.5 Flash)
+- Model is configurable via `METADATA_LLM_MODEL` (default: `qwen/qwen3.5-122b-a10b`)
+- Metadata generation uses an OpenAI-compatible endpoint configured via `OPENAI_BASE_URL`, so it can target OpenRouter or a local LLM
 - A cheap/fast model is sufficient here since the input is already clean extracted text
 
 ### F-09: Duplicate Detection
@@ -130,23 +131,24 @@ Full-text search accessible to AI assistants.
 - Returns: array of results with id, title, description, document_date, added_at, original_filename, relevance snippet
 - Uses the same FTS5 search as the web UI
 - Results are ranked by BM25 relevance
+- MCP tools should be bulk-first where possible so assistants can minimize round trips
 
 ### F-13: get_document Tool
 
-Fetch complete metadata and extracted text for a specific document.
+Fetch complete metadata and extracted text for one or more documents.
 
-- Input: `id` (number, required)
-- Returns: full document record — all metadata fields plus the complete extracted text
-- Primary use case: AI assistant wants to read a document it found via search
+- Input: `ids` (number[], preferred) or `id` (number, convenience form)
+- Returns: array of full document records — all metadata fields plus the complete extracted text
+- Primary use case: AI assistant wants to read several documents it found via search without making N tool calls
 
 ### F-14: get_document_content Tool
 
-Return only the full extracted text of a document.
+Return only the full extracted text of one or more documents.
 
-- Input: `id` (number, required)
-- Returns: the raw extracted text as a string
+- Input: `ids` (number[], preferred) or `id` (number, convenience form)
+- Returns: array of `{ id, content }` objects
 - Lighter than `get_document` when the assistant only needs the content, not metadata
-- Useful for feeding document text into further LLM processing
+- Useful for feeding document text from multiple documents into further LLM processing
 
 ### F-15: list_recent_documents Tool
 
@@ -168,10 +170,10 @@ Expose documents as MCP resources for direct access.
 
 ### F-17: download_document Tool
 
-Provide access to the original file.
+Provide access to one or more original files.
 
-- Input: `id` (number, required)
-- Returns: a URL pointing to the original file download endpoint (`/api/documents/:id/original`)
+- Input: `ids` (number[], preferred) or `id` (number, convenience form)
+- Returns: array of download objects, each with a URL pointing to the original file download endpoint (`/api/documents/:id/original`)
 - The AI assistant can present this URL to the user or fetch the file itself
 - The URL is only accessible within the Tailscale network
 

@@ -18,7 +18,7 @@ Docs-AI fixes all of that. It's a single Next.js application backed by SQLite th
 
 The existing paperless-ngx instance has ~500 documents with bad OCR and bad metadata. The text extraction is unreliable enough that searching for "invoice" might miss half the actual invoices because Tesseract read them as "lnvoice" or "inv0ice" or just garbage. The metadata (titles, dates, correspondents) was either manually entered or auto-generated poorly.
 
-The insight behind Docs-AI is that modern vision LLMs have made document extraction a solved problem — GPT-4o, Claude, and Gemini can read scanned documents with near-human accuracy at trivial cost. For a ~500 document personal archive, re-OCR'ing everything costs less than $10. The bottleneck is no longer extraction quality; it's having a simple system that puts good extraction to work.
+The insight behind Docs-AI is that modern vision LLMs have made document extraction a solved problem — GPT-4o, Claude, and Qwen can read scanned documents with near-human accuracy at trivial cost. For a ~500 document personal archive, re-OCR'ing everything costs less than $10. The bottleneck is no longer extraction quality; it's having a simple system that puts good extraction to work.
 
 ## Goals
 
@@ -48,7 +48,7 @@ If search is good, you don't need folders, tags, or hierarchies. The entire UI i
 
 ### AI-first metadata
 
-Document titles, descriptions, and dates are derived by an LLM from the extracted text at ingest time. This produces better metadata than manual entry for most documents — an LLM reading an invoice will generate a title like "Deutsche Telekom Invoice — March 2026" and extract the correct date, which is more useful than whatever the scanner named the file.
+Document titles, descriptions, and dates are derived by an LLM from the extracted text at ingest time. This produces better metadata than manual entry for most documents — an LLM reading an invoice will generate a title like "Deutsche Telekom Invoice — March 2026" and extract the correct date, which is more useful than whatever the scanner named the file. Metadata calls go through an OpenAI-compatible endpoint so the same pipeline can target OpenRouter or a local LLM.
 
 ### One container, one database
 

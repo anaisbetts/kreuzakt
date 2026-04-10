@@ -108,7 +108,7 @@ const result = await extractFile(filePath, null, {
     ocr: {
         backend: 'vlm',
         vlmConfig: {
-            model: process.env.OCR_VLM_MODEL ?? 'google/gemini-2.5-flash',
+            model: process.env.OCR_VLM_MODEL ?? 'qwen/qwen3.5-122b-a10b',
         },
     },
 });
@@ -121,8 +121,15 @@ With `forceOcr: false`, Kreuzberg extracts embedded text from digital PDFs (free
 After text extraction, a separate LLM call derives structured metadata from the plain text:
 
 ```typescript
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+    baseURL: process.env.OPENAI_BASE_URL ?? 'https://openrouter.ai/api/v1',
+    apiKey: process.env.OPENAI_API_KEY ?? 'local-llm',
+});
+
 const response = await openai.chat.completions.create({
-    model: process.env.METADATA_LLM_MODEL ?? 'google/gemini-2.5-flash',
+    model: process.env.METADATA_LLM_MODEL ?? 'qwen/qwen3.5-122b-a10b',
     messages: [{
         role: 'system',
         content: `Extract metadata from the following document text.
@@ -138,7 +145,7 @@ Return JSON: { "title": "...", "description": "...", "document_date": "YYYY-MM-D
 });
 ```
 
-This step operates on **plain text**, not images, so it can use a fast/cheap text model even when the OCR step used an expensive vision model. The model is independently configurable via `METADATA_LLM_MODEL`.
+This step operates on **plain text**, not images, so it can use a fast/cheap text model even when the OCR step used an expensive vision model. The model is independently configurable via `METADATA_LLM_MODEL`, and the OpenAI-compatible endpoint is configurable via `OPENAI_BASE_URL` so the same code can target OpenRouter or a local LLM gateway.
 
 ---
 
@@ -285,7 +292,8 @@ The full hash is stored in the database for dedup; the prefix in the filename is
 | `ORIGINALS_DIR` | `$DATA_DIR/originals` | Directory for archived original files |
 | `THUMBNAILS_DIR` | `$DATA_DIR/thumbnails` | Directory for generated thumbnails |
 | `DB_PATH` | `$DATA_DIR/docs-ai.db` | Path to the SQLite database file |
-| `OCR_VLM_MODEL` | `google/gemini-2.5-flash` | Kreuzberg VLM model for OCR on scanned docs |
-| `METADATA_LLM_MODEL` | `google/gemini-2.5-flash` | LLM model for metadata derivation |
-| `OPENROUTER_API_KEY` | — | API key for OpenRouter (used by both OCR VLM and metadata LLM) |
+| `OCR_VLM_MODEL` | `qwen/qwen3.5-122b-a10b` | Kreuzberg VLM model for OCR on scanned docs |
+| `METADATA_LLM_MODEL` | `qwen/qwen3.5-122b-a10b` | LLM model for metadata derivation |
+| `OPENAI_BASE_URL` | `https://openrouter.ai/api/v1` | OpenAI-compatible endpoint for metadata LLM calls; can point at a local gateway |
+| `OPENAI_API_KEY` | — | API key for the OpenAI-compatible endpoint; use a placeholder value if your local endpoint ignores auth |
 | `PORT` | `3000` | HTTP server port |

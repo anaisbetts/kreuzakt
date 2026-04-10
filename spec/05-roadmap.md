@@ -23,7 +23,7 @@
 - [ ] Originals folder management: hash computation, hash-prefixed file naming, dedup check
 - [ ] **OCR Evaluation Framework** — the `eval/` CLI tool (see `06-ocr-eval.md`)
 - [ ] Curate ~10-20 test fixtures from the existing paperless archive
-- [ ] Run evaluation across Tesseract, PaddleOCR, Gemini Flash, Claude Sonnet, GPT-4o
+- [ ] Run evaluation across Tesseract, PaddleOCR, Qwen 3.5 122B A10B, Claude Sonnet, GPT-4o
 - [ ] Generate evaluation report and choose default VLM provider
 
 ### Definition of Done
@@ -44,6 +44,7 @@ You can insert a document record into SQLite (via a seed script or direct SQL), 
 - [ ] Pipeline orchestrator: detect → dedup → extract → metadata → persist → move → thumbnail
 - [ ] Kreuzberg integration with configurable VLM backend (`OCR_VLM_MODEL` env var)
 - [ ] LLM metadata generation: title, description, document_date from extracted text (`METADATA_LLM_MODEL` env var)
+- [ ] OpenAI-compatible metadata endpoint configuration (`OPENAI_BASE_URL`, `OPENAI_API_KEY`) for OpenRouter or local LLMs
 - [ ] SHA-256 dedup check against existing documents
 - [ ] Processing queue: insert `pending` on detect, update through `processing` → `completed`/`failed`
 - [ ] Failure handling: file stays in ingest/, error recorded in queue, retry on restart
@@ -69,17 +70,18 @@ Drop a PDF, scanned image, or DOCX into the ingest folder. Within seconds, the d
 
 - [ ] MCP Streamable HTTP transport mounted at `/mcp`
 - [ ] `search_documents` tool — full-text search with ranked results
-- [ ] `get_document` tool — fetch metadata + full text by ID
-- [ ] `get_document_content` tool — fetch raw text only by ID
+- [ ] Bulk-first MCP tool design — use array inputs/outputs wherever the operation naturally supports batching
+- [ ] `get_document` tool — fetch metadata + full text by ID or `ids[]`, returning an array
+- [ ] `get_document_content` tool — fetch raw text by ID or `ids[]`, returning an array
 - [ ] `list_recent_documents` tool — recent documents with optional `since` filter
-- [ ] `download_document` tool — return download URL for original file
+- [ ] `download_document` tool — return download URLs for one or more original files
 - [ ] Document resources: `document://{id}` URIs via `resources/list` and `resources/read`
 - [ ] Test with at least two MCP clients (e.g. Claude Desktop / Cursor, and Red via mbfai)
 - [ ] Verify tool descriptions are clear enough for AI assistants to use without documentation
 
 ### Definition of Done
 
-An AI assistant configured with the Docs-AI MCP server can: search for documents by natural language query, read the full text of a specific document, list what was recently added, and provide a download link for an original file. Tested with real queries against the archive.
+An AI assistant configured with the Docs-AI MCP server can: search for documents by natural language query, fetch multiple documents or document contents in a single tool call, list what was recently added, and provide download links for one or more original files. Tested with real queries against the archive.
 
 ---
 
@@ -120,7 +122,7 @@ The existing paperless-ngx archive is fully migrated, searchable, and accessible
 | `tailwindcss` | CSS framework | 0 |
 | `@kreuzberg/node` | Document text extraction + VLM OCR | 1 |
 | `chokidar` | File system watching | 1 |
-| `openai` | LLM calls for metadata generation (via OpenRouter) | 1 |
+| `openai` | LLM calls for metadata generation via an OpenAI-compatible endpoint | 1 |
 | `@modelcontextprotocol/sdk` | MCP server SDK | 2 |
 | `tsx` | TypeScript execution for eval scripts and import tooling | 0 |
 
@@ -140,8 +142,8 @@ Kreuzberg's VLM backend needs no system dependencies — it makes HTTP calls to 
 1. **Single flat documents table.** No separate metadata table. All fields on one row. AI-derived fields (title, description, document_date) are stored alongside system fields and the full extracted text.
 2. **No authentication.** Tailscale is the security boundary. The application has no concept of users.
 3. **No tags or taxonomy.** The description field absorbs what structured tags would have been. FTS makes it searchable without formal categories.
-4. **Two-model strategy.** OCR (VLM, vision model on images) and metadata generation (text model on extracted text) are separate pipeline steps with independently configurable models.
+4. **Two-model strategy.** OCR (VLM, vision model on images) and metadata generation (text model on extracted text) are separate pipeline steps with independently configurable models, and metadata calls go through a configurable OpenAI-compatible endpoint.
 5. **File stays in ingest until success.** The original is only moved to originals/ after all processing succeeds. This makes failure recovery trivial.
 6. **FTS5 over vector search.** BM25 full-text search is sufficient for a personal archive of this size. Vector search is not planned.
 7. **Kreuzberg over Docling/LlamaParse.** Native Node.js bindings, 91+ formats, VLM backend support, no Python sidecar.
-8. **Gemini 2.5 Flash as default VLM.** Best cost/accuracy ratio for OCR. Configurable via environment variable. Decision validated (or overridden) by the OCR evaluation framework in Phase 0.
+8. **Qwen 3.5 122B A10B as default VLM.** Best cost/accuracy ratio for OCR. Configurable via environment variable. Decision validated (or overridden) by the OCR evaluation framework in Phase 0.

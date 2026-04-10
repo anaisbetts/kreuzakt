@@ -175,8 +175,9 @@ Processing queue visibility and system health. Not a primary navigation target �
 │  Database: ✓ OK (487 documents)                      │
 │  Originals: ✓ /data/originals/ (2.3 GB)             │
 │  Ingest: ✓ /data/ingest/ (watching)                  │
-│  OCR Model: google/gemini-2.5-flash                  │
-│  Metadata Model: google/gemini-2.5-flash             │
+│  OCR Model: qwen/qwen3.5-122b-a10b                   │
+│  Metadata Model: qwen/qwen3.5-122b-a10b              │
+│  LLM Endpoint: http://localhost:11434/v1             │
 │                                                      │
 │  Processing Queue                                    │
 │  ─────────────────                                   │
@@ -197,7 +198,7 @@ Processing queue visibility and system health. Not a primary navigation target �
 
 **Behavior:**
 
-- Top section shows system health: database status, directory status, configured models
+- Top section shows system health: database status, directory status, configured models, and the active OpenAI-compatible endpoint
 - Processing queue shows recent pipeline activity
 - Status indicators: ● processing, ✓ completed, ✗ failed
 - Failed items show the error message and a retry button

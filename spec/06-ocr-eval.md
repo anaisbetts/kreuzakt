@@ -31,7 +31,7 @@ fixtures/*.pdf
 ┌─────────────┐     For each backend:
 │  extract.ts │     - Tesseract (free, local)
 │             │     - PaddleOCR (free, local)
-│  Kreuzberg  │     - VLM: Gemini 2.5 Flash
+│  Kreuzberg  │     - VLM: Qwen 3.5 122B A10B
 │  extraction │     - VLM: Claude Sonnet
 │             │     - VLM: GPT-4o
 └──────┬──────┘
@@ -76,7 +76,7 @@ import { extractFile } from '@kreuzberg/node';
 const backends = [
     { name: 'tesseract', config: { ocr: { backend: 'tesseract' } } },
     { name: 'paddleocr', config: { ocr: { backend: 'paddle-ocr' } } },
-    { name: 'vlm:gemini', config: { forceOcr: true, ocr: { backend: 'vlm', vlmConfig: { model: 'google/gemini-2.5-flash' } } } },
+    { name: 'vlm:qwen', config: { forceOcr: true, ocr: { backend: 'vlm', vlmConfig: { model: 'qwen/qwen3.5-122b-a10b' } } } },
     { name: 'vlm:claude', config: { forceOcr: true, ocr: { backend: 'vlm', vlmConfig: { model: 'anthropic/claude-sonnet-4' } } } },
     { name: 'vlm:gpt4o', config: { forceOcr: true, ocr: { backend: 'vlm', vlmConfig: { model: 'openai/gpt-4o' } } } },
 ];
@@ -107,14 +107,14 @@ The judge LLM receives the original document and each extraction result, then sc
 
 ### Judge Model
 
-Claude Opus 4.6 via OpenRouter, using the `openai` SDK:
+Claude Opus 4.6 via a configurable OpenAI-compatible endpoint, using the `openai` SDK:
 
 ```typescript
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-    baseURL: 'https://openrouter.ai/api/v1',
-    apiKey: process.env.OPENROUTER_API_KEY,
+    baseURL: process.env.OPENAI_BASE_URL ?? 'https://openrouter.ai/api/v1',
+    apiKey: process.env.OPENAI_API_KEY ?? 'local-llm',
 });
 
 const response = await openai.chat.completions.create({
@@ -192,11 +192,11 @@ The report is a markdown file written to `results/{date}_report.md`. Format:
 |---------|-----------------|-------------|--------------|------------|----------------|
 | tesseract | 6.2 | 5.8 | 5.5 | 5.8 | $0.00 |
 | paddleocr | 7.1 | 6.9 | 6.3 | 6.8 | $0.00 |
-| vlm:gemini | 9.1 | 9.3 | 8.8 | 9.1 | $0.00017 |
+| vlm:qwen | 9.1 | 9.3 | 8.8 | 9.1 | $0.00017 |
 | vlm:claude | 9.4 | 9.5 | 9.1 | 9.4 | $0.006 |
 | vlm:gpt4o | 9.5 | 9.6 | 9.0 | 9.4 | $0.0075 |
 
-**Recommendation:** vlm:gemini — best cost/quality ratio. 95% of vlm:gpt4o
+**Recommendation:** vlm:qwen — best cost/quality ratio. 95% of vlm:gpt4o
 quality at 2% of the cost.
 
 ## Per-Document Scores
@@ -214,7 +214,7 @@ quality at 2% of the cost.
 
 | Backend | Total Tokens (Input) | Total Tokens (Output) | Total Cost | Per-Page Cost |
 |---------|---------------------|----------------------|------------|---------------|
-| vlm:gemini | 45,000 | 12,000 | $0.043 | $0.0017 |
+| vlm:qwen | 45,000 | 12,000 | $0.043 | $0.0017 |
 | ... | ... | ... | ... | ... |
 
 ## Raw Data
@@ -229,7 +229,7 @@ Cached extractions and judge responses are in results/cache/.
 npx tsx eval/evaluate.ts
 
 # Only specific backends
-npx tsx eval/evaluate.ts --backends tesseract,vlm:gemini,vlm:gpt4o
+npx tsx eval/evaluate.ts --backends tesseract,vlm:qwen,vlm:gpt4o
 
 # Re-judge without re-extracting (uses cached extractions)
 npx tsx eval/evaluate.ts --judge-only
@@ -245,16 +245,17 @@ npx tsx eval/evaluate.ts --output ./eval/results
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `OPENROUTER_API_KEY` | Yes | API key for OpenRouter (used for VLM extraction and judge calls) |
+| `OPENAI_BASE_URL` | No | OpenAI-compatible endpoint for judge calls; defaults to OpenRouter and can point at a local gateway |
+| `OPENAI_API_KEY` | Conditional | API key for the configured endpoint; use a placeholder value if your local endpoint ignores auth |
 
-The same OpenRouter API key is used for both VLM OCR (Gemini, Claude, GPT-4o via Kreuzberg) and the judge model (Opus 4.6 via the OpenAI SDK). No separate API keys needed.
+The same OpenAI-compatible client configuration can be used for judge calls whether the endpoint is OpenRouter or a local gateway. OCR backends remain independently configurable through Kreuzberg's VLM model settings.
 
 ## What This Tells Us
 
 After running the evaluation, we'll know:
 
 1. **Is VLM OCR actually better than Tesseract for our documents?** The answer is almost certainly yes, but by how much?
-2. **Which VLM provider gives the best results?** Gemini Flash may be 95% as good as GPT-4o at 2% of the cost — or the gap might be larger for our specific document types.
+2. **Which VLM provider gives the best results?** Qwen 3.5 122B A10B may be 95% as good as GPT-4o at 2% of the cost — or the gap might be larger for our specific document types.
 3. **Are there document types where traditional OCR is good enough?** Maybe clean typed PDFs don't benefit from VLM at all, and we can save the API call.
 4. **What's the real cost?** Published benchmarks use different page sizes and densities. Our actual documents will give us a real per-page cost.
 

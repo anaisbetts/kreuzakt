@@ -28,8 +28,9 @@ Health check for monitoring and Docker health probes.
     "database": true,
     "originals_dir": true,
     "ingest_dir": true,
-    "ocr_model": "google/gemini-2.5-flash",
-    "metadata_model": "google/gemini-2.5-flash"
+    "ocr_model": "qwen/qwen3.5-122b-a10b",
+    "metadata_model": "qwen/qwen3.5-122b-a10b",
+    "openai_base_url": "http://localhost:11434/v1"
 }
 ```
 
@@ -280,6 +281,8 @@ The MCP server is mounted at `/mcp` using Streamable HTTP transport. It exposes 
 
 ### Tools
 
+MCP tools should be **bulk-first** wherever the operation naturally supports it. For read-oriented tools, the canonical input is an array (`ids`), even if a convenience `id` form is also accepted. Tool outputs should likewise normalize to arrays so AI assistants can fetch multiple documents in one round trip.
+
 #### search_documents
 
 Search the document archive using full-text search.
@@ -324,7 +327,7 @@ Search the document archive using full-text search.
 
 #### get_document
 
-Fetch complete metadata and extracted text for a document.
+Fetch complete metadata and extracted text for one or more documents.
 
 **Input Schema:**
 
@@ -332,22 +335,44 @@ Fetch complete metadata and extracted text for a document.
 {
     "type": "object",
     "properties": {
+        "ids": {
+            "type": "array",
+            "items": { "type": "number" },
+            "description": "Document IDs to fetch. Preferred over `id` for bulk reads."
+        },
         "id": {
             "type": "number",
-            "description": "Document ID"
+            "description": "Single document ID convenience form. Equivalent to passing `ids: [id]`."
         }
-    },
-    "required": ["id"]
+    }
 }
 ```
 
-**Output:** Full document record including all metadata fields and the extracted text content. This is the primary tool for reading a document found via search.
+**Output:** JSON array of full document records including all metadata fields and the extracted text content. Results are returned in the same order as the requested IDs when possible. This is the primary tool for reading documents found via search.
+
+```json
+[
+    {
+        "id": 42,
+        "title": "Deutsche Telekom Invoice — March 2026",
+        "description": "Monthly mobile service invoice from Deutsche Telekom for the billing period March 2026.",
+        "document_date": "2026-03-15",
+        "added_at": "2026-03-20T14:30:00Z",
+        "original_filename": "scan_20260315.pdf",
+        "stored_filename": "a1b2c3d4e5f6_scan_20260315.pdf",
+        "mime_type": "application/pdf",
+        "file_size": 245760,
+        "page_count": 2,
+        "content": "Deutsche Telekom\nInvoice\n..."
+    }
+]
+```
 
 ---
 
 #### get_document_content
 
-Return only the full extracted text of a document.
+Return only the full extracted text of one or more documents.
 
 **Input Schema:**
 
@@ -355,16 +380,33 @@ Return only the full extracted text of a document.
 {
     "type": "object",
     "properties": {
+        "ids": {
+            "type": "array",
+            "items": { "type": "number" },
+            "description": "Document IDs to fetch content for. Preferred over `id` for bulk reads."
+        },
         "id": {
             "type": "number",
-            "description": "Document ID"
+            "description": "Single document ID convenience form. Equivalent to passing `ids: [id]`."
         }
-    },
-    "required": ["id"]
+    }
 }
 ```
 
-**Output:** Plain text string containing the complete extracted text. Lighter than `get_document` when only the content is needed — useful for feeding into further processing or summarization.
+**Output:** JSON array of content objects. Lighter than `get_document` when only the extracted text is needed — useful for feeding multiple documents into further processing or summarization.
+
+```json
+[
+    {
+        "id": 42,
+        "content": "Deutsche Telekom\nInvoice\n..."
+    },
+    {
+        "id": 43,
+        "content": "Lease agreement\n..."
+    }
+]
+```
 
 ---
 
@@ -397,7 +439,7 @@ List recently added documents.
 
 #### download_document
 
-Get a download URL for the original document file.
+Get download URLs for one or more original document files.
 
 **Input Schema:**
 
@@ -405,25 +447,31 @@ Get a download URL for the original document file.
 {
     "type": "object",
     "properties": {
+        "ids": {
+            "type": "array",
+            "items": { "type": "number" },
+            "description": "Document IDs to generate download URLs for. Preferred over `id` for bulk reads."
+        },
         "id": {
             "type": "number",
-            "description": "Document ID"
+            "description": "Single document ID convenience form. Equivalent to passing `ids: [id]`."
         }
-    },
-    "required": ["id"]
+    }
 }
 ```
 
-**Output:** JSON object with the download URL:
+**Output:** JSON array of download objects:
 
 ```json
-{
-    "id": 42,
-    "original_filename": "scan_20260315.pdf",
-    "mime_type": "application/pdf",
-    "file_size": 245760,
-    "download_url": "http://<host>:3000/api/documents/42/original"
-}
+[
+    {
+        "id": 42,
+        "original_filename": "scan_20260315.pdf",
+        "mime_type": "application/pdf",
+        "file_size": 245760,
+        "download_url": "http://<host>:3000/api/documents/42/original"
+    }
+]
 ```
 
 The URL is only accessible within the Tailscale network. The AI assistant can present this to the user or fetch it directly.
@@ -495,4 +543,4 @@ app/api/
 
 The MCP server uses the `@modelcontextprotocol/sdk` package with Streamable HTTP transport. It's mounted at `/mcp` as a Next.js route handler that delegates to the MCP SDK's request handling.
 
-The MCP tools share the same database query functions as the REST API — they're thin wrappers that translate between MCP tool schemas and the underlying Kysely queries.
+The MCP tools share the same database query functions as the REST API — they're thin wrappers that translate between MCP tool schemas and the underlying Kysely queries. For bulk-first tools like `get_document`, `get_document_content`, and `download_document`, the implementation should batch lookups with `WHERE id IN (...)` queries instead of issuing one query per requested ID.
