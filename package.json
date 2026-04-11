@@ -5,14 +5,12 @@
   "scripts": {
     "check": "biome check && bunx tsgo --noEmit",
     "f": "biome check --write --unsafe",
+    "reset": "rm data/docs-ai* && mv data/originals/* ./data/ingest && rm -rf ./data/thumbnails",
     "dev": "bun --bun next dev",
     "build": "bun --bun next build",
     "start": "bun --bun next start",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write .",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "seed": "bun run scripts/seed.ts",
     "eval": "bun run eval/evaluate.ts"
   },
   "dependencies": {

@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 
 import { jsonError } from "@/lib/api";
 import { getDocumentById } from "@/lib/documents";
+import { jpegThumbnailResponse } from "@/lib/fileResponse";
 import { fileExists, getThumbnailPath } from "@/lib/files";
 
 export const runtime = "nodejs";
@@ -38,12 +39,7 @@ export async function GET(
       );
     }
 
-    return new Response(Bun.file(thumbnailPath), {
-      headers: {
-        "Content-Type": "image/jpeg",
-        "Cache-Control": "public, max-age=86400",
-      },
-    });
+    return jpegThumbnailResponse(thumbnailPath);
   } catch (error) {
     console.error("thumbnail fetch failed", error);
 
