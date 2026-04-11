@@ -18,7 +18,7 @@ function openRouterApiKey() {
   return process.env.OPENROUTER_KEY ?? process.env.OPENAI_API_KEY ?? "";
 }
 
-/** Default matches app (`src/lib/config.ts`) and spec. */
+/** Default model for the `vlm:qwen` eval backend when env vars are unset. */
 const QWEN_OPENROUTER_MODEL =
   process.env.QWEN_VLM_MODEL ??
   process.env.OCR_VLM_MODEL ??

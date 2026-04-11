@@ -45,7 +45,7 @@ export const appConfig = {
     path.join(dataDir, "thumbnails"),
   ),
   dbPath: resolvePath(process.env.DB_PATH, path.join(dataDir, "docs-ai.db")),
-  ocrModel: process.env.OCR_VLM_MODEL ?? "qwen/qwen3.5-122b-a10b",
+  ocrModel: process.env.OCR_VLM_MODEL ?? "openai/gpt-5.4-mini",
   metadataModel: process.env.METADATA_LLM_MODEL ?? "qwen/qwen3.5-122b-a10b",
   openaiBaseUrl: openAiCompatibleBaseUrl(),
   openaiApiKey: openAiCompatibleApiKey(),

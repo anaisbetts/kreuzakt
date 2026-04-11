@@ -22,9 +22,9 @@
 - [x] Document viewer (S-02): document content display, metadata sidebar, download button
 - [x] Originals folder management: hash computation, hash-prefixed file naming, dedup check
 - [x] **OCR Evaluation Framework** — the `eval/` CLI tool (see `06-ocr-eval.md`)
-- [ ] Curate ~10-20 test fixtures from the existing paperless archive
-- [ ] Run evaluation across Tesseract, PaddleOCR, Qwen 3.5 122B A10B, Claude Sonnet, GPT-4o
-- [ ] Generate evaluation report and choose default VLM provider
+- [x] Curate ~10-20 test fixtures from the existing paperless archive
+- [x] Run evaluation across Tesseract, PaddleOCR, Qwen 3.5 122B A10B, Claude Sonnet, GPT-4o
+- [x] Generate evaluation report and choose default VLM provider
 
 ### Definition of Done
 
