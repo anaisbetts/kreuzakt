@@ -42,3 +42,8 @@ next-env.d.ts
 
 # storybook
 storybook-static/
+
+# docs-ai runtime data
+/data/
+/eval/results/
+!/eval/results/.gitkeep

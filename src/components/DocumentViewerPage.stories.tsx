@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { fn } from 'storybook/test';
-import { DocumentViewerPage } from './DocumentViewerPage';
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { fn } from "storybook/test";
+import { DocumentViewerPage } from "./DocumentViewerPage";
 
 const extractedText = `Deutsche Telekom
 
@@ -38,9 +38,9 @@ Landgrabenweg 151
 53227 Bonn`;
 
 const meta = {
-  title: 'Pages/DocumentViewerPage',
+  title: "Pages/DocumentViewerPage",
   component: DocumentViewerPage,
-  parameters: { layout: 'fullscreen' },
+  parameters: { layout: "fullscreen" },
   args: {
     onBack: fn(),
     onDownload: fn(),
@@ -56,13 +56,13 @@ type Story = StoryObj<typeof meta>;
 export const PDFDocument: Story = {
   args: {
     id: 42,
-    title: 'Deutsche Telekom Invoice — March 2026',
+    title: "Deutsche Telekom Invoice — March 2026",
     description:
-      'Monthly mobile service invoice from Deutsche Telekom for the billing period March 2026.',
-    documentDate: '2026-03-15',
-    addedAt: '2026-03-20T14:30:00Z',
-    originalFilename: 'scan_20260315.pdf',
-    mimeType: 'application/pdf',
+      "Monthly mobile service invoice from Deutsche Telekom for the billing period March 2026.",
+    documentDate: "2026-03-15",
+    addedAt: "2026-03-20T14:30:00Z",
+    originalFilename: "scan_20260315.pdf",
+    mimeType: "application/pdf",
     fileSize: 245760,
     pageCount: 2,
     content: extractedText,
@@ -72,29 +72,29 @@ export const PDFDocument: Story = {
 export const ImageDocument: Story = {
   args: {
     id: 40,
-    title: 'Kitchen Renovation Receipt',
+    title: "Kitchen Renovation Receipt",
     description:
-      'Receipt from Bauhaus for kitchen counter materials and installation.',
-    documentDate: '2026-02-20',
-    addedAt: '2026-02-21T09:15:00Z',
-    originalFilename: 'IMG_20260220_receipt.jpg',
-    mimeType: 'image/jpeg',
+      "Receipt from Bauhaus for kitchen counter materials and installation.",
+    documentDate: "2026-02-20",
+    addedAt: "2026-02-21T09:15:00Z",
+    originalFilename: "IMG_20260220_receipt.jpg",
+    mimeType: "image/jpeg",
     fileSize: 1843200,
     content:
-      'BAUHAUS\nFachcentren GmbH & Co. KG\nFiliale Berlin-Tempelhof\nGermaniastr. 36, 12099 Berlin\n\nKASSENBON\n\n20.02.2026   14:23    Kasse 07\n\nGranitplatte Küche 240x60cm\n  Art.-Nr. 294.837.221         890,00\nMontageservice pauschal\n  Art.-Nr. 900.100.003         350,00\nSilikon Sanitär transp. 310ml\n  Art.-Nr. 112.449.008     2x   1,75\n                               -----\nSumme                       1.243,50 EUR\nMwSt 19%                      198,66 EUR\n\nEC-Kartenzahlung             1.243,50 EUR\nKartennr. ****4821\n\nVielen Dank für Ihren Einkauf!',
+      "BAUHAUS\nFachcentren GmbH & Co. KG\nFiliale Berlin-Tempelhof\nGermaniastr. 36, 12099 Berlin\n\nKASSENBON\n\n20.02.2026   14:23    Kasse 07\n\nGranitplatte Küche 240x60cm\n  Art.-Nr. 294.837.221         890,00\nMontageservice pauschal\n  Art.-Nr. 900.100.003         350,00\nSilikon Sanitär transp. 310ml\n  Art.-Nr. 112.449.008     2x   1,75\n                               -----\nSumme                       1.243,50 EUR\nMwSt 19%                      198,66 EUR\n\nEC-Kartenzahlung             1.243,50 EUR\nKartennr. ****4821\n\nVielen Dank für Ihren Einkauf!",
   },
 };
 
 export const MultiPagePDF: Story = {
   args: {
     id: 41,
-    title: 'Apartment Lease Agreement',
+    title: "Apartment Lease Agreement",
     description:
-      'Rental contract for the apartment at Berliner Str. 42, signed December 2024.',
-    documentDate: '2024-12-01',
-    addedAt: '2024-12-05T10:00:00Z',
-    originalFilename: 'mietvertrag_berliner_str_42.pdf',
-    mimeType: 'application/pdf',
+      "Rental contract for the apartment at Berliner Str. 42, signed December 2024.",
+    documentDate: "2024-12-01",
+    addedAt: "2024-12-05T10:00:00Z",
+    originalFilename: "mietvertrag_berliner_str_42.pdf",
+    mimeType: "application/pdf",
     fileSize: 524288,
     pageCount: 5,
     currentPage: 3,
@@ -105,13 +105,13 @@ export const MultiPagePDF: Story = {
 export const ExtractedText: Story = {
   args: {
     id: 42,
-    title: 'Deutsche Telekom Invoice — March 2026',
+    title: "Deutsche Telekom Invoice — March 2026",
     description:
-      'Monthly mobile service invoice from Deutsche Telekom for the billing period March 2026.',
-    documentDate: '2026-03-15',
-    addedAt: '2026-03-20T14:30:00Z',
-    originalFilename: 'scan_20260315.pdf',
-    mimeType: 'application/pdf',
+      "Monthly mobile service invoice from Deutsche Telekom for the billing period March 2026.",
+    documentDate: "2026-03-15",
+    addedAt: "2026-03-20T14:30:00Z",
+    originalFilename: "scan_20260315.pdf",
+    mimeType: "application/pdf",
     fileSize: 245760,
     pageCount: 2,
     content: extractedText,

@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export interface DocumentViewerProps {
   id: number;
   title: string;
@@ -19,10 +21,10 @@ export interface DocumentViewerProps {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
   });
 }
 
@@ -45,6 +47,7 @@ function PDFPreview({
     <div className="flex h-full flex-col rounded-lg border border-neutral-200 bg-neutral-800 overflow-hidden">
       <div className="flex items-center gap-2 bg-neutral-700 px-4 py-2">
         <svg
+          aria-hidden="true"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -91,6 +94,7 @@ function ImagePreview({ filename }: { filename: string }) {
     <div className="flex h-full flex-col rounded-lg border border-neutral-200 bg-neutral-900 overflow-hidden">
       <div className="flex items-center gap-2 bg-neutral-800 px-4 py-2">
         <svg
+          aria-hidden="true"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -106,15 +110,26 @@ function ImagePreview({ filename }: { filename: string }) {
         </svg>
         <span className="text-xs text-neutral-300">{filename}</span>
         <div className="ml-auto flex items-center gap-2">
-          <button type="button" className="text-xs text-neutral-400 hover:text-neutral-200">-</button>
+          <button
+            type="button"
+            className="text-xs text-neutral-400 hover:text-neutral-200"
+          >
+            -
+          </button>
           <span className="text-xs text-neutral-500">100%</span>
-          <button type="button" className="text-xs text-neutral-400 hover:text-neutral-200">+</button>
+          <button
+            type="button"
+            className="text-xs text-neutral-400 hover:text-neutral-200"
+          >
+            +
+          </button>
         </div>
       </div>
       <div className="flex flex-1 items-center justify-center p-8">
         <div className="relative flex aspect-[3/4] max-h-[80%] w-auto items-center justify-center overflow-hidden rounded shadow-2xl ring-1 ring-white/10">
           <div className="absolute inset-0 bg-gradient-to-br from-neutral-200 via-neutral-100 to-neutral-200" />
           <svg
+            aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -135,11 +150,11 @@ function ImagePreview({ filename }: { filename: string }) {
 }
 
 const pageSkeletonVariants = [
-  { heading: 'w-2/5', sub: 'w-1/4', lines: ['w-full', 'w-full', 'w-3/4'] },
-  { heading: 'w-1/3', sub: 'w-2/5', lines: ['w-full', 'w-5/6', 'w-full'] },
-  { heading: 'w-3/5', sub: 'w-1/3', lines: ['w-4/5', 'w-full', 'w-2/3'] },
-  { heading: 'w-1/2', sub: 'w-1/4', lines: ['w-full', 'w-full', 'w-4/5'] },
-  { heading: 'w-2/5', sub: 'w-1/3', lines: ['w-full', 'w-3/4', 'w-full'] },
+  { heading: "w-2/5", sub: "w-1/4", lines: ["w-full", "w-full", "w-3/4"] },
+  { heading: "w-1/3", sub: "w-2/5", lines: ["w-full", "w-5/6", "w-full"] },
+  { heading: "w-3/5", sub: "w-1/3", lines: ["w-4/5", "w-full", "w-2/3"] },
+  { heading: "w-1/2", sub: "w-1/4", lines: ["w-full", "w-full", "w-4/5"] },
+  { heading: "w-2/5", sub: "w-1/3", lines: ["w-full", "w-3/4", "w-full"] },
 ];
 
 function PageThumbnailStrip({
@@ -163,23 +178,28 @@ function PageThumbnailStrip({
             type="button"
             onClick={() => onPageChange?.(page)}
             className={[
-              'flex flex-col items-center gap-1',
-              isActive ? 'opacity-100' : 'opacity-60 hover:opacity-80',
-            ].join(' ')}
+              "flex flex-col items-center gap-1",
+              isActive ? "opacity-100" : "opacity-60 hover:opacity-80",
+            ].join(" ")}
           >
             <div
               className={[
-                'flex aspect-[3/4] w-full flex-col gap-0.5 rounded border bg-white p-1.5 shadow-sm transition-all',
+                "flex aspect-[3/4] w-full flex-col gap-0.5 rounded border bg-white p-1.5 shadow-sm transition-all",
                 isActive
-                  ? 'ring-2 ring-blue-500 border-blue-300'
-                  : 'border-neutral-200 hover:border-neutral-300',
-              ].join(' ')}
+                  ? "ring-2 ring-blue-500 border-blue-300"
+                  : "border-neutral-200 hover:border-neutral-300",
+              ].join(" ")}
             >
-              <div className={`h-0.5 ${variant.heading} rounded-sm bg-neutral-300`} />
-              <div className={`h-0.5 ${variant.sub} rounded-sm bg-neutral-200`} />
+              <div
+                className={`h-0.5 ${variant.heading} rounded-sm bg-neutral-300`}
+              />
+              <div
+                className={`h-0.5 ${variant.sub} rounded-sm bg-neutral-200`}
+              />
               <div className="mt-1 flex flex-col gap-px">
                 {variant.lines.map((w, li) => (
                   <div
+                    // biome-ignore lint/suspicious/noArrayIndexKey: static placeholder lines; order is fixed
                     key={li}
                     className={`h-px ${w} rounded-sm bg-neutral-200`}
                   />
@@ -188,11 +208,9 @@ function PageThumbnailStrip({
             </div>
             <span
               className={[
-                'text-[10px]',
-                isActive
-                  ? 'font-medium text-blue-600'
-                  : 'text-neutral-500',
-              ].join(' ')}
+                "text-[10px]",
+                isActive ? "font-medium text-blue-600" : "text-neutral-500",
+              ].join(" ")}
             >
               {page}
             </span>
@@ -218,7 +236,7 @@ function MetadataField({
   children,
 }: {
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-0.5">
@@ -249,8 +267,8 @@ export function DocumentViewerPage({
   onPageChange,
   onStatusClick,
 }: DocumentViewerProps) {
-  const isImage = mimeType.startsWith('image/');
-  const isPdf = mimeType === 'application/pdf';
+  const isImage = mimeType.startsWith("image/");
+  const isPdf = mimeType === "application/pdf";
   const showPageStrip =
     !showExtractedText && pageCount != null && pageCount > 1;
 
@@ -263,6 +281,7 @@ export function DocumentViewerPage({
           className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
         >
           <svg
+            aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -285,6 +304,7 @@ export function DocumentViewerPage({
           aria-label="System status"
         >
           <svg
+            aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -308,13 +328,13 @@ export function DocumentViewerPage({
 
       <main className="mx-auto flex w-full max-w-6xl flex-1 gap-6 px-6 py-6">
         <div className="flex flex-1 gap-3 min-h-[600px]">
-          {showPageStrip && (
+          {showPageStrip && pageCount != null ? (
             <PageThumbnailStrip
-              pageCount={pageCount!}
+              pageCount={pageCount}
               currentPage={currentPage}
               onPageChange={onPageChange}
             />
-          )}
+          ) : null}
           <div className="flex-1">
             {showExtractedText ? (
               <TextPreview content={content} />
@@ -337,15 +357,11 @@ export function DocumentViewerPage({
             <h1 className="text-lg font-semibold text-neutral-900">{title}</h1>
 
             <dl className="flex flex-col gap-4">
-              <MetadataField label="Description">
-                {description}
-              </MetadataField>
+              <MetadataField label="Description">{description}</MetadataField>
               <MetadataField label="Document Date">
                 {formatDate(documentDate)}
               </MetadataField>
-              <MetadataField label="Added">
-                {formatDate(addedAt)}
-              </MetadataField>
+              <MetadataField label="Added">{formatDate(addedAt)}</MetadataField>
               <MetadataField label="Original File">
                 <span className="font-mono text-xs">{originalFilename}</span>
               </MetadataField>
@@ -362,6 +378,7 @@ export function DocumentViewerPage({
                 className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
               >
                 <svg
+                  aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -383,6 +400,7 @@ export function DocumentViewerPage({
                 className="flex items-center justify-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
               >
                 <svg
+                  aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -396,7 +414,7 @@ export function DocumentViewerPage({
                     d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
                   />
                 </svg>
-                {showExtractedText ? 'View Document' : 'View Text'}
+                {showExtractedText ? "View Document" : "View Text"}
               </button>
             </div>
           </div>

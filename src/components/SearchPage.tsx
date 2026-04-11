@@ -1,14 +1,21 @@
-import { SearchBar } from './SearchBar';
-import { DocumentCard, type DocumentCardProps } from './DocumentCard';
+import { DocumentCard, type DocumentCardProps } from "./DocumentCard";
+import { SearchBar } from "./SearchBar";
 
 export interface SearchPageProps {
   query?: string;
+  hasActiveSearch?: boolean;
   recentDocuments?: DocumentCardProps[];
   searchResults?: DocumentCardProps[];
   totalResults?: number;
+  page?: number;
+  totalPages?: number;
+  onQueryChange?: (query: string) => void;
   onSearch?: (query: string) => void;
+  onClear?: () => void;
+  onPageChange?: (page: number) => void;
   onDocumentClick?: (id: number) => void;
   onStatusClick?: () => void;
+  onHomeClick?: () => void;
 }
 
 function StatusIcon({ onClick }: { onClick?: () => void }) {
@@ -20,6 +27,7 @@ function StatusIcon({ onClick }: { onClick?: () => void }) {
       aria-label="System status"
     >
       <svg
+        aria-hidden="true"
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
@@ -50,74 +58,219 @@ function DocumentGrid({
   onDocumentClick?: (id: number) => void;
 }) {
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       {documents.map((doc) => (
-        <DocumentCard key={doc.id} {...doc} onClick={onDocumentClick} />
+        <DocumentCard
+          key={doc.id}
+          {...doc}
+          variant="grid"
+          onClick={onDocumentClick}
+        />
       ))}
     </div>
   );
 }
 
+function SearchResultsList({
+  documents,
+  onDocumentClick,
+}: {
+  documents: DocumentCardProps[];
+  onDocumentClick?: (id: number) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      {documents.map((doc) => (
+        <DocumentCard
+          key={doc.id}
+          {...doc}
+          variant="list"
+          onClick={onDocumentClick}
+        />
+      ))}
+    </div>
+  );
+}
+
+function Pagination({
+  page = 1,
+  totalPages = 1,
+  onPageChange,
+}: {
+  page?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+}) {
+  if (!onPageChange || totalPages <= 1) {
+    return null;
+  }
+
+  const start = Math.max(1, page - 2);
+  const end = Math.min(totalPages, start + 4);
+  const pages = Array.from(
+    { length: end - start + 1 },
+    (_, index) => start + index,
+  );
+
+  return (
+    <nav
+      className="mt-8 flex items-center justify-center gap-2"
+      aria-label="Pagination"
+    >
+      <button
+        type="button"
+        onClick={() => onPageChange(page - 1)}
+        disabled={page <= 1}
+        className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-600 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Prev
+      </button>
+      {pages.map((pageNumber) => (
+        <button
+          key={pageNumber}
+          type="button"
+          onClick={() => onPageChange(pageNumber)}
+          className={[
+            "min-w-10 rounded-lg px-3 py-2 text-sm",
+            pageNumber === page
+              ? "bg-blue-600 text-white"
+              : "border border-neutral-200 bg-white text-neutral-700",
+          ].join(" ")}
+        >
+          {pageNumber}
+        </button>
+      ))}
+      <button
+        type="button"
+        onClick={() => onPageChange(page + 1)}
+        disabled={page >= totalPages}
+        className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-600 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Next
+      </button>
+    </nav>
+  );
+}
+
 export function SearchPage({
   query,
+  hasActiveSearch,
   recentDocuments,
   searchResults,
   totalResults,
+  page = 1,
+  totalPages = 1,
+  onQueryChange,
   onSearch,
+  onClear,
+  onPageChange,
   onDocumentClick,
   onStatusClick,
+  onHomeClick,
 }: SearchPageProps) {
-  const hasQuery = Boolean(query);
+  const hasQuery = hasActiveSearch ?? Boolean(query);
   const documents = hasQuery ? searchResults : recentDocuments;
   const hasDocuments = documents && documents.length > 0;
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50">
-      <header className="flex justify-end px-6 py-4">
-        <StatusIcon onClick={onStatusClick} />
-      </header>
-
-      <div className="flex flex-1 flex-col items-center px-6 pt-16">
-        <h1 className="mb-8 text-4xl font-bold tracking-tight text-neutral-900">
-          Docs-AI
-        </h1>
-        <SearchBar
-          size="lg"
-          defaultValue={query}
-          onSearch={onSearch}
-          className="w-full max-w-xl"
-        />
-
-        <div className="mt-12 w-full max-w-3xl pb-16">
-          {hasQuery && totalResults != null && (
-            <p className="mb-4 text-center text-xs font-semibold uppercase tracking-widest text-neutral-400">
-              {totalResults} {totalResults === 1 ? 'result' : 'results'}
-            </p>
-          )}
-
-          {!hasQuery && hasDocuments && (
-            <p className="mb-4 text-center text-xs font-semibold uppercase tracking-widest text-neutral-400">
-              Recent Documents
-            </p>
-          )}
-
-          {hasDocuments ? (
-            <DocumentGrid
-              documents={documents}
-              onDocumentClick={onDocumentClick}
-            />
-          ) : hasQuery ? (
-            <div className="flex flex-col items-center gap-2 py-16 text-center">
-              <p className="text-lg font-medium text-neutral-700">
-                No documents found
-              </p>
-              <p className="text-sm text-neutral-500">
-                Try a different search term or check the spelling.
-              </p>
+      {hasQuery ? (
+        <>
+          <header className="border-b border-neutral-200 bg-white px-6 py-4">
+            <div className="mx-auto flex w-full max-w-6xl items-center gap-4">
+              <button
+                type="button"
+                onClick={onHomeClick ?? onClear}
+                className="shrink-0 text-xl font-semibold tracking-tight text-neutral-900"
+              >
+                Docs-AI
+              </button>
+              <SearchBar
+                size="md"
+                value={query}
+                onChange={(event) => onQueryChange?.(event.currentTarget.value)}
+                onSearch={onSearch}
+                onClear={onClear}
+                showClearButton={Boolean(query)}
+                className="w-full max-w-2xl"
+              />
+              <div className="ml-auto">
+                <StatusIcon onClick={onStatusClick} />
+              </div>
             </div>
-          ) : null}
-        </div>
-      </div>
+          </header>
+
+          <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 py-8">
+            {totalResults != null && (
+              <p className="mb-6 text-sm text-neutral-500">
+                {totalResults} {totalResults === 1 ? "result" : "results"}
+              </p>
+            )}
+
+            {hasDocuments ? (
+              <>
+                <SearchResultsList
+                  documents={documents}
+                  onDocumentClick={onDocumentClick}
+                />
+                <Pagination
+                  page={page}
+                  totalPages={totalPages}
+                  onPageChange={onPageChange}
+                />
+              </>
+            ) : (
+              <div className="flex flex-col items-center gap-2 py-16 text-center">
+                <p className="text-lg font-medium text-neutral-700">
+                  No documents found
+                </p>
+                <p className="text-sm text-neutral-500">
+                  Try a different search term or check the spelling.
+                </p>
+              </div>
+            )}
+          </main>
+        </>
+      ) : (
+        <>
+          <header className="flex justify-end px-6 py-4">
+            <StatusIcon onClick={onStatusClick} />
+          </header>
+
+          <main className="flex flex-1 flex-col items-center px-6 pt-16">
+            <div className="flex w-full max-w-3xl flex-1 flex-col items-center">
+              <div className="flex flex-1 flex-col items-center justify-center pb-12">
+                <h1 className="mb-8 text-4xl font-bold tracking-tight text-neutral-900">
+                  Docs-AI
+                </h1>
+                <SearchBar
+                  size="lg"
+                  value={query ?? ""}
+                  onChange={(event) =>
+                    onQueryChange?.(event.currentTarget.value)
+                  }
+                  onSearch={onSearch}
+                  className="w-full max-w-xl"
+                />
+              </div>
+
+              <div className="w-full pb-16">
+                {hasDocuments && (
+                  <>
+                    <p className="mb-6 text-center text-xs font-semibold uppercase tracking-widest text-neutral-400">
+                      Recent Documents
+                    </p>
+                    <DocumentGrid
+                      documents={documents}
+                      onDocumentClick={onDocumentClick}
+                    />
+                  </>
+                )}
+              </div>
+            </div>
+          </main>
+        </>
+      )}
     </div>
   );
 }
