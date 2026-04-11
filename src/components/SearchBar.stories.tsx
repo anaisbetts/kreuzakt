@@ -1,12 +1,12 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { fn } from 'storybook/test';
-import { SearchBar } from './SearchBar';
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { fn } from "storybook/test";
+import { SearchBar } from "./SearchBar";
 
 const meta = {
-  title: 'Components/SearchBar',
+  title: "Components/SearchBar",
   component: SearchBar,
-  parameters: { layout: 'centered' },
-  tags: ['autodocs'],
+  parameters: { layout: "centered" },
+  tags: ["autodocs"],
   args: { onSearch: fn() },
   decorators: [
     (Story) => (
@@ -23,13 +23,13 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 export const Small: Story = {
-  args: { size: 'sm' },
+  args: { size: "sm" },
 };
 
 export const Large: Story = {
-  args: { size: 'lg' },
+  args: { size: "lg" },
 };
 
 export const CustomPlaceholder: Story = {
-  args: { placeholder: 'Search invoices, receipts, letters…' },
+  args: { placeholder: "Search invoices, receipts, letters…" },
 };
