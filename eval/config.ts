@@ -11,7 +11,7 @@ type VlmLlmConfig = {
   api_key?: string;
 };
 
-const OPENROUTER_BASE = process.env.OPENAI_BASE_URL ?? appConfig.openaiBaseUrl;
+const OPENROUTER_BASE = appConfig.openaiBaseUrl;
 
 /** Prefer dedicated OpenRouter key; fall back to generic OpenAI-compatible key. */
 function openRouterApiKey() {

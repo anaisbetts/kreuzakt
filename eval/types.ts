@@ -38,7 +38,10 @@ export interface EvaluatedFixtureResult {
   fixture: FixtureInfo;
   backend: BackendConfig;
   extraction: CachedExtraction;
-  score: JudgeScore;
+  /** Set when the judge API returned a valid score. */
+  score?: JudgeScore;
+  /** Set when judging failed (network, API error, bad JSON, etc.). */
+  judgeError?: string;
 }
 
 export interface EvaluationReportData {

@@ -11,6 +11,14 @@ function average(values: number[]) {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
+function fmtAvg(value: number | null) {
+  return value == null ? "—" : value.toFixed(2);
+}
+
+function escapeCell(text: string) {
+  return text.replaceAll("|", "\\|").replaceAll("\n", " ");
+}
+
 function formatMoney(value: number) {
   return `$${value.toFixed(value < 0.01 ? 5 : 2)}`;
 }
@@ -37,23 +45,56 @@ export async function writeEvaluationReport(
         (sum, result) => sum + (result.extraction.page_count ?? 1),
         0,
       );
+      const judged = results.filter(
+        (
+          result,
+        ): result is typeof result & {
+          score: NonNullable<(typeof result)["score"]>;
+        } => result.score != null,
+      );
+      const avgCompleteness =
+        judged.length > 0
+          ? average(judged.map((result) => result.score.completeness))
+          : null;
+      const avgAccuracy =
+        judged.length > 0
+          ? average(judged.map((result) => result.score.accuracy))
+          : null;
+      const avgStructure =
+        judged.length > 0
+          ? average(judged.map((result) => result.score.structure))
+          : null;
+      const avgOverall =
+        judged.length > 0
+          ? average(judged.map((result) => result.score.overall))
+          : null;
 
       return {
         backendName,
         backendLabel: sample.backend.label,
-        avgCompleteness: average(
-          results.map((result) => result.score.completeness),
-        ),
-        avgAccuracy: average(results.map((result) => result.score.accuracy)),
-        avgStructure: average(results.map((result) => result.score.structure)),
-        avgOverall: average(results.map((result) => result.score.overall)),
+        judgedCount: judged.length,
+        totalCount: results.length,
+        avgCompleteness,
+        avgAccuracy,
+        avgStructure,
+        avgOverall,
         estimatedCost: pageCount * sample.backend.costPerPageEstimate,
         estimatedCostPerPage: sample.backend.costPerPageEstimate,
       };
     })
-    .sort((left, right) => right.avgOverall - left.avgOverall);
+    .sort((left, right) => {
+      if (left.judgedCount === 0 && right.judgedCount > 0) {
+        return 1;
+      }
+      if (left.judgedCount > 0 && right.judgedCount === 0) {
+        return -1;
+      }
+      const lo = left.avgOverall ?? -Infinity;
+      const ro = right.avgOverall ?? -Infinity;
+      return ro - lo;
+    });
 
-  const recommendation = backendSummaries[0];
+  const recommendation = backendSummaries.find((row) => row.judgedCount > 0);
   const groupedByFixture = new Map<string, EvaluationReportData["results"]>();
 
   for (const result of data.results) {
@@ -68,16 +109,16 @@ export async function writeEvaluationReport(
     "",
     "## Summary",
     "",
-    "| Backend | Avg Completeness | Avg Accuracy | Avg Structure | Avg Overall | Est. Cost/Page |",
-    "|---------|------------------|--------------|---------------|-------------|----------------|",
+    "| Backend | Avg Completeness | Avg Accuracy | Avg Structure | Avg Overall | Est. Cost/Page | Judged |",
+    "|---------|------------------|--------------|---------------|-------------|----------------|--------|",
     ...backendSummaries.map(
       (summary) =>
-        `| ${summary.backendName} | ${summary.avgCompleteness.toFixed(2)} | ${summary.avgAccuracy.toFixed(2)} | ${summary.avgStructure.toFixed(2)} | ${summary.avgOverall.toFixed(2)} | ${formatMoney(summary.estimatedCostPerPage)} |`,
+        `| ${summary.backendName} | ${fmtAvg(summary.avgCompleteness)} | ${fmtAvg(summary.avgAccuracy)} | ${fmtAvg(summary.avgStructure)} | ${fmtAvg(summary.avgOverall)} | ${formatMoney(summary.estimatedCostPerPage)} | ${summary.judgedCount}/${summary.totalCount} |`,
     ),
     "",
     recommendation
-      ? `**Recommendation:** ${recommendation.backendName} — best observed overall score in this run.`
-      : "**Recommendation:** No results available.",
+      ? `**Recommendation:** ${recommendation.backendName} — best average overall among backends with at least one successful judgement.`
+      : "**Recommendation:** No successful judgements — all judge calls failed or there were no results.",
     "",
     "## Per-Document Scores",
     "",
@@ -95,9 +136,15 @@ export async function writeEvaluationReport(
     for (const result of results.sort((left, right) =>
       left.backend.name.localeCompare(right.backend.name),
     )) {
-      reportLines.push(
-        `| ${result.backend.name} | ${result.score.completeness.toFixed(1)} | ${result.score.accuracy.toFixed(1)} | ${result.score.structure.toFixed(1)} | ${result.score.overall.toFixed(1)} | ${result.score.notes.replaceAll("\n", " ")} |`,
-      );
+      if (result.judgeError) {
+        reportLines.push(
+          `| ${result.backend.name} | — | — | — | — | ${escapeCell(`Error: ${result.judgeError}`)} |`,
+        );
+      } else if (result.score) {
+        reportLines.push(
+          `| ${result.backend.name} | ${result.score.completeness.toFixed(1)} | ${result.score.accuracy.toFixed(1)} | ${result.score.structure.toFixed(1)} | ${result.score.overall.toFixed(1)} | ${escapeCell(result.score.notes)} |`,
+        );
+      }
     }
     reportLines.push("");
   }
@@ -116,6 +163,18 @@ export async function writeEvaluationReport(
   reportLines.push("");
   reportLines.push("Cached extractions are stored under `results/cache/`.");
   reportLines.push("");
+
+  const judgeFailures = data.results.filter((r) => r.judgeError);
+  if (judgeFailures.length > 0) {
+    reportLines.push("## Judge failures");
+    reportLines.push("");
+    for (const row of judgeFailures) {
+      reportLines.push(
+        `- **${row.fixture.fileName}** / \`${row.backend.name}\`: ${row.judgeError}`,
+      );
+    }
+    reportLines.push("");
+  }
 
   const reportPath = path.join(
     outputDir,

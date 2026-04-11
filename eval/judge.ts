@@ -8,6 +8,10 @@ import { appConfig } from "../src/lib/config";
 
 import type { CachedExtraction, FixtureInfo, JudgeScore } from "./types";
 
+/** OpenRouter slug; override with JUDGE_MODEL. */
+const DEFAULT_JUDGE_MODEL =
+  process.env.JUDGE_MODEL ?? "anthropic/claude-opus-4.6";
+
 const JUDGE_SYSTEM_PROMPT = `You are an OCR quality evaluator. You will receive:
 1. Images of the original document pages when available
 2. Text extracted from that document by an OCR system
@@ -45,6 +49,33 @@ Return JSON:
 }
 
 overall must be on the same 0-5 scale, weighted: 0.4 * accuracy + 0.35 * completeness + 0.25 * structure`;
+
+/**
+ * Models sometimes wrap JSON in ```json fences or add a short preamble despite
+ * `response_format: json_object`. Strip fences and fall back to the outermost object.
+ */
+function parseJudgeScoreJson(content: string): JudgeScore {
+  let s = content.trim();
+  if (s.startsWith("```")) {
+    s = s.replace(/^```(?:json)?\s*/i, "");
+    const fenceEnd = s.lastIndexOf("```");
+    if (fenceEnd !== -1) {
+      s = s.slice(0, fenceEnd).trim();
+    }
+  }
+  try {
+    return JSON.parse(s) as JudgeScore;
+  } catch {
+    const start = s.indexOf("{");
+    const end = s.lastIndexOf("}");
+    if (start !== -1 && end > start) {
+      return JSON.parse(s.slice(start, end + 1)) as JudgeScore;
+    }
+    throw new Error(
+      `Judge response was not valid JSON (first 240 chars): ${content.slice(0, 240)}`,
+    );
+  }
+}
 
 function getImageMimeType(filePath: string) {
   const extension = path.extname(filePath).toLowerCase();
@@ -145,14 +176,28 @@ export async function judgeExtraction(
   fixture: FixtureInfo,
   extraction: CachedExtraction,
 ) {
+  const baseURL = appConfig.openaiBaseUrl;
+  const apiKey = appConfig.openaiApiKey;
+  if (!apiKey) {
+    throw new Error(
+      "Judge requires OPENROUTER_KEY or OPENAI_API_KEY (OpenAI-compatible endpoint).",
+    );
+  }
+
   const openai = new OpenAI({
-    baseURL: appConfig.openaiBaseUrl,
-    apiKey: appConfig.openaiApiKey || "local-llm",
+    baseURL,
+    apiKey,
+    defaultHeaders: {
+      "HTTP-Referer":
+        process.env.OPENROUTER_HTTP_REFERER ??
+        "https://github.com/anaisbetts/docs-ai",
+      "X-Title": process.env.OPENROUTER_APP_TITLE ?? "docs-ai OCR judge",
+    },
   });
 
   const rendered = await renderDocumentImages(fixture.filePath);
   const response = await openai.chat.completions.create({
-    model: "anthropic/claude-4.6-opus",
+    model: DEFAULT_JUDGE_MODEL,
     response_format: { type: "json_object" },
     messages: [
       {
@@ -184,7 +229,7 @@ ${extraction.extracted_text}`,
   });
 
   const rawContent = response.choices[0]?.message?.content ?? "{}";
-  const parsed = JSON.parse(rawContent) as JudgeScore;
+  const parsed = parseJudgeScoreJson(rawContent);
 
   return {
     ...parsed,

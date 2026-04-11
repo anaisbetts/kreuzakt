@@ -151,14 +151,46 @@ async function main() {
         continue;
       }
 
-      const score = await judgeExtraction(fixture, extraction);
-      results.push({
-        fixture,
-        backend,
-        extraction,
-        score,
-      });
-      console.log(`judged ${fixture.fileName} with ${backend.name}`);
+      let score: Awaited<ReturnType<typeof judgeExtraction>> | undefined;
+      let judgeError: string | undefined;
+
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          score = await judgeExtraction(fixture, extraction);
+          judgeError = undefined;
+          break;
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          if (attempt === 0) {
+            console.error(
+              `judge failed for ${fixture.fileName} (${backend.name}), retrying once: ${message}`,
+            );
+            continue;
+          }
+          judgeError = message;
+        }
+      }
+
+      if (score) {
+        results.push({
+          fixture,
+          backend,
+          extraction,
+          score,
+        });
+        console.log(`judged ${fixture.fileName} with ${backend.name}`);
+      } else if (judgeError) {
+        console.error(
+          `judge failed for ${fixture.fileName} (${backend.name}) after retry: ${judgeError}`,
+        );
+        results.push({
+          fixture,
+          backend,
+          extraction,
+          judgeError,
+        });
+      }
     }
   }
 
@@ -169,6 +201,14 @@ async function main() {
     });
 
     console.log(`Report written to ${reportPath}`);
+
+    const judgeFailures = results.filter((r) => r.judgeError).length;
+    if (judgeFailures > 0) {
+      console.error(
+        `Warning: ${judgeFailures} judgement(s) failed; scores are omitted for those rows.`,
+      );
+      process.exitCode = 1;
+    }
   }
 }
 
