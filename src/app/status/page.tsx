@@ -1,22 +1,29 @@
 import Link from "next/link";
 
+import { ProcessingQueue } from "@/components/ProcessingQueue";
 import { appConfig } from "@/lib/config";
 import { getDocumentCount } from "@/lib/documents";
 import { ensureAppDirectories, fileExists } from "@/lib/files";
+import { getQueueCounts, getQueueEntries } from "@/lib/ingest/queue";
 
 async function loadStatus() {
   await ensureAppDirectories();
 
-  const [documents, originalsDir, ingestDir] = await Promise.all([
-    getDocumentCount(),
-    fileExists(appConfig.originalsDir),
-    fileExists(appConfig.ingestDir),
-  ]);
+  const [documents, originalsDir, ingestDir, queueEntries, queueCounts] =
+    await Promise.all([
+      getDocumentCount(),
+      fileExists(appConfig.originalsDir),
+      fileExists(appConfig.ingestDir),
+      getQueueEntries({ limit: 5 }),
+      getQueueCounts(),
+    ]);
 
   return {
     documents,
     originalsDir,
     ingestDir,
+    queueEntries,
+    queueCounts,
   };
 }
 
@@ -46,8 +53,8 @@ export default async function StatusPage() {
           System Status
         </h1>
         <p className="text-sm text-neutral-500">
-          Phase 0 exposes health and storage status. Processing queue visibility
-          arrives in Phase 1.
+          Health, storage paths, model configuration, and the live processing
+          queue for new ingests.
         </p>
       </div>
 
@@ -65,6 +72,11 @@ export default async function StatusPage() {
         <StatusRow label="Metadata Model" value={appConfig.metadataModel} />
         <StatusRow label="LLM Endpoint" value={appConfig.openaiBaseUrl} />
       </div>
+
+      <ProcessingQueue
+        initialEntries={status.queueEntries}
+        initialCounts={status.queueCounts}
+      />
     </main>
   );
 }
