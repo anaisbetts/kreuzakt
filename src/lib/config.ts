@@ -1,5 +1,6 @@
 import path from "node:path";
 
+/** Dev default (`./data`); Docker image sets `DATA_DIR=/data` for one volume mount. */
 const DEFAULT_DATA_DIR = path.join(process.cwd(), "data");
 
 function resolvePath(value: string | undefined, fallback: string) {

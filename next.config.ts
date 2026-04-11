@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
     "chokidar",
     "sharp",
   ],
+  output: "standalone",
 };
 
 export default nextConfig;

@@ -1,0 +1,27 @@
+# Dependencies and build output
+node_modules
+.next
+out
+build
+coverage
+
+# Git and tooling
+.git
+.github
+.cursor
+.vscode
+
+# Env and secrets
+.env*
+!.env.example
+
+# Misc
+*.md
+!README.md
+.DS_Store
+*.log
+storybook-static
+
+# Runtime data (not needed in image)
+data
+eval/results
