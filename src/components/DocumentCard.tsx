@@ -108,7 +108,7 @@ function Thumbnail({
 }) {
   const className = compact
     ? "aspect-[3/4] h-28 shrink-0 overflow-hidden rounded-lg border border-neutral-200 bg-white"
-    : "w-full";
+    : "aspect-[3/4] w-full overflow-hidden rounded-lg border border-neutral-200 bg-white";
 
   if (!thumbnailUrl) {
     return (

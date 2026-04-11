@@ -1,7 +1,12 @@
 import { renderPdfPage } from "@kreuzberg/node";
 import sharp from "sharp";
 
-import { ensureAppDirectories, getThumbnailPath } from "@/lib/files";
+import {
+  ensureAppDirectories,
+  ensureDirectory,
+  getDocumentThumbnailDir,
+  getPageThumbnailPath,
+} from "@/lib/files";
 
 const THUMBNAIL_WIDTH = 300;
 
@@ -15,8 +20,12 @@ function isSupportedImage(mimeType: string) {
   );
 }
 
-async function writeThumbnailFromBuffer(buffer: Buffer, documentId: number) {
-  const outputPath = getThumbnailPath(documentId);
+async function writeThumbnailFromBuffer(
+  buffer: Buffer,
+  documentId: number,
+  page: number,
+) {
+  const outputPath = getPageThumbnailPath(documentId, page);
 
   await sharp(buffer)
     .rotate()
@@ -34,18 +43,25 @@ export async function generateThumbnail(
   filePath: string,
   mimeType: string,
   documentId: number,
+  pageCount: number | null,
 ) {
   await ensureAppDirectories();
+  await ensureDirectory(getDocumentThumbnailDir(documentId));
 
   if (mimeType === "application/pdf") {
-    const firstPage = await renderPdfPage(filePath, 0, { dpi: 144 });
-    await writeThumbnailFromBuffer(firstPage, documentId);
+    const pages = pageCount && pageCount > 0 ? pageCount : 1;
+
+    for (let i = 0; i < pages; i++) {
+      const pageBuffer = await renderPdfPage(filePath, i, { dpi: 144 });
+      await writeThumbnailFromBuffer(pageBuffer, documentId, i + 1);
+    }
+
     return true;
   }
 
   if (isSupportedImage(mimeType)) {
     const imageBuffer = await sharp(filePath).rotate().toBuffer();
-    await writeThumbnailFromBuffer(imageBuffer, documentId);
+    await writeThumbnailFromBuffer(imageBuffer, documentId, 1);
     return true;
   }
 

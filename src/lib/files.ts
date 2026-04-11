@@ -57,8 +57,16 @@ export function getOriginalFilePath(storedFilename: string) {
   return path.join(appConfig.originalsDir, storedFilename);
 }
 
+export function getDocumentThumbnailDir(documentId: number) {
+  return path.join(appConfig.thumbnailsDir, String(documentId));
+}
+
+export function getPageThumbnailPath(documentId: number, page: number) {
+  return path.join(getDocumentThumbnailDir(documentId), `${page}.jpg`);
+}
+
 export function getThumbnailPath(documentId: number) {
-  return path.join(appConfig.thumbnailsDir, `${documentId}.jpg`);
+  return getPageThumbnailPath(documentId, 1);
 }
 
 export async function findDuplicateDocumentId(fileHash: string) {

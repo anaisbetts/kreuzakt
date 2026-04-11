@@ -35,10 +35,12 @@ function formatFileSize(bytes: number) {
 }
 
 function PDFPreview({
+  id,
   filename,
   currentPage = 1,
   pageCount,
 }: {
+  id: number;
   filename: string;
   currentPage?: number;
   pageCount?: number;
@@ -69,27 +71,18 @@ function PDFPreview({
         )}
       </div>
       <div className="flex flex-1 items-center justify-center p-8">
-        <div className="flex aspect-[8.5/11] w-full max-w-md flex-col rounded bg-white shadow-2xl">
-          <div className="flex flex-1 flex-col gap-2 p-10">
-            <div className="h-3 w-2/5 rounded bg-neutral-200" />
-            <div className="h-2 w-1/4 rounded bg-neutral-100" />
-            <div className="mt-6 h-2 w-full rounded bg-neutral-100" />
-            <div className="h-2 w-full rounded bg-neutral-100" />
-            <div className="h-2 w-3/4 rounded bg-neutral-100" />
-            <div className="mt-4 h-2 w-full rounded bg-neutral-100" />
-            <div className="h-2 w-full rounded bg-neutral-100" />
-            <div className="h-2 w-5/6 rounded bg-neutral-100" />
-            <div className="mt-4 h-2 w-full rounded bg-neutral-100" />
-            <div className="h-2 w-2/3 rounded bg-neutral-100" />
-            <div className="mt-auto h-2 w-1/3 rounded bg-neutral-200" />
-          </div>
-        </div>
+        {/* biome-ignore lint/performance/noImgElement: same-origin API thumbnails */}
+        <img
+          src={`/api/documents/${id}/pages/${currentPage}/thumbnail`}
+          alt={`${filename} page ${currentPage}`}
+          className="max-h-full max-w-full rounded bg-white object-contain shadow-2xl"
+        />
       </div>
     </div>
   );
 }
 
-function ImagePreview({ filename }: { filename: string }) {
+function ImagePreview({ id, filename }: { id: number; filename: string }) {
   return (
     <div className="flex h-full flex-col rounded-lg border border-neutral-200 bg-neutral-900 overflow-hidden">
       <div className="flex items-center gap-2 bg-neutral-800 px-4 py-2">
@@ -109,59 +102,26 @@ function ImagePreview({ filename }: { filename: string }) {
           />
         </svg>
         <span className="text-xs text-neutral-300">{filename}</span>
-        <div className="ml-auto flex items-center gap-2">
-          <button
-            type="button"
-            className="text-xs text-neutral-400 hover:text-neutral-200"
-          >
-            -
-          </button>
-          <span className="text-xs text-neutral-500">100%</span>
-          <button
-            type="button"
-            className="text-xs text-neutral-400 hover:text-neutral-200"
-          >
-            +
-          </button>
-        </div>
       </div>
       <div className="flex flex-1 items-center justify-center p-8">
-        <div className="relative flex aspect-[3/4] max-h-[80%] w-auto items-center justify-center overflow-hidden rounded shadow-2xl ring-1 ring-white/10">
-          <div className="absolute inset-0 bg-gradient-to-br from-neutral-200 via-neutral-100 to-neutral-200" />
-          <svg
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={0.75}
-            stroke="currentColor"
-            className="relative h-20 w-20 text-neutral-300"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"
-            />
-          </svg>
-        </div>
+        {/* biome-ignore lint/performance/noImgElement: same-origin API thumbnails */}
+        <img
+          src={`/api/documents/${id}/pages/1/thumbnail`}
+          alt={filename}
+          className="max-h-full max-w-full rounded shadow-2xl ring-1 ring-white/10"
+        />
       </div>
     </div>
   );
 }
 
-const pageSkeletonVariants = [
-  { heading: "w-2/5", sub: "w-1/4", lines: ["w-full", "w-full", "w-3/4"] },
-  { heading: "w-1/3", sub: "w-2/5", lines: ["w-full", "w-5/6", "w-full"] },
-  { heading: "w-3/5", sub: "w-1/3", lines: ["w-4/5", "w-full", "w-2/3"] },
-  { heading: "w-1/2", sub: "w-1/4", lines: ["w-full", "w-full", "w-4/5"] },
-  { heading: "w-2/5", sub: "w-1/3", lines: ["w-full", "w-3/4", "w-full"] },
-];
-
 function PageThumbnailStrip({
+  id,
   pageCount,
   currentPage = 1,
   onPageChange,
 }: {
+  id: number;
   pageCount: number;
   currentPage?: number;
   onPageChange?: (page: number) => void;
@@ -170,7 +130,6 @@ function PageThumbnailStrip({
     <div className="flex w-20 shrink-0 flex-col gap-3 overflow-y-auto rounded-lg border border-neutral-200 bg-neutral-100 p-2">
       {Array.from({ length: pageCount }, (_, i) => {
         const page = i + 1;
-        const variant = pageSkeletonVariants[i % pageSkeletonVariants.length];
         const isActive = page === currentPage;
         return (
           <button
@@ -184,27 +143,19 @@ function PageThumbnailStrip({
           >
             <div
               className={[
-                "flex aspect-[3/4] w-full flex-col gap-0.5 rounded border bg-white p-1.5 shadow-sm transition-all",
+                "aspect-[3/4] w-full overflow-hidden rounded border bg-white shadow-sm transition-all",
                 isActive
                   ? "ring-2 ring-blue-500 border-blue-300"
                   : "border-neutral-200 hover:border-neutral-300",
               ].join(" ")}
             >
-              <div
-                className={`h-0.5 ${variant.heading} rounded-sm bg-neutral-300`}
+              {/* biome-ignore lint/performance/noImgElement: same-origin API thumbnails */}
+              <img
+                src={`/api/documents/${id}/pages/${page}/thumbnail`}
+                alt={`Page ${page}`}
+                loading="lazy"
+                className="h-full w-full object-cover"
               />
-              <div
-                className={`h-0.5 ${variant.sub} rounded-sm bg-neutral-200`}
-              />
-              <div className="mt-1 flex flex-col gap-px">
-                {variant.lines.map((w, li) => (
-                  <div
-                    // biome-ignore lint/suspicious/noArrayIndexKey: static placeholder lines; order is fixed
-                    key={li}
-                    className={`h-px ${w} rounded-sm bg-neutral-200`}
-                  />
-                ))}
-              </div>
             </div>
             <span
               className={[
@@ -330,6 +281,7 @@ export function DocumentViewerPage({
         <div className="flex flex-1 gap-3 min-h-[600px]">
           {showPageStrip && pageCount != null ? (
             <PageThumbnailStrip
+              id={id}
               pageCount={pageCount}
               currentPage={currentPage}
               onPageChange={onPageChange}
@@ -340,12 +292,13 @@ export function DocumentViewerPage({
               <TextPreview content={content} />
             ) : isPdf ? (
               <PDFPreview
+                id={id}
                 filename={originalFilename}
                 currentPage={currentPage}
                 pageCount={pageCount}
               />
             ) : isImage ? (
-              <ImagePreview filename={originalFilename} />
+              <ImagePreview id={id} filename={originalFilename} />
             ) : (
               <TextPreview content={content} />
             )}

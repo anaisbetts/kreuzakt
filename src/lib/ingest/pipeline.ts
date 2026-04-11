@@ -7,8 +7,8 @@ import {
   computeFileHash,
   copyOriginalToArchive,
   findDuplicateDocumentId,
+  getDocumentThumbnailDir,
   getOriginalFilePath,
-  getThumbnailPath,
 } from "@/lib/files";
 
 import { extractDocument } from "./extract";
@@ -27,7 +27,7 @@ async function cleanupFailedArtifacts(
 ) {
   await Promise.allSettled([
     rm(getOriginalFilePath(storedFilename), { force: true }),
-    rm(getThumbnailPath(documentId), { force: true }),
+    rm(getDocumentThumbnailDir(documentId), { recursive: true, force: true }),
   ]);
 }
 
@@ -95,6 +95,7 @@ export async function processIngestFile(
       getOriginalFilePath(storedFilename),
       extracted.mimeType,
       insertedDocumentId,
+      extracted.pageCount,
     );
 
     await updateQueueStatus(queueEntryId, "completed", {
