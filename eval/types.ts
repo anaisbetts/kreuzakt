@@ -2,6 +2,7 @@ export interface BackendConfig {
   name: string;
   label: string;
   costPerPageEstimate: number;
+  /** Pass-through to `extractFile(..., config)`. */
   kreuzbergConfig: Record<string, unknown>;
 }
 

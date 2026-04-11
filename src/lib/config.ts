@@ -27,7 +27,7 @@ export const appConfig = {
   ocrModel: process.env.OCR_VLM_MODEL ?? "qwen/qwen3.5-122b-a10b",
   metadataModel: process.env.METADATA_LLM_MODEL ?? "qwen/qwen3.5-122b-a10b",
   openaiBaseUrl: process.env.OPENAI_BASE_URL ?? "https://openrouter.ai/api/v1",
-  openaiApiKey: process.env.OPENAI_API_KEY ?? "",
+  openaiApiKey: process.env.OPENAI_API_KEY ?? process.env.OPENROUTER_KEY ?? "",
   port: Number(process.env.PORT ?? "3000"),
 } as const;
 
