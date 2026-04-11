@@ -1,4 +1,3 @@
-import { renderPdfPage } from "@kreuzberg/node";
 import sharp from "sharp";
 
 import {
@@ -7,6 +6,8 @@ import {
   getDocumentThumbnailDir,
   getPageThumbnailPath,
 } from "@/lib/files";
+
+import { getKreuzberg } from "./kreuzberg";
 
 const THUMBNAIL_WIDTH = 300;
 
@@ -49,6 +50,7 @@ export async function generateThumbnail(
   await ensureDirectory(getDocumentThumbnailDir(documentId));
 
   if (mimeType === "application/pdf") {
+    const { renderPdfPage } = getKreuzberg();
     const pages = pageCount && pageCount > 0 ? pageCount : 1;
 
     for (let i = 0; i < pages; i++) {

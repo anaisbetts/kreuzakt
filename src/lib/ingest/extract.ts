@@ -1,6 +1,6 @@
-import { detectMimeTypeFromPath, extractFile } from "@kreuzberg/node";
-
 import { appConfig } from "@/lib/config";
+
+import { getKreuzberg } from "./kreuzberg";
 
 type KreuzbergVlmConfig = {
   model: string;
@@ -34,6 +34,7 @@ function buildVlmConfig(): KreuzbergVlmConfig {
 export async function extractDocument(
   filePath: string,
 ): Promise<ExtractedDocument> {
+  const { detectMimeTypeFromPath, extractFile } = getKreuzberg();
   const mimeType = detectMimeTypeFromPath(filePath);
   const result = await extractFile(filePath, null, {
     forceOcr: false,
