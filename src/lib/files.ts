@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { access, copyFile, mkdir } from "node:fs/promises";
+import { access, copyFile, mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { appConfig } from "@/lib/config";
@@ -27,6 +27,11 @@ export async function fileExists(filePath: string) {
   } catch {
     return false;
   }
+}
+
+/** Full file read for HTTP responses (works in Node production; avoids Bun.file). */
+export async function readFileForResponse(filePath: string) {
+  return readFile(filePath);
 }
 
 export async function computeFileHash(filePath: string) {

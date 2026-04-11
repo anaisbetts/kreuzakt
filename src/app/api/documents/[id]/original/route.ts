@@ -2,7 +2,11 @@ import type { NextRequest } from "next/server";
 
 import { jsonError } from "@/lib/api";
 import { getDocumentById } from "@/lib/documents";
-import { fileExists, getOriginalFilePath } from "@/lib/files";
+import {
+  fileExists,
+  getOriginalFilePath,
+  readFileForResponse,
+} from "@/lib/files";
 
 export const runtime = "nodejs";
 
@@ -38,7 +42,9 @@ export async function GET(
       );
     }
 
-    return new Response(Bun.file(filePath), {
+    const body = await readFileForResponse(filePath);
+
+    return new Response(body, {
       headers: {
         "Content-Type": document.mime_type,
         "Content-Disposition": `attachment; filename="${document.original_filename}"; filename*=UTF-8''${encodeURIComponent(document.original_filename)}`,

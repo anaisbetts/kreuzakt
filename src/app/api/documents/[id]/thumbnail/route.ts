@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 
 import { jsonError } from "@/lib/api";
 import { getDocumentById } from "@/lib/documents";
-import { fileExists, getThumbnailPath } from "@/lib/files";
+import { fileExists, getThumbnailPath, readFileForResponse } from "@/lib/files";
 
 export const runtime = "nodejs";
 
@@ -38,7 +38,9 @@ export async function GET(
       );
     }
 
-    return new Response(Bun.file(thumbnailPath), {
+    const body = await readFileForResponse(thumbnailPath);
+
+    return new Response(body, {
       headers: {
         "Content-Type": "image/jpeg",
         "Cache-Control": "public, max-age=86400",
