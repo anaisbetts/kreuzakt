@@ -8,20 +8,20 @@
 
 ### Deliverables
 
-- [ ] Initialize Next.js project with TypeScript, Tailwind CSS, Kysely, Bun SQLite dialect (`bun:sqlite`)
-- [ ] SQLite schema: `documents` table, `documents_fts` virtual table (FTS5, porter tokenizer), `processing_queue` table
-- [ ] FTS sync triggers (insert, update, delete)
-- [ ] Kysely type definitions matching the schema
-- [ ] Database initialization on first run (create tables, set WAL mode, pragmas)
-- [ ] `GET /api/search` — FTS5 search with BM25 ranking, pagination, snippets
-- [ ] `GET /api/documents` — list recent documents with pagination
-- [ ] `GET /api/documents/:id` — single document with full metadata and content
-- [ ] `GET /api/documents/:id/original` — serve original file from originals/
-- [ ] `GET /api/health` — basic health check
-- [ ] Search UI (S-01): centered search bar, recent documents grid, search results list with snippets
-- [ ] Document viewer (S-02): document content display, metadata sidebar, download button
-- [ ] Originals folder management: hash computation, hash-prefixed file naming, dedup check
-- [ ] **OCR Evaluation Framework** — the `eval/` CLI tool (see `06-ocr-eval.md`)
+- [x] Initialize Next.js project with TypeScript, Tailwind CSS, Kysely, Bun SQLite dialect (`bun:sqlite`)
+- [x] SQLite schema: `documents` table, `documents_fts` virtual table (FTS5, porter tokenizer), `processing_queue` table
+- [x] FTS sync triggers (insert, update, delete)
+- [x] Kysely type definitions matching the schema
+- [x] Database initialization on first run (create tables, set WAL mode, pragmas)
+- [x] `GET /api/search` — FTS5 search with BM25 ranking, pagination, snippets
+- [x] `GET /api/documents` — list recent documents with pagination
+- [x] `GET /api/documents/:id` — single document with full metadata and content
+- [x] `GET /api/documents/:id/original` — serve original file from originals/
+- [x] `GET /api/health` — basic health check
+- [x] Search UI (S-01): centered search bar, recent documents grid, search results list with snippets
+- [x] Document viewer (S-02): document content display, metadata sidebar, download button
+- [x] Originals folder management: hash computation, hash-prefixed file naming, dedup check
+- [x] **OCR Evaluation Framework** — the `eval/` CLI tool (see `06-ocr-eval.md`)
 - [ ] Curate ~10-20 test fixtures from the existing paperless archive
 - [ ] Run evaluation across Tesseract, PaddleOCR, Qwen 3.5 122B A10B, Claude Sonnet, GPT-4o
 - [ ] Generate evaluation report and choose default VLM provider

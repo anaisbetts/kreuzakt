@@ -31,6 +31,7 @@ export const BACKENDS: BackendConfig[] = [
         backend: "vlm",
         vlmConfig: {
           model: "qwen/qwen3.5-122b-a10b",
+          baseUrl: "http://localhost:18080",
         },
       },
     },

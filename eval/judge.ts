@@ -12,25 +12,28 @@ const JUDGE_SYSTEM_PROMPT = `You are an OCR quality evaluator. You will receive:
 1. Images of the original document pages when available
 2. Text extracted from that document by an OCR system
 
-Score the extraction on three dimensions (0-10 each):
+Score the extraction on three dimensions (0-5 each):
 
-COMPLETENESS (0-10): Is all visible text from the original captured?
-- 10: Every word, number, and symbol is present
-- 7-9: Minor omissions (headers, footers, watermarks)
-- 4-6: Significant text is missing
-- 0-3: Most text is missing
+COMPLETENESS (0-5): Is all visible text from the original captured?
+- 5: Every word, number, and symbol is present
+- 4: Minor omissions (headers, footers, watermarks)
+- 3: Noticeable gaps but most text is there
+- 1-2: Significant text is missing
+- 0: Most text is missing
 
-ACCURACY (0-10): Is the extracted text correct?
-- 10: Perfect transcription, no errors
-- 7-9: Minor typos or character substitutions
-- 4-6: Frequent errors but still readable
-- 0-3: Garbled, hallucinated, or mostly wrong
+ACCURACY (0-5): Is the extracted text correct?
+- 5: Perfect transcription, no errors
+- 4: Minor typos or character substitutions
+- 3: Frequent errors but still readable
+- 1-2: Garbled, hallucinated, or mostly wrong
+- 0: Unusable
 
-STRUCTURE (0-10): Is the document structure preserved?
-- 10: Paragraphs, tables, lists, and reading order are correct
-- 7-9: Minor structural issues
-- 4-6: Structure is partially lost (merged columns, scrambled order)
-- 0-3: No meaningful structure preserved
+STRUCTURE (0-5): Is the document structure preserved?
+- 5: Paragraphs, tables, lists, and reading order are correct
+- 4: Minor structural issues
+- 3: Structure is partially lost (merged columns, scrambled order)
+- 1-2: Little meaningful structure preserved
+- 0: No meaningful structure preserved
 
 Return JSON:
 {
@@ -39,7 +42,9 @@ Return JSON:
   "structure": <number>,
   "overall": <number>,
   "notes": "<brief explanation of major issues, if any>"
-}`;
+}
+
+overall must be on the same 0-5 scale, weighted: 0.4 * accuracy + 0.35 * completeness + 0.25 * structure`;
 
 function getImageMimeType(filePath: string) {
   const extension = path.extname(filePath).toLowerCase();
