@@ -12,6 +12,7 @@ import { SearchBar } from "./SearchBar";
 
 export interface SearchPageProps {
   query?: string;
+  expandRelatedKeywords?: boolean;
   hasActiveSearch?: boolean;
   recentDocuments?: DocumentCardProps[];
   searchResults?: DocumentCardProps[];
@@ -27,6 +28,7 @@ export interface SearchPageProps {
     message: string;
   } | null;
   onQueryChange?: (query: string) => void;
+  onExpandRelatedKeywordsChange?: (enabled: boolean) => void;
   onSearch?: (query: string) => void;
   onClear?: () => void;
   onPageChange?: (page: number) => void;
@@ -157,6 +159,7 @@ function Pagination({
 
 export function SearchPage({
   query,
+  expandRelatedKeywords = false,
   hasActiveSearch,
   recentDocuments,
   searchResults,
@@ -168,6 +171,7 @@ export function SearchPage({
   isNavigating = false,
   uploadNotice = null,
   onQueryChange,
+  onExpandRelatedKeywordsChange,
   onSearch,
   onClear,
   onPageChange,
@@ -322,6 +326,17 @@ export function SearchPage({
                 showClearButton={Boolean(query)}
                 className="w-full max-w-xl"
               />
+              <label className="mt-3 flex w-full max-w-xl px-4 items-center gap-3 text-sm text-neutral-600">
+                <input
+                  type="checkbox"
+                  checked={expandRelatedKeywords}
+                  onChange={(event) =>
+                    onExpandRelatedKeywordsChange?.(event.currentTarget.checked)
+                  }
+                  className="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-2 focus:ring-blue-500/20"
+                />
+                <span>Search related keywords</span>
+              </label>
             </div>
 
             <div className="w-full">

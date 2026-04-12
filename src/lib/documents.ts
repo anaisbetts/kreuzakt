@@ -2,6 +2,7 @@ import { sql } from "kysely";
 
 import { getDb } from "@/lib/db/connection";
 import type { DocumentRow } from "@/lib/db/schema";
+import { expandSearchQuery } from "@/lib/query-expansion";
 
 export interface DocumentSummary {
   id: number;
@@ -64,6 +65,18 @@ function buildDownloadUrl(id: number, baseUrl?: string) {
 
 function ensureTrailingSlash(value: string) {
   return value.endsWith("/") ? value : `${value}/`;
+}
+
+function quoteFtsPhrase(value: string) {
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
+export function buildExpandedMatchQuery(query: string, relatedTerms: string[]) {
+  if (relatedTerms.length === 0) {
+    return query;
+  }
+
+  return [`(${query})`, ...relatedTerms.map(quoteFtsPhrase)].join(" OR ");
 }
 
 function uniqueIds(ids: number[]) {
@@ -186,18 +199,25 @@ export async function searchDocuments({
   query,
   page,
   limit,
+  expandRelatedKeywords = false,
 }: {
   query: string;
   page: number;
   limit: number;
+  expandRelatedKeywords?: boolean;
 }): Promise<PaginatedDocuments<SearchResultDocument>> {
   const db = await getDb();
   const offset = (page - 1) * limit;
+  const relatedTerms = expandRelatedKeywords
+    ? await expandSearchQuery(query)
+    : [];
+  const matchQuery = buildExpandedMatchQuery(query, relatedTerms);
+  console.log("sqlite fts MATCH query", matchQuery);
 
   const totalResult = await sql<{ count: number }>`
     SELECT COUNT(*) AS count
     FROM documents_fts
-    WHERE documents_fts MATCH ${query}
+    WHERE documents_fts MATCH ${matchQuery}
   `.execute(db);
 
   const results = await sql<{
@@ -221,7 +241,7 @@ export async function searchDocuments({
       snippet(documents_fts, -1, '[[[', ']]]', '...', 18) AS snippet
     FROM documents_fts
     JOIN documents AS d ON d.id = documents_fts.rowid
-    WHERE documents_fts MATCH ${query}
+    WHERE documents_fts MATCH ${matchQuery}
     ORDER BY bm25(documents_fts)
     LIMIT ${limit}
     OFFSET ${offset}
