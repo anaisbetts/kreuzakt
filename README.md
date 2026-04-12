@@ -16,3 +16,46 @@ docs-ai is a project that takes the best parts of Paperless, drastically improve
 
 - docs-ai **always** preserves your original documents, it never edits them directly
 - Ingestion based on file watches works the same, drop documents into the 'ingest' folder and it will automatically be processed
+
+## Self-hosting with Docker Compose
+
+```yaml
+services:
+  docs-ai:
+    image: ghcr.io/anaisbetts/docs-ai:latest
+    ports:
+      - "3000:3000"
+    environment:
+      OPENROUTER_KEY: ${OPENROUTER_KEY}
+    volumes:
+      - ./docs:data
+    restart: unless-stopped
+```
+
+Drop this in a `docker-compose.yml`, set `OPENROUTER_KEY` in your environment or a `.env` file, and run `docker compose up -d`. The web UI is at `http://localhost:3000`.
+
+The `./docs` folder will be initialized with three directories - `./data/ingest`, `./data/originals`, and `./data/thumbnails`. To get started, drop all of your documents into the ingest folder - they will eventually all move to the originals folder. You can see the progress at `http://localhost:3000/status` - if you have a lot of documents it might take a bit.
+
+### Volume mounts
+
+Everything lives under `/data` by default — the SQLite database, originals, thumbnails, and the ingest folder. One volume mount is all you need. To drop documents in for processing, copy them into the container's `/data/ingest/` directory.
+
+If you want to split things up, override with individual env vars and mount each path separately:
+
+| Variable | Default | Description |
+|---|---|---|
+| `INGEST_DIR` | `/data/ingest` | Watched folder for new documents |
+| `ORIGINALS_DIR` | `/data/originals` | Stored original files |
+| `THUMBNAILS_DIR` | `/data/thumbnails` | Generated thumbnails |
+| `DB_PATH` | `/data/docs-ai.db` | SQLite database |
+
+### Optional environment variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `OPENROUTER_KEY` | — | API key for [OpenRouter](https://openrouter.ai) (recommended) |
+| `OPENAI_API_KEY` | — | Alternative: direct OpenAI key |
+| `OPENAI_BASE_URL` | `https://openrouter.ai/api/v1` | Base URL for any OpenAI-compatible API (e.g. Ollama at `http://host.docker.internal:11434/v1`) |
+| `OCR_VLM_MODEL` | `openai/gpt-5.4-mini` | Model used for OCR |
+| `METADATA_LLM_MODEL` | `openai/gpt-5.4` | Model used for title/description extraction |
+| `PORT` | `3000` | Port inside the container |
