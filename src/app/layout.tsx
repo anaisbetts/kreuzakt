@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kreuzakt",
+  title: "Kreuzact Document Search",
   description:
     "Personal document archive with SQLite search and AI-ready access.",
 };
