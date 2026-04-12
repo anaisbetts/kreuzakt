@@ -70,13 +70,15 @@ function PDFPreview({
           </span>
         )}
       </div>
-      <div className="flex flex-1 items-center justify-center p-8">
-        {/* biome-ignore lint/performance/noImgElement: same-origin API thumbnails */}
-        <img
-          src={`/api/documents/${id}/pages/${currentPage}/thumbnail`}
-          alt={`${filename} page ${currentPage}`}
-          className="max-h-full max-w-full rounded bg-white object-contain shadow-2xl"
-        />
+      <div className="relative flex-1 min-h-0">
+        <div className="absolute inset-0 flex items-center justify-center p-2">
+          {/* biome-ignore lint/performance/noImgElement: same-origin API page images */}
+          <img
+            src={`/api/documents/${id}/pages/${currentPage}/image`}
+            alt={`${filename} page ${currentPage}`}
+            className="max-h-full max-w-full rounded bg-white object-contain shadow-2xl"
+          />
+        </div>
       </div>
     </div>
   );
@@ -103,13 +105,15 @@ function ImagePreview({ id, filename }: { id: number; filename: string }) {
         </svg>
         <span className="text-xs text-neutral-300">{filename}</span>
       </div>
-      <div className="flex flex-1 items-center justify-center p-8">
-        {/* biome-ignore lint/performance/noImgElement: same-origin API thumbnails */}
-        <img
-          src={`/api/documents/${id}/pages/1/thumbnail`}
-          alt={filename}
-          className="max-h-full max-w-full rounded shadow-2xl ring-1 ring-white/10"
-        />
+      <div className="relative flex-1 min-h-0">
+        <div className="absolute inset-0 flex items-center justify-center p-2">
+          {/* biome-ignore lint/performance/noImgElement: same-origin API page images */}
+          <img
+            src={`/api/documents/${id}/pages/1/image`}
+            alt={filename}
+            className="max-h-full max-w-full rounded shadow-2xl ring-1 ring-white/10"
+          />
+        </div>
       </div>
     </div>
   );
@@ -224,7 +228,7 @@ export function DocumentViewerPage({
     !showExtractedText && pageCount != null && pageCount > 1;
 
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-50">
+    <div className="flex h-screen flex-col overflow-hidden bg-zinc-50">
       <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-3">
         <button
           type="button"
@@ -277,8 +281,8 @@ export function DocumentViewerPage({
         </button>
       </header>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-1 gap-6 px-6 py-6">
-        <div className="flex flex-1 gap-3 min-h-[600px]">
+      <main className="mx-auto flex w-full max-w-6xl flex-1 gap-6 px-6 py-6 min-h-0">
+        <div className="flex flex-1 gap-3 min-h-0">
           {showPageStrip && pageCount != null ? (
             <PageThumbnailStrip
               id={id}
@@ -305,7 +309,7 @@ export function DocumentViewerPage({
           </div>
         </div>
 
-        <aside className="w-80 shrink-0">
+        <aside className="w-80 shrink-0 overflow-y-auto">
           <div className="flex flex-col gap-5 rounded-xl border border-neutral-200 bg-white p-6">
             <h1 className="text-lg font-semibold text-neutral-900">{title}</h1>
 
