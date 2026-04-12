@@ -72,19 +72,36 @@ Everything lives under `/data` by default — the SQLite database, originals, th
 
 ## MCP setup
 
-If your MCP client supports remote Streamable HTTP servers, point it at the `/mcp` URL directly. A typical config looks like this:
+<details>
+<summary><strong>Connect Claude Desktop, Cursor, or any MCP client</strong> — HTTPS URL, Tailscale Serve, and example configs</summary>
+
+docs-ai exposes a remote MCP endpoint at **`/mcp`** (Streamable HTTP). Replace the hostname below with wherever you serve the app — for example `https://docs.your-tailnet.ts.net/mcp` when using [Tailscale Serve](https://tailscale.com/docs/features/tailscale-serve). Most clients will not talk to plain `http`, so terminating TLS (Serve, a reverse proxy, etc.) is the usual approach.
+
+**Claude Desktop** — use [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) to bridge the HTTP endpoint:
 
 ```json
 {
   "mcpServers": {
-    "docs-ai": {
-      "url": "https://docs-ai.tailnet.ts.net/mcp"
+    "docs": {
+      "command": "npx",
+      "args": ["mcp-remote@latest", "https://docs.your-tailnet.ts.net/mcp"]
     }
   }
 }
 ```
 
-Because most MCP clients refuse to connect to servers over `http`, it is recommended to use [Tailscale Serve](https://tailscale.com/docs/features/tailscale-serve) - this will give Docs AI an HTTPS endpoint but not expose it to the public Internet.
+**Cursor** — native HTTP transport in `.cursor/mcp.json` (or your project MCP config):
+
+```json
+{
+  "mcpServers": {
+    "docs": {
+      "type": "http",
+      "url": "https://docs.your-tailnet.ts.net/mcp"
+    }
+  }
+}
+```
 
 ### What the MCP server exposes
 
@@ -110,6 +127,8 @@ Once connected, your assistant can:
 - "Find invoices from Deutsche Telekom."
 - "What was my health insurance number again?"
 - "How much did I pay in taxes last year"
+
+</details>
 
 ## Local development
 
