@@ -101,7 +101,7 @@ export function DocumentViewerClient({
       }}
       onToggleText={() => setShowExtractedText((current) => !current)}
       onPageChange={setCurrentPage}
-      onStatusClick={() => router.push("/status")}
+      onStatusClick={() => router.push("/settings")}
     />
   );
 }

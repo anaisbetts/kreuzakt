@@ -13,6 +13,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
+    enablePolling: false,
     initialCounts: {
       pending: 2,
       processing: 1,
@@ -71,6 +72,7 @@ export const Default: Story = {
 
 export const Empty: Story = {
   args: {
+    enablePolling: false,
     initialCounts: {
       pending: 0,
       processing: 0,

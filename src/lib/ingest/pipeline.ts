@@ -10,15 +10,19 @@ import {
   getDocumentThumbnailDir,
   getOriginalFilePath,
 } from "@/lib/files";
-
 import { extractDocument } from "./extract";
 import { generateDocumentMetadata } from "./metadata";
+import { isDuplicateFileHashConstraintError } from "./pipeline-errors";
 import { markDuplicateQueueEntry, updateQueueStatus } from "./queue";
 import { generateThumbnail } from "./thumbnail";
 
 export interface ProcessFileResult {
   kind: "completed" | "duplicate";
   documentId: number;
+}
+
+export interface ProcessIngestOptions {
+  addedAt?: string;
 }
 
 async function cleanupFailedArtifacts(
@@ -34,8 +38,10 @@ async function cleanupFailedArtifacts(
 export async function processIngestFile(
   filePath: string,
   queueEntryId: number,
+  options?: ProcessIngestOptions,
 ): Promise<ProcessFileResult> {
   let insertedDocumentId: number | null = null;
+  let fileHash: string | null = null;
   let storedFilename: string | null = null;
 
   try {
@@ -45,11 +51,11 @@ export async function processIngestFile(
       completedAt: null,
     });
 
-    const fileHash = await computeFileHash(filePath);
+    fileHash = await computeFileHash(filePath);
     const duplicateDocumentId = await findDuplicateDocumentId(fileHash);
 
     if (duplicateDocumentId) {
-      await unlink(filePath);
+      await rm(filePath, { force: true });
       await markDuplicateQueueEntry(queueEntryId, duplicateDocumentId);
 
       return {
@@ -82,7 +88,7 @@ export async function processIngestFile(
         description: metadata.description,
         document_date: metadata.document_date,
         content: extracted.content,
-        added_at: new Date().toISOString(),
+        added_at: options?.addedAt ?? new Date().toISOString(),
       })
       .returning("id")
       .executeTakeFirstOrThrow();
@@ -108,6 +114,24 @@ export async function processIngestFile(
       documentId: insertedDocumentId,
     };
   } catch (error) {
+    if (
+      insertedDocumentId == null &&
+      fileHash &&
+      isDuplicateFileHashConstraintError(error)
+    ) {
+      const duplicateDocumentId = await findDuplicateDocumentId(fileHash);
+
+      if (duplicateDocumentId) {
+        await rm(filePath, { force: true });
+        await markDuplicateQueueEntry(queueEntryId, duplicateDocumentId);
+
+        return {
+          kind: "duplicate",
+          documentId: duplicateDocumentId,
+        };
+      }
+    }
+
     if (insertedDocumentId != null) {
       const db = await getDb();
       await db

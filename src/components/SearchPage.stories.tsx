@@ -200,6 +200,7 @@ export const EmptyState: Story = {
 export const ActiveSearch: Story = {
   args: {
     query: "invoice telekom",
+    hasActiveSearch: true,
     searchResults: mockSearchResults,
     totalResults: 12,
   },
@@ -208,7 +209,21 @@ export const ActiveSearch: Story = {
 export const NoResults: Story = {
   args: {
     query: "nonexistent document xyz",
+    hasActiveSearch: true,
     searchResults: [],
     totalResults: 0,
+  },
+};
+
+export const LibraryEmpty: Story = {
+  args: {
+    recentDocuments: [],
+  },
+};
+
+export const ListLoadError: Story = {
+  args: {
+    recentDocuments: [],
+    listError: "Database is unavailable",
   },
 };

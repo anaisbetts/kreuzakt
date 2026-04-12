@@ -11,7 +11,8 @@
     "start": "bun --bun next start",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "eval": "bun run eval/evaluate.ts"
+    "eval": "bun run eval/evaluate.ts",
+    "test:paperless-integration": "tmpdir=\"$(mktemp -d)\" && trap 'rm -rf \"$tmpdir\"' EXIT && DATA_DIR=\"$tmpdir\" bun --env-file=.env.local test src/lib/import/paperless.integration.bun.test.ts"
   },
   "dependencies": {
     "@kreuzberg/node": "^4.8.2",

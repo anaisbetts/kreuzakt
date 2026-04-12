@@ -12,6 +12,8 @@ const REFRESH_INTERVAL_MS = 5000;
 type ProcessingQueueProps = {
   initialEntries: QueueRow[];
   initialCounts: QueueCounts;
+  /** When false, keeps the initial snapshot and does not poll `/api/queue` (e.g. Storybook). */
+  enablePolling?: boolean;
 };
 
 function totalCount(counts: QueueCounts) {
@@ -107,6 +109,7 @@ async function fetchQueue(limit: number) {
 export function ProcessingQueue({
   initialEntries,
   initialCounts,
+  enablePolling = true,
 }: ProcessingQueueProps) {
   const [entries, setEntries] = useState(initialEntries);
   const [counts, setCounts] = useState(initialCounts);
@@ -134,6 +137,10 @@ export function ProcessingQueue({
   }, []);
 
   useEffect(() => {
+    if (!enablePolling) {
+      return;
+    }
+
     void refreshQueue(currentLimit);
 
     const interval = window.setInterval(() => {
@@ -141,7 +148,7 @@ export function ProcessingQueue({
     }, REFRESH_INTERVAL_MS);
 
     return () => window.clearInterval(interval);
-  }, [currentLimit, refreshQueue]);
+  }, [currentLimit, refreshQueue, enablePolling]);
 
   async function handleRetry(id: number) {
     setRetryingIds((current) => [...current, id]);
