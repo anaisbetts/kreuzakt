@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+
 import { DocumentCard, type DocumentCardProps } from "./DocumentCard";
 import { SearchBar } from "./SearchBar";
 
@@ -147,10 +149,17 @@ export function SearchPage({
   onStatusClick,
   onHomeClick,
 }: SearchPageProps) {
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const hasQuery = hasActiveSearch ?? Boolean(query);
   const documents = hasQuery ? searchResults : recentDocuments;
   const hasDocuments = documents && documents.length > 0;
   const title = hasQuery ? "Search Results" : "Recent Documents";
+
+  useEffect(() => {
+    if (!hasQuery) {
+      searchInputRef.current?.focus();
+    }
+  }, [hasQuery]);
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50">
@@ -176,6 +185,7 @@ export function SearchPage({
               Docs-AI
             </button>
             <SearchBar
+              ref={searchInputRef}
               size="lg"
               value={query ?? ""}
               onChange={(event) => onQueryChange?.(event.currentTarget.value)}

@@ -1,12 +1,19 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   DocumentViewerPage,
   type DocumentViewerProps,
 } from "./DocumentViewerPage";
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  const tag = target.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+}
 
 export interface DocumentViewerClientProps
   extends Omit<
@@ -19,14 +26,73 @@ export interface DocumentViewerClientProps
     | "onStatusClick"
   > {}
 
-export function DocumentViewerClient(props: DocumentViewerClientProps) {
+export function DocumentViewerClient({
+  currentPage: initialPage,
+  mimeType,
+  pageCount,
+  ...viewerProps
+}: DocumentViewerClientProps) {
   const router = useRouter();
   const [showExtractedText, setShowExtractedText] = useState(false);
-  const [currentPage, setCurrentPage] = useState(props.currentPage ?? 1);
+  const [currentPage, setCurrentPage] = useState(initialPage ?? 1);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (isEditableTarget(e.target)) {
+        return;
+      }
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (showExtractedText) {
+          setShowExtractedText(false);
+        } else {
+          router.back();
+        }
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+        setShowExtractedText(true);
+        return;
+      }
+
+      if (showExtractedText) {
+        return;
+      }
+
+      if (
+        mimeType !== "application/pdf" ||
+        pageCount == null ||
+        pageCount <= 1
+      ) {
+        return;
+      }
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setCurrentPage((p) => Math.min(p + 1, pageCount));
+        return;
+      }
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setCurrentPage((p) => Math.max(p - 1, 1));
+        return;
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [mimeType, pageCount, router, showExtractedText]);
 
   return (
     <DocumentViewerPage
-      {...props}
+      {...viewerProps}
+      mimeType={mimeType}
+      pageCount={pageCount}
       currentPage={currentPage}
       showExtractedText={showExtractedText}
       onBack={() => router.back()}

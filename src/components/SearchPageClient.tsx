@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { DocumentCardProps } from "./DocumentCard";
 import { SearchPage } from "./SearchPage";
 
@@ -30,12 +30,36 @@ export function SearchPageClient({
     setQuery(initialQuery);
   }, [initialQuery]);
 
+  const handleClear = useCallback(() => {
+    setQuery("");
+    router.push("/");
+    router.refresh();
+  }, [router]);
+
+  useEffect(() => {
+    if (!hasActiveSearch) {
+      return;
+    }
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Escape") {
+        return;
+      }
+      e.preventDefault();
+      handleClear();
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [hasActiveSearch, handleClear]);
+
   function navigateToSearch(nextQuery: string, nextPage = 1) {
     const trimmedQuery = nextQuery.trim();
 
     if (!trimmedQuery) {
-      router.push("/");
-      router.refresh();
+      handleClear();
       return;
     }
 
@@ -46,12 +70,6 @@ export function SearchPageClient({
     }
 
     router.push(`/?${params.toString()}`);
-    router.refresh();
-  }
-
-  function handleClear() {
-    setQuery("");
-    router.push("/");
     router.refresh();
   }
 
