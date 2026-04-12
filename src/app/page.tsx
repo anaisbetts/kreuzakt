@@ -1,31 +1,13 @@
-import type { DocumentCardProps } from "@/components/DocumentCard";
 import { SearchPageClient } from "@/components/SearchPageClient";
+import { toDocumentCardProps } from "@/lib/document-card-props";
 import { listDocuments, searchDocuments } from "@/lib/documents";
-
-function toCardProps(document: {
-  id: number;
-  title: string;
-  description: string;
-  document_date: string | null;
-  added_at: string;
-  mime_type: string;
-  thumbnail_url: string;
-  snippet?: string;
-}): DocumentCardProps {
-  return {
-    id: document.id,
-    title: document.title,
-    description: document.description,
-    documentDate: document.document_date ?? document.added_at,
-    mimeType: document.mime_type,
-    thumbnailUrl: document.thumbnail_url,
-    snippet: document.snippet,
-  };
-}
 
 function loadErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
+
+/** Must match `recentPageSize` passed to SearchPageClient for infinite scroll. */
+const RECENT_PAGE_SIZE = 24;
 
 export default async function Home({
   searchParams,
@@ -49,7 +31,9 @@ export default async function Home({
         <SearchPageClient
           initialQuery={query}
           recentDocuments={[]}
-          searchResults={results.items.map(toCardProps)}
+          recentTotal={0}
+          recentPageSize={RECENT_PAGE_SIZE}
+          searchResults={results.items.map(toDocumentCardProps)}
           totalResults={results.total}
           page={results.page}
           totalPages={Math.max(1, Math.ceil(results.total / results.limit))}
@@ -60,6 +44,8 @@ export default async function Home({
         <SearchPageClient
           initialQuery={query}
           recentDocuments={[]}
+          recentTotal={0}
+          recentPageSize={RECENT_PAGE_SIZE}
           searchResults={[]}
           totalResults={0}
           page={1}
@@ -73,13 +59,15 @@ export default async function Home({
   try {
     const recent = await listDocuments({
       page: 1,
-      limit: 12,
+      limit: RECENT_PAGE_SIZE,
     });
 
     return (
       <SearchPageClient
         initialQuery=""
-        recentDocuments={recent.items.map(toCardProps)}
+        recentDocuments={recent.items.map(toDocumentCardProps)}
+        recentTotal={recent.total}
+        recentPageSize={RECENT_PAGE_SIZE}
         searchResults={[]}
         page={1}
         totalPages={1}
@@ -90,6 +78,8 @@ export default async function Home({
       <SearchPageClient
         initialQuery=""
         recentDocuments={[]}
+        recentTotal={0}
+        recentPageSize={RECENT_PAGE_SIZE}
         searchResults={[]}
         page={1}
         totalPages={1}

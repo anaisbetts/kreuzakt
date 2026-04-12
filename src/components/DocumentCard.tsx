@@ -158,7 +158,8 @@ function Thumbnail({
         key={`${documentId}-${thumbnailUrl}`}
         src={thumbnailUrl}
         alt=""
-        decoding="sync"
+        loading="lazy"
+        decoding="async"
         onLoad={() => setLoadFailed(false)}
         onError={() => {
           if (mountedRef.current) {

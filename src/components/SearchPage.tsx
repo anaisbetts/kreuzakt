@@ -35,6 +35,8 @@ export interface SearchPageProps {
   onStatusClick?: () => void;
   onHomeClick?: () => void;
   headerActions?: ReactNode;
+  /** Shown below the document grid on the home (recent) view — e.g. infinite-scroll sentinel */
+  recentFooter?: ReactNode;
 }
 
 function StatusIcon({ onClick }: { onClick?: () => void }) {
@@ -174,6 +176,7 @@ export function SearchPage({
   onStatusClick,
   onHomeClick,
   headerActions,
+  recentFooter,
 }: SearchPageProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [keyboardFocusIndex, setKeyboardFocusIndex] = useState<number | null>(
@@ -362,6 +365,7 @@ export function SearchPage({
                     focusedIndex={keyboardFocusIndex}
                     onDocumentClick={onDocumentClick}
                   />
+                  {!hasQuery ? recentFooter : null}
                   {hasQuery && (
                     <Pagination
                       page={page}
