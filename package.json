@@ -5,24 +5,24 @@
   "scripts": {
     "check": "biome check && bunx tsgo --noEmit",
     "f": "biome check --write --unsafe",
+    "reset": "rm data/docs-ai* && mv data/originals/* ./data/ingest && rm -rf ./data/thumbnails",
     "dev": "bun --bun next dev",
     "build": "bun --bun next build",
     "start": "bun --bun next start",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write .",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "seed": "bun run scripts/seed.ts",
     "eval": "bun run eval/evaluate.ts"
   },
   "dependencies": {
     "@kreuzberg/node": "^4.8.2",
+    "chokidar": "^5.0.0",
     "kysely": "^0.28.16",
     "kysely-bun-sqlite": "^0.4.0",
     "next": "16.2.3",
     "openai": "^6.34.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.11",

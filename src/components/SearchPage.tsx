@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+
 import { DocumentCard, type DocumentCardProps } from "./DocumentCard";
 import { SearchBar } from "./SearchBar";
 
@@ -64,27 +66,6 @@ function DocumentGrid({
           key={doc.id}
           {...doc}
           variant="grid"
-          onClick={onDocumentClick}
-        />
-      ))}
-    </div>
-  );
-}
-
-function SearchResultsList({
-  documents,
-  onDocumentClick,
-}: {
-  documents: DocumentCardProps[];
-  onDocumentClick?: (id: number) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-4">
-      {documents.map((doc) => (
-        <DocumentCard
-          key={doc.id}
-          {...doc}
-          variant="list"
           onClick={onDocumentClick}
         />
       ))}
@@ -168,109 +149,90 @@ export function SearchPage({
   onStatusClick,
   onHomeClick,
 }: SearchPageProps) {
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const hasQuery = hasActiveSearch ?? Boolean(query);
   const documents = hasQuery ? searchResults : recentDocuments;
   const hasDocuments = documents && documents.length > 0;
+  const title = hasQuery ? "Search Results" : "Recent Documents";
+
+  useEffect(() => {
+    if (!hasQuery) {
+      searchInputRef.current?.focus();
+    }
+  }, [hasQuery]);
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50">
-      {hasQuery ? (
-        <>
-          <header className="border-b border-neutral-200 bg-white px-6 py-4">
-            <div className="mx-auto flex w-full max-w-6xl items-center gap-4">
-              <button
-                type="button"
-                onClick={onHomeClick ?? onClear}
-                className="shrink-0 text-xl font-semibold tracking-tight text-neutral-900"
-              >
-                Docs-AI
-              </button>
-              <SearchBar
-                size="md"
-                value={query}
-                onChange={(event) => onQueryChange?.(event.currentTarget.value)}
-                onSearch={onSearch}
-                onClear={onClear}
-                showClearButton={Boolean(query)}
-                className="w-full max-w-2xl"
-              />
-              <div className="ml-auto">
-                <StatusIcon onClick={onStatusClick} />
-              </div>
-            </div>
-          </header>
+      <header className="flex justify-end px-6 py-4">
+        <StatusIcon onClick={onStatusClick} />
+      </header>
 
-          <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 py-8">
-            {totalResults != null && (
-              <p className="mb-6 text-sm text-neutral-500">
+      <main className="flex flex-1 flex-col items-center px-6 pb-16 pt-10">
+        <div className="flex w-full max-w-6xl flex-1 flex-col items-center">
+          <div
+            className={[
+              "w-full max-w-3xl",
+              hasQuery
+                ? "flex flex-col items-center pb-10"
+                : "flex flex-1 flex-col items-center justify-center pb-12",
+            ].join(" ")}
+          >
+            <button
+              type="button"
+              onClick={onHomeClick ?? onClear}
+              className="mb-8 text-4xl font-bold tracking-tight text-neutral-900"
+            >
+              Docs-AI
+            </button>
+            <SearchBar
+              ref={searchInputRef}
+              size="lg"
+              value={query ?? ""}
+              onChange={(event) => onQueryChange?.(event.currentTarget.value)}
+              onSearch={onSearch}
+              onClear={onClear}
+              showClearButton={Boolean(query)}
+              className="w-full max-w-xl"
+            />
+          </div>
+
+          <div className="w-full">
+            {hasQuery && totalResults != null && (
+              <p className="mb-6 text-center text-sm text-neutral-500">
                 {totalResults} {totalResults === 1 ? "result" : "results"}
               </p>
             )}
 
             {hasDocuments ? (
               <>
-                <SearchResultsList
+                <p className="mb-6 text-center text-xs font-semibold uppercase tracking-widest text-neutral-400">
+                  {title}
+                </p>
+                <DocumentGrid
                   documents={documents}
                   onDocumentClick={onDocumentClick}
                 />
-                <Pagination
-                  page={page}
-                  totalPages={totalPages}
-                  onPageChange={onPageChange}
-                />
+                {hasQuery && (
+                  <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    onPageChange={onPageChange}
+                  />
+                )}
               </>
-            ) : (
-              <div className="flex flex-col items-center gap-2 py-16 text-center">
+            ) : hasQuery ? (
+              <div className="flex flex-col items-center gap-2 py-12 text-center">
                 <p className="text-lg font-medium text-neutral-700">
-                  No documents found
+                  No results found
                 </p>
                 <p className="text-sm text-neutral-500">
                   Try a different search term or check the spelling.
                 </p>
               </div>
-            )}
-          </main>
-        </>
-      ) : (
-        <>
-          <header className="flex justify-end px-6 py-4">
-            <StatusIcon onClick={onStatusClick} />
-          </header>
-
-          <main className="flex flex-1 flex-col items-center px-6 pt-16">
-            <div className="flex w-full max-w-3xl flex-1 flex-col items-center">
-              <div className="flex flex-1 flex-col items-center justify-center pb-12">
-                <h1 className="mb-8 text-4xl font-bold tracking-tight text-neutral-900">
-                  Docs-AI
-                </h1>
-                <SearchBar
-                  size="lg"
-                  value={query ?? ""}
-                  onChange={(event) =>
-                    onQueryChange?.(event.currentTarget.value)
-                  }
-                  onSearch={onSearch}
-                  className="w-full max-w-xl"
-                />
-              </div>
-
-              <div className="w-full pb-16">
-                {hasDocuments && (
-                  <>
-                    <p className="mb-6 text-center text-xs font-semibold uppercase tracking-widest text-neutral-400">
-                      Recent Documents
-                    </p>
-                    <DocumentGrid
-                      documents={documents}
-                      onDocumentClick={onDocumentClick}
-                    />
-                  </>
-                )}
-              </div>
-            </div>
-          </main>
-        </>
-      )}
+            ) : null}
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

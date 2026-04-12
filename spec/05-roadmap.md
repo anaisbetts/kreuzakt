@@ -18,7 +18,7 @@
 - [x] `GET /api/documents/:id` — single document with full metadata and content
 - [x] `GET /api/documents/:id/original` — serve original file from originals/
 - [x] `GET /api/health` — basic health check
-- [x] Search UI (S-01): centered search bar, recent documents grid, search results list with snippets
+- [x] Search UI (S-01): centered search bar, recent documents grid, search results grid with snippets
 - [x] Document viewer (S-02): document content display, metadata sidebar, download button
 - [x] Originals folder management: hash computation, hash-prefixed file naming, dedup check
 - [x] **OCR Evaluation Framework** — the `eval/` CLI tool (see `06-ocr-eval.md`)

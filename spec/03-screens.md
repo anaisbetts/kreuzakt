@@ -48,52 +48,51 @@ The primary screen. Inspired by Google Search — a centered search bar that exp
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  Docs-AI   ┌────────────────────────────┐  [⚙]     │
-│            │  invoice telekom     [×]   │           │
-│            └────────────────────────────┘           │
+│                                            [⚙ Status]│
 │                                                      │
-│  12 results                                          │
+│                      Docs-AI                         │
 │                                                      │
-│  ┌──────────────────────────────────────────────┐   │
-│  │ ┌────┐  Deutsche Telekom Invoice — Mar 2026  │   │
-│  │ │thumb│  March 15, 2026                       │   │
-│  │ └────┘  ...monthly **invoice** for mobile     │   │
-│  │         service from **Telekom**...           │   │
-│  └──────────────────────────────────────────────┘   │
+│          ┌──────────────────────────────┐            │
+│          │  invoice telekom       [×]   │            │
+│          └──────────────────────────────┘            │
 │                                                      │
-│  ┌──────────────────────────────────────────────┐   │
-│  │ ┌────┐  Deutsche Telekom Invoice — Feb 2026  │   │
-│  │ │thumb│  February 15, 2026                    │   │
-│  │ └────┘  ...your **Telekom** mobile plan       │   │
-│  │         **invoice** for February...           │   │
-│  └──────────────────────────────────────────────┘   │
+│                  12 results                         │
 │                                                      │
-│  ┌──────────────────────────────────────────────┐   │
-│  │ ...                                          │   │
-│  └──────────────────────────────────────────────┘   │
+│            ── Search Results ──                    │
 │                                                      │
-│                   [1] 2  3  Next →                   │
+│  ┌──────────────┐  ┌──────────────┐  ┌────────────┐│
+│  │              │  │              │  │            ││
+│  │    thumb     │  │    thumb     │  │   thumb    ││
+│  │              │  │              │  │            ││
+│  │ Telekom Inv. │  │ Telekom Inv. │  │ Telekom... ││
+│  │ Mar 15, 2026 │  │ Feb 15, 2026 │  │ Jan 15     ││
+│  │ Description  │  │ Description  │  │ Desc...    ││
+│  │ ...invoice...│  │ ...Telekom...│  │ ...match...││
+│  └──────────────┘  └──────────────┘  └────────────┘│
+│                                                      │
+│                   [1] 2  3  Next →                  │
 │                                                      │
 └─────────────────────────────────────────────────────┘
 ```
 
 **Behavior:**
 
-- On typing, the layout transitions: search bar moves to the top, results appear below
-- Results are a vertical list of cards (not a grid — list is better for scanning text snippets)
-- Each card shows: thumbnail, title, document date, and a snippet with highlighted match terms
+- On typing, the layout stays in the same visual family as the empty state: centered brand, large search bar, and card grid below
+- Results are shown as a grid of large-thumbnail cards, using the same card system as the landing page
+- Each result card shows: thumbnail, title, document date, description, and a snippet with highlighted match terms
 - Matching terms are bold in the snippet (via FTS5 `snippet()` or `highlight()`)
-- Result count shown above the list
+- Result count shown above the grid
 - Pagination at the bottom (20 results per page)
 - Clicking a result navigates to S-02
 - Clear button (×) in the search bar resets to the empty state
 - Search is triggered on Enter or after a short debounce (~300ms) while typing
 - Keyboard navigation: arrow keys to move through results, Enter to open
+- If there are no matches, the page keeps the same overall layout and shows an inline "No results" message below the search bar instead of switching to a separate results-only shell
 
 ### Responsive Behavior
 
-- **Desktop (>768px):** cards in the empty state are a 3-column grid; search results are a single-column list with thumbnails on the left
-- **Mobile (<768px):** cards stack vertically in the empty state; search results are full-width cards with thumbnail above title
+- **Desktop (>768px):** both recent documents and active search results use the same multi-column card grid with large thumbnails
+- **Mobile (<768px):** cards stack vertically with the thumbnail above the text content in both recent-documents and active-search states
 
 ---
 

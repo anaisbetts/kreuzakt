@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 
 import { jsonError } from "@/lib/api";
 import { getDocumentById } from "@/lib/documents";
+import { streamedFileResponse } from "@/lib/fileResponse";
 import { fileExists, getOriginalFilePath } from "@/lib/files";
 
 export const runtime = "nodejs";
@@ -38,11 +39,9 @@ export async function GET(
       );
     }
 
-    return new Response(Bun.file(filePath), {
-      headers: {
-        "Content-Type": document.mime_type,
-        "Content-Disposition": `attachment; filename="${document.original_filename}"; filename*=UTF-8''${encodeURIComponent(document.original_filename)}`,
-      },
+    return streamedFileResponse(filePath, {
+      "Content-Type": document.mime_type,
+      "Content-Disposition": `attachment; filename="${document.original_filename}"; filename*=UTF-8''${encodeURIComponent(document.original_filename)}`,
     });
   } catch (error) {
     console.error("original download failed", error);

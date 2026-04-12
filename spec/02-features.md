@@ -36,8 +36,9 @@ Download the original file exactly as it was ingested.
 
 Search results show context around the matching terms.
 
-- Each result card shows: thumbnail, title, document date, and a text snippet
+- Each result card shows: thumbnail, title, document date, description, and a text snippet
 - Snippets highlight the matching terms within surrounding context
+- Search results use the same large-thumbnail card style as the landing-page recent documents view
 - FTS5's `snippet()` function provides this natively with configurable context length
 - Snippet source prioritizes title and description matches, falls back to content matches
 
@@ -46,7 +47,7 @@ Search results show context around the matching terms.
 The landing state before any search query is entered.
 
 - Shows the most recently added documents as cards
-- Same card format as search results (thumbnail, title, date, description)
+- Uses the same large-thumbnail card format as active search results
 - Sorted by `added_at` descending
 - Provides an immediate sense of what's in the archive without requiring a query
 - Doubles as a "what was just ingested" view
