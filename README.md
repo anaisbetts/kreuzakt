@@ -2,7 +2,7 @@
 
 Kreuzakt is a project that takes the best parts of [Paperless](https://docs.paperless-ngx.com), drastically improves the OCR using VLLMs, and throws out 99% of the complexity. Take every boring document in your life and make them all instantly easy to find, and (optionally) let AIs search them to answer questions for you.
 
-<img width="2000" height="655" alt="image" src="https://github.com/user-attachments/assets/c04fd7dd-fccd-4c2f-a5b1-70c94b637e19" />
+<img width="2000" height="655" alt="image" src="https://github.com/user-attachments/assets/feeff8dc-80e2-4a7a-814c-a1d13e32f906" />
 
 ### What's Different:
 
