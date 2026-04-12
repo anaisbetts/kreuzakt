@@ -45,6 +45,8 @@ export function SearchBar({
         placeholder={placeholder}
         className={[
           "w-full rounded-lg border border-neutral-300 bg-white pl-10 shadow-sm",
+          /* Hide native search clear so only our custom button shows */
+          "[&::-webkit-search-cancel-button]:hidden [&::-ms-clear]:hidden",
           showClearButton ? "pr-10" : "",
           "transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20",
           sizeStyles[size],
