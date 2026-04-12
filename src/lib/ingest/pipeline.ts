@@ -10,9 +10,9 @@ import {
   getDocumentThumbnailDir,
   getOriginalFilePath,
 } from "@/lib/files";
-
 import { extractDocument } from "./extract";
 import { generateDocumentMetadata } from "./metadata";
+import { isDuplicateFileHashConstraintError } from "./pipeline-errors";
 import { markDuplicateQueueEntry, updateQueueStatus } from "./queue";
 import { generateThumbnail } from "./thumbnail";
 
@@ -41,6 +41,7 @@ export async function processIngestFile(
   options?: ProcessIngestOptions,
 ): Promise<ProcessFileResult> {
   let insertedDocumentId: number | null = null;
+  let fileHash: string | null = null;
   let storedFilename: string | null = null;
 
   try {
@@ -50,11 +51,11 @@ export async function processIngestFile(
       completedAt: null,
     });
 
-    const fileHash = await computeFileHash(filePath);
+    fileHash = await computeFileHash(filePath);
     const duplicateDocumentId = await findDuplicateDocumentId(fileHash);
 
     if (duplicateDocumentId) {
-      await unlink(filePath);
+      await rm(filePath, { force: true });
       await markDuplicateQueueEntry(queueEntryId, duplicateDocumentId);
 
       return {
@@ -113,6 +114,24 @@ export async function processIngestFile(
       documentId: insertedDocumentId,
     };
   } catch (error) {
+    if (
+      insertedDocumentId == null &&
+      fileHash &&
+      isDuplicateFileHashConstraintError(error)
+    ) {
+      const duplicateDocumentId = await findDuplicateDocumentId(fileHash);
+
+      if (duplicateDocumentId) {
+        await rm(filePath, { force: true });
+        await markDuplicateQueueEntry(queueEntryId, duplicateDocumentId);
+
+        return {
+          kind: "duplicate",
+          documentId: duplicateDocumentId,
+        };
+      }
+    }
+
     if (insertedDocumentId != null) {
       const db = await getDb();
       await db

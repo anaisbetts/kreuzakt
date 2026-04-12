@@ -4,6 +4,9 @@ import path from "node:path";
 import { appConfig } from "@/lib/config";
 import { ensureDirectory } from "@/lib/files";
 
+import { resolvePaperlessApiUrl } from "./paperless-url";
+import { normalizePaperlessUrl } from "./paperless-url-shared";
+
 const DEFAULT_PAGE_SIZE = 100;
 
 export interface PaperlessDocument {
@@ -110,7 +113,7 @@ export class PaperlessClient {
 
     return {
       count: payload.count,
-      next: payload.next ?? null,
+      next: payload.next ? this.resolveApiUrl(payload.next) : null,
       results: payload.results.map(parsePaperlessDocument),
     } satisfies PaperlessDocumentPage;
   }
@@ -129,12 +132,28 @@ export class PaperlessClient {
     ).toString();
   }
 
+  private resolveApiUrl(url: string) {
+    return resolvePaperlessApiUrl(this.baseUrl, url);
+  }
+
   private async request(url: string) {
+    console.info("paperless upstream request", {
+      apiKey: summarizeSecret(this.apiKey),
+      url,
+    });
+
     const response = await fetch(url, {
       headers: {
         Authorization: `Token ${this.apiKey}`,
       },
       signal: this.signal,
+    });
+
+    console.info("paperless upstream response", {
+      ok: response.ok,
+      status: response.status,
+      statusText: response.statusText,
+      url,
     });
 
     if (!response.ok) {
@@ -143,10 +162,6 @@ export class PaperlessClient {
 
     return response;
   }
-}
-
-export function normalizePaperlessUrl(value: string) {
-  return value.trim().replace(/\/+$/, "");
 }
 
 function parsePaperlessDocument(value: unknown): PaperlessDocument {
@@ -250,4 +265,18 @@ function extensionForMimeType(mimeType: unknown) {
   }
 
   return "";
+}
+
+function summarizeSecret(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return "<empty>";
+  }
+
+  if (trimmed.length <= 8) {
+    return `${trimmed[0] ?? ""}...${trimmed.at(-1) ?? ""} (len=${trimmed.length})`;
+  }
+
+  return `${trimmed.slice(0, 4)}...${trimmed.slice(-4)} (len=${trimmed.length})`;
 }

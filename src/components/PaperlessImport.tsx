@@ -51,14 +51,11 @@ const initialProgress: ImportProgressState = {
 };
 
 export function PaperlessImport() {
-  const [paperlessUrl, setPaperlessUrl] = useState("");
-  const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(initialProgress);
 
-  const canImport = paperlessUrl.trim() !== "" && apiKey.trim() !== "";
   const progressPercent = useMemo(() => {
     if (progress.total < 1) {
       return 0;
@@ -70,7 +67,16 @@ export function PaperlessImport() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!canImport || isImporting) {
+    if (isImporting) {
+      return;
+    }
+
+    const formData = new FormData(event.currentTarget);
+    const paperlessUrl = formData.get("url");
+    const apiKey = formData.get("apiKey");
+
+    if (typeof paperlessUrl !== "string" || typeof apiKey !== "string") {
+      setError("Paperless URL and API key are required");
       return;
     }
 
@@ -79,6 +85,11 @@ export function PaperlessImport() {
     setProgress(initialProgress);
 
     try {
+      console.info("paperless import submit", {
+        apiKey: summarizeSecret(apiKey),
+        paperlessUrl: paperlessUrl.trim(),
+      });
+
       const response = await fetch("/api/import/paperless", {
         method: "POST",
         headers: {
@@ -92,6 +103,12 @@ export function PaperlessImport() {
 
       if (!response.ok) {
         const body = (await response.json()) as { message?: string };
+        console.error("paperless import request failed", {
+          apiKey: summarizeSecret(apiKey),
+          message: body.message ?? "Paperless import failed",
+          paperlessUrl: paperlessUrl.trim(),
+          status: response.status,
+        });
         throw new Error(body.message ?? "Paperless import failed");
       }
 
@@ -171,9 +188,9 @@ export function PaperlessImport() {
           </span>
           <input
             type="url"
-            value={paperlessUrl}
-            onChange={(event) => setPaperlessUrl(event.target.value)}
+            name="url"
             placeholder="https://paperless.example.com"
+            required
             className="rounded-xl border border-neutral-300 px-4 py-3 text-sm text-neutral-900 outline-none transition-colors focus:border-blue-500"
           />
         </label>
@@ -183,8 +200,9 @@ export function PaperlessImport() {
           <div className="flex gap-2">
             <input
               type={showApiKey ? "text" : "password"}
-              value={apiKey}
-              onChange={(event) => setApiKey(event.target.value)}
+              name="apiKey"
+              required
+              autoComplete="off"
               className="min-w-0 flex-1 rounded-xl border border-neutral-300 px-4 py-3 text-sm text-neutral-900 outline-none transition-colors focus:border-blue-500"
             />
             <button
@@ -208,7 +226,7 @@ export function PaperlessImport() {
           </div>
           <button
             type="submit"
-            disabled={!canImport || isImporting}
+            disabled={isImporting}
             className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
           >
             {isImporting ? "Importing..." : "Import"}
@@ -312,4 +330,18 @@ function parseSseChunk(chunk: string, onEvent: (event: ImportEvent) => void) {
   }
 
   onEvent(JSON.parse(data) as ImportEvent);
+}
+
+function summarizeSecret(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return "<empty>";
+  }
+
+  if (trimmed.length <= 8) {
+    return `${trimmed[0] ?? ""}...${trimmed.at(-1) ?? ""} (len=${trimmed.length})`;
+  }
+
+  return `${trimmed.slice(0, 4)}...${trimmed.slice(-4)} (len=${trimmed.length})`;
 }
