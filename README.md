@@ -34,7 +34,7 @@ services:
 
 Drop this in a `docker-compose.yml`, set `OPENROUTER_KEY` in your environment or a `.env` file, and run `docker compose up -d`. The web UI is at `http://localhost:3000`.
 
-The `./docs` folder will be initialized with three directories - `./data/ingest`, `./data/originals`, and `./data/thumbnails`. To get started, drop all of your documents into the ingest folder - they will eventually all move to the originals folder. You can see the progress at `http://localhost:3000/status` - if you have a lot of documents it might take a bit.
+The `./docs` folder will be initialized with three directories - `./data/ingest`, `./data/originals`, and `./data/thumbnails`. To get started, drop all of your documents into the ingest folder - they will eventually all move to the originals folder. You can see the progress at `http://localhost:3000/settings` - if you have a lot of documents it might take a bit.
 
 ### Volume mounts
 

@@ -229,4 +229,4 @@ S-01 Search ──── click result ────► S-02 Document Viewer
 |-------|--------|-------------|
 | `/` | S-01 | Search (empty state or with `?q=...` query parameter) |
 | `/documents/:id` | S-02 | Document viewer |
-| `/status` | S-03 | Processing queue and system health |
+| `/settings` | S-03 | Processing queue and system health |

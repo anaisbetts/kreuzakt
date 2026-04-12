@@ -88,7 +88,7 @@ export function SearchPageClient({
       onPageChange={(nextPage) => navigateToSearch(query, nextPage)}
       onHomeClick={handleClear}
       onDocumentClick={(id) => router.push(`/documents/${id}`)}
-      onStatusClick={() => router.push("/status")}
+      onStatusClick={() => router.push("/settings")}
     />
   );
 }
