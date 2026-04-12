@@ -8,6 +8,7 @@ const devConfig: Partial<NextConfig> = {
 const nextConfig: NextConfig = {
   serverExternalPackages: [
     "@kreuzberg/node",
+    "@modelcontextprotocol/sdk",
     "@kreuzberg/node-darwin-arm64",
     "@kreuzberg/node-linux-arm64-gnu",
     "@kreuzberg/node-linux-x64-gnu",
