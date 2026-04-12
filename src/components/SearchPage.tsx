@@ -60,7 +60,7 @@ function DocumentGrid({
   onDocumentClick?: (id: number) => void;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
       {documents.map((doc) => (
         <DocumentCard
           key={doc.id}
