@@ -1,5 +1,13 @@
 import type { ReactNode } from "react";
 
+import { AppHeaderActions } from "./AppHeaderActions";
+import { FileDropSurface } from "./FileDropSurface";
+
+type UploadNotice = {
+  kind: "success" | "error";
+  message: string;
+} | null;
+
 export interface DocumentViewerProps {
   id: number;
   title: string;
@@ -18,6 +26,10 @@ export interface DocumentViewerProps {
   onToggleText?: () => void;
   onPageChange?: (page: number) => void;
   onStatusClick?: () => void;
+  onUploadFiles?: (files: File[]) => void | Promise<void>;
+  isUploading?: boolean;
+  uploadNotice?: UploadNotice;
+  headerActions?: ReactNode;
 }
 
 function formatDate(iso: string) {
@@ -46,7 +58,7 @@ function PDFPreview({
   pageCount?: number;
 }) {
   return (
-    <div className="flex h-full flex-col rounded-lg border border-neutral-200 bg-neutral-800 overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-neutral-200 bg-neutral-800">
       <div className="flex items-center gap-2 bg-neutral-700 px-4 py-2">
         <svg
           aria-hidden="true"
@@ -70,9 +82,8 @@ function PDFPreview({
           </span>
         )}
       </div>
-      <div className="relative flex-1 min-h-0">
-        {/* Desktop (default): centered, full page visible in pane. Narrow screens: width-first scale + scroll. */}
-        <div className="absolute inset-0 flex items-center justify-center overflow-hidden p-2 max-md:block max-md:overflow-y-auto max-md:overflow-x-hidden max-md:p-0">
+      <div className="relative min-h-0 flex-1">
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden p-2 max-md:block max-md:overflow-x-hidden max-md:overflow-y-auto max-md:p-0">
           {/* biome-ignore lint/performance/noImgElement: same-origin API page images */}
           <img
             src={`/api/documents/${id}/pages/${currentPage}/image`}
@@ -87,7 +98,7 @@ function PDFPreview({
 
 function ImagePreview({ id, filename }: { id: number; filename: string }) {
   return (
-    <div className="flex h-full flex-col rounded-lg border border-neutral-200 bg-neutral-900 overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-neutral-200 bg-neutral-900">
       <div className="flex items-center gap-2 bg-neutral-800 px-4 py-2">
         <svg
           aria-hidden="true"
@@ -106,8 +117,8 @@ function ImagePreview({ id, filename }: { id: number; filename: string }) {
         </svg>
         <span className="text-xs text-neutral-300">{filename}</span>
       </div>
-      <div className="relative flex-1 min-h-0">
-        <div className="absolute inset-0 flex items-center justify-center overflow-hidden p-2 max-md:block max-md:overflow-y-auto max-md:overflow-x-hidden max-md:p-0">
+      <div className="relative min-h-0 flex-1">
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden p-2 max-md:block max-md:overflow-x-hidden max-md:overflow-y-auto max-md:p-0">
           {/* biome-ignore lint/performance/noImgElement: same-origin API page images */}
           <img
             src={`/api/documents/${id}/pages/1/image`}
@@ -135,10 +146,8 @@ function PageThumbnailStrip({
     <div
       className={[
         "flex shrink-0 gap-3 rounded-lg border border-neutral-200 bg-neutral-100 p-2",
-        // Portrait / narrow: horizontal strip at top
         "flex-row overflow-x-auto overflow-y-hidden [-webkit-overflow-scrolling:touch]",
-        // Tablet+: vertical strip on the left
-        "md:w-20 md:flex-col md:overflow-y-auto md:overflow-x-hidden",
+        "md:w-20 md:flex-col md:overflow-x-hidden md:overflow-y-auto",
       ].join(" ")}
     >
       {Array.from({ length: pageCount }, (_, i) => {
@@ -158,7 +167,7 @@ function PageThumbnailStrip({
               className={[
                 "aspect-[3/4] w-14 overflow-hidden rounded border bg-white shadow-sm transition-all md:w-full",
                 isActive
-                  ? "ring-2 ring-blue-500 border-blue-300"
+                  ? "border-blue-300 ring-2 ring-blue-500"
                   : "border-neutral-200 hover:border-neutral-300",
               ].join(" ")}
             >
@@ -230,6 +239,10 @@ export function DocumentViewerPage({
   onToggleText,
   onPageChange,
   onStatusClick,
+  onUploadFiles,
+  isUploading = false,
+  uploadNotice = null,
+  headerActions,
 }: DocumentViewerProps) {
   const isImage = mimeType.startsWith("image/");
   const isPdf = mimeType === "application/pdf";
@@ -237,157 +250,153 @@ export function DocumentViewerPage({
     !showExtractedText && pageCount != null && pageCount > 1;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-zinc-50">
-      <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-3">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
-        >
-          <svg
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-            className="h-4 w-4"
+    <FileDropSurface onFilesDrop={onUploadFiles}>
+      <div className="flex h-screen flex-col overflow-hidden bg-zinc-50">
+        <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-            />
-          </svg>
-          Back to search
-        </button>
-        <button
-          type="button"
-          onClick={onStatusClick}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600"
-          aria-label="System status"
-        >
-          <svg
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="h-5 w-5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-          </svg>
-        </button>
-      </header>
-
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 overflow-y-auto px-2 py-4 min-h-0 md:flex-row md:gap-6 md:overflow-hidden md:px-6 md:py-6">
-        {/* Narrow: stack viewer then metadata; scroll main to read everything. */}
-        <div className="flex flex-1 flex-col gap-3 max-md:flex-none md:min-h-0 md:flex-1 md:flex-row">
-          {showPageStrip && pageCount != null ? (
-            <PageThumbnailStrip
-              id={id}
-              pageCount={pageCount}
-              currentPage={currentPage}
-              onPageChange={onPageChange}
-            />
-          ) : null}
-          {/* Explicit height on mobile so PDF/Image h-full works; desktop keeps flex-1 fill. */}
-          <div className="flex min-h-0 flex-1 flex-col max-md:h-[62dvh] max-md:min-h-[45dvh] max-md:flex-none md:min-h-0">
-            {showExtractedText ? (
-              <TextPreview content={content} />
-            ) : isPdf ? (
-              <PDFPreview
-                id={id}
-                filename={originalFilename}
-                currentPage={currentPage}
-                pageCount={pageCount}
+            <svg
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="h-4 w-4"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
               />
-            ) : isImage ? (
-              <ImagePreview id={id} filename={originalFilename} />
-            ) : (
-              <TextPreview content={content} />
-            )}
-          </div>
-        </div>
+            </svg>
+            Back to search
+          </button>
+          {headerActions ?? (
+            <AppHeaderActions
+              isUploading={isUploading}
+              onUploadFiles={onUploadFiles}
+              onStatusClick={onStatusClick}
+            />
+          )}
+        </header>
 
-        <aside className="w-full shrink-0 md:w-80">
-          <div className="flex flex-col gap-5 rounded-xl border border-neutral-200 bg-white p-6">
-            <h1 className="text-lg font-semibold text-neutral-900">{title}</h1>
-
-            <dl className="flex flex-col gap-4">
-              <MetadataField label="Description">{description}</MetadataField>
-              <MetadataField label="Document Date">
-                {formatDate(documentDate)}
-              </MetadataField>
-              <MetadataField label="Added">{formatDate(addedAt)}</MetadataField>
-              <MetadataField label="Original File">
-                <span className="font-mono text-xs">{originalFilename}</span>
-              </MetadataField>
-              <MetadataField label="Size">
-                {formatFileSize(fileSize)}
-                {pageCount != null && ` · ${pageCount} pages`}
-              </MetadataField>
-            </dl>
-
-            <div className="flex flex-col gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => onDownload?.(id)}
-                className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-              >
-                <svg
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                  className="h-4 w-4"
+        <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 overflow-y-auto px-2 py-4 min-h-0 md:flex-row md:gap-6 md:overflow-hidden md:px-6 md:py-6">
+          <div className="flex flex-1 flex-col gap-3 max-md:flex-none md:min-h-0 md:flex-1 md:flex-row">
+            {showPageStrip && pageCount != null ? (
+              <PageThumbnailStrip
+                id={id}
+                pageCount={pageCount}
+                currentPage={currentPage}
+                onPageChange={onPageChange}
+              />
+            ) : null}
+            <div className="flex min-h-0 flex-1 flex-col max-md:h-[62dvh] max-md:min-h-[45dvh] max-md:flex-none md:min-h-0">
+              {uploadNotice ? (
+                <div
+                  className={[
+                    "mb-4 rounded-xl px-4 py-3 text-center text-sm",
+                    uploadNotice.kind === "success"
+                      ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
+                      : "border border-red-200 bg-red-50 text-red-800",
+                  ].join(" ")}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
-                  />
-                </svg>
-                Download
-              </button>
-              <button
-                type="button"
-                onClick={onToggleText}
-                className="flex items-center justify-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
-              >
-                <svg
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                  className="h-4 w-4"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
-                  />
-                </svg>
-                {showExtractedText ? "View Document" : "View Text"}
-              </button>
+                  {uploadNotice.message}
+                </div>
+              ) : null}
+              {showExtractedText ? (
+                <TextPreview content={content} />
+              ) : isPdf ? (
+                <PDFPreview
+                  id={id}
+                  filename={originalFilename}
+                  currentPage={currentPage}
+                  pageCount={pageCount}
+                />
+              ) : isImage ? (
+                <ImagePreview id={id} filename={originalFilename} />
+              ) : (
+                <TextPreview content={content} />
+              )}
             </div>
           </div>
-        </aside>
-      </main>
-    </div>
+
+          <aside className="w-full shrink-0 md:w-80">
+            <div className="flex flex-col gap-5 rounded-xl border border-neutral-200 bg-white p-6">
+              <h1 className="text-lg font-semibold text-neutral-900">
+                {title}
+              </h1>
+
+              <dl className="flex flex-col gap-4">
+                <MetadataField label="Description">{description}</MetadataField>
+                <MetadataField label="Document Date">
+                  {formatDate(documentDate)}
+                </MetadataField>
+                <MetadataField label="Added">
+                  {formatDate(addedAt)}
+                </MetadataField>
+                <MetadataField label="Original File">
+                  <span className="font-mono text-xs">{originalFilename}</span>
+                </MetadataField>
+                <MetadataField label="Size">
+                  {formatFileSize(fileSize)}
+                  {pageCount != null && ` · ${pageCount} pages`}
+                </MetadataField>
+              </dl>
+
+              <div className="flex flex-col gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => onDownload?.(id)}
+                  className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                >
+                  <svg
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className="h-4 w-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                    />
+                  </svg>
+                  Download
+                </button>
+                <button
+                  type="button"
+                  onClick={onToggleText}
+                  className="flex items-center justify-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+                >
+                  <svg
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className="h-4 w-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+                    />
+                  </svg>
+                  {showExtractedText ? "View Document" : "View Text"}
+                </button>
+              </div>
+            </div>
+          </aside>
+        </main>
+      </div>
+    </FileDropSurface>
   );
 }

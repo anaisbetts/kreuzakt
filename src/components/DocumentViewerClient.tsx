@@ -7,6 +7,7 @@ import {
   DocumentViewerPage,
   type DocumentViewerProps,
 } from "./DocumentViewerPage";
+import { useIngestUpload } from "./useIngestUpload";
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -24,6 +25,7 @@ export interface DocumentViewerClientProps
     | "onToggleText"
     | "onPageChange"
     | "onStatusClick"
+    | "headerActions"
   > {}
 
 export function DocumentViewerClient({
@@ -35,6 +37,7 @@ export function DocumentViewerClient({
   const router = useRouter();
   const [showExtractedText, setShowExtractedText] = useState(false);
   const [currentPage, setCurrentPage] = useState(initialPage ?? 1);
+  const { isUploading, notice, uploadFiles } = useIngestUpload();
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -95,6 +98,8 @@ export function DocumentViewerClient({
       pageCount={pageCount}
       currentPage={currentPage}
       showExtractedText={showExtractedText}
+      isUploading={isUploading}
+      uploadNotice={notice}
       onBack={() => router.back()}
       onDownload={(id) => {
         window.location.href = `/api/documents/${id}/original`;
@@ -102,6 +107,7 @@ export function DocumentViewerClient({
       onToggleText={() => setShowExtractedText((current) => !current)}
       onPageChange={setCurrentPage}
       onStatusClick={() => router.push("/settings")}
+      onUploadFiles={uploadFiles}
     />
   );
 }
