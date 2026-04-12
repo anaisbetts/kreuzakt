@@ -1,7 +1,7 @@
 "use client";
 
 import type { DragEvent, ReactNode } from "react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type FileDropSurfaceProps = {
   children: ReactNode;
@@ -19,12 +19,36 @@ function isFileDrag(event: DragEvent<HTMLElement>) {
   return Array.from(event.dataTransfer?.types ?? []).includes("Files");
 }
 
+function dragStartedOnInPageImage(event: globalThis.DragEvent) {
+  return event.composedPath().some((node) => node instanceof HTMLImageElement);
+}
+
 export function FileDropSurface({
   children,
   onFilesDrop,
 }: FileDropSurfaceProps) {
   const dragDepthRef = useRef(0);
+  const internalPageImageDragRef = useRef(false);
   const [isActive, setIsActive] = useState(false);
+
+  useEffect(() => {
+    function onDragStart(event: globalThis.DragEvent) {
+      if (dragStartedOnInPageImage(event)) {
+        internalPageImageDragRef.current = true;
+      }
+    }
+
+    function onDragEnd() {
+      internalPageImageDragRef.current = false;
+    }
+
+    document.addEventListener("dragstart", onDragStart, true);
+    document.addEventListener("dragend", onDragEnd, true);
+    return () => {
+      document.removeEventListener("dragstart", onDragStart, true);
+      document.removeEventListener("dragend", onDragEnd, true);
+    };
+  }, []);
 
   function resetDropTarget() {
     dragDepthRef.current = 0;
@@ -32,7 +56,12 @@ export function FileDropSurface({
   }
 
   function handleDragEnter(event: DragEvent<HTMLDivElement>) {
-    if (!onFilesDrop || !supportsDesktopDropTarget() || !isFileDrag(event)) {
+    if (
+      !onFilesDrop ||
+      !supportsDesktopDropTarget() ||
+      !isFileDrag(event) ||
+      internalPageImageDragRef.current
+    ) {
       return;
     }
 
@@ -42,7 +71,12 @@ export function FileDropSurface({
   }
 
   function handleDragOver(event: DragEvent<HTMLDivElement>) {
-    if (!onFilesDrop || !supportsDesktopDropTarget() || !isFileDrag(event)) {
+    if (
+      !onFilesDrop ||
+      !supportsDesktopDropTarget() ||
+      !isFileDrag(event) ||
+      internalPageImageDragRef.current
+    ) {
       return;
     }
 
@@ -52,7 +86,12 @@ export function FileDropSurface({
   }
 
   function handleDragLeave(event: DragEvent<HTMLDivElement>) {
-    if (!onFilesDrop || !supportsDesktopDropTarget() || !isFileDrag(event)) {
+    if (
+      !onFilesDrop ||
+      !supportsDesktopDropTarget() ||
+      !isFileDrag(event) ||
+      internalPageImageDragRef.current
+    ) {
       return;
     }
 
@@ -70,8 +109,15 @@ export function FileDropSurface({
     }
 
     event.preventDefault();
-    const files = Array.from(event.dataTransfer.files ?? []);
+    const fromInPageImage = internalPageImageDragRef.current;
+    internalPageImageDragRef.current = false;
     resetDropTarget();
+
+    if (fromInPageImage) {
+      return;
+    }
+
+    const files = Array.from(event.dataTransfer.files ?? []);
 
     if (files.length === 0) {
       return;
