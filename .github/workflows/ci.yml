@@ -57,7 +57,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=ref,event=branch
+            # We only publish from main or tags; raw `main` is explicit (branch ref tags can be empty in GHA).
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=tag
             type=sha,format=short
 
