@@ -40,19 +40,19 @@ You can insert a document record into SQLite (via a seed script or direct SQL), 
 
 ### Deliverables
 
-- [ ] Chokidar file watcher on the ingest directory with stabilization delay
-- [ ] Pipeline orchestrator: detect → dedup → extract → metadata → persist → move → thumbnail
-- [ ] Kreuzberg integration with configurable VLM backend (`OCR_VLM_MODEL` env var)
-- [ ] LLM metadata generation: title, description, document_date from extracted text (`METADATA_LLM_MODEL` env var)
-- [ ] OpenAI-compatible metadata endpoint configuration (`OPENAI_BASE_URL`, `OPENAI_API_KEY`) for OpenRouter or local LLMs
-- [ ] SHA-256 dedup check against existing documents
-- [ ] Processing queue: insert `pending` on detect, update through `processing` → `completed`/`failed`
-- [ ] Failure handling: file stays in ingest/, error recorded in queue, retry on restart
-- [ ] Thumbnail generation from first page (PDF) or original image
-- [ ] `GET /api/queue` — processing queue status
-- [ ] `POST /api/queue/:id/retry` — retry failed items
-- [ ] Status page (S-03): system health, queue visibility, retry button
-- [ ] Startup recovery: process any files already present in ingest/ on boot
+- [x] Chokidar file watcher on the ingest directory with stabilization delay
+- [x] Pipeline orchestrator: detect → dedup → extract → metadata → persist → move → thumbnail
+- [x] Kreuzberg integration with configurable VLM backend (`OCR_VLM_MODEL` env var)
+- [x] LLM metadata generation: title, description, document_date from extracted text (`METADATA_LLM_MODEL` env var)
+- [x] OpenAI-compatible metadata endpoint configuration (`OPENAI_BASE_URL`, `OPENAI_API_KEY`) for OpenRouter or local LLMs
+- [x] SHA-256 dedup check against existing documents
+- [x] Processing queue: insert `pending` on detect, update through `processing` → `completed`/`failed`
+- [x] Failure handling: file stays in ingest/, error recorded in queue, retry on restart
+- [x] Thumbnail generation from first page (PDF) or original image
+- [x] `GET /api/queue` — processing queue status
+- [x] `POST /api/queue/:id/retry` — retry failed items
+- [x] Status page (S-03): system health, queue visibility, retry button
+- [x] Startup recovery: process any files already present in ingest/ on boot
 
 ### Definition of Done
 
