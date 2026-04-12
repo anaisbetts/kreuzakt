@@ -2,7 +2,8 @@
 # Mount one volume on /data, or set INGEST_DIR, ORIGINALS_DIR, THUMBNAILS_DIR, DB_PATH
 # and mount each path separately.
 #
-# Pull instead of build: set `image: ghcr.io/<owner>/<repo>:latest` and remove `build:`.
+# Pull instead of build: set `image: ghcr.io/<owner>/<repo>:<tag>` and remove `build:`.
+# Tags: `main` tracks the default branch; `latest` points at the newest semver release tag (v*).
 
 services:
   docs-ai:
