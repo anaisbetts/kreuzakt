@@ -1,19 +1,20 @@
-import { createRequire } from "node:module";
+import {
+  detectMimeTypeFromPath,
+  extractFile,
+  renderPdfPage,
+} from "@kreuzberg/node";
 
 type KreuzbergModule = Pick<
   typeof import("@kreuzberg/node"),
   "detectMimeTypeFromPath" | "extractFile" | "renderPdfPage"
 >;
 
-const require = createRequire(import.meta.url);
-
-let cachedModule: KreuzbergModule | null = null;
+const kreuzberg: KreuzbergModule = {
+  detectMimeTypeFromPath,
+  extractFile,
+  renderPdfPage,
+};
 
 export function getKreuzberg(): KreuzbergModule {
-  if (cachedModule) {
-    return cachedModule;
-  }
-
-  cachedModule = require("@kreuzberg/node") as KreuzbergModule;
-  return cachedModule;
+  return kreuzberg;
 }

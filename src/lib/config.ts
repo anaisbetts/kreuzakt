@@ -10,6 +10,9 @@ export function isDevMode() {
 
 const dataDir = resolvePath(process.env.DATA_DIR, DEFAULT_DATA_DIR);
 
+/** Default OpenAI-compatible base when `OPENAI_BASE_URL` is unset or blank. */
+export const OPENROUTER_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
+
 export const appConfig = {
   dataDir,
   ingestDir: resolvePath(process.env.INGEST_DIR, path.join(dataDir, "ingest")),
@@ -22,52 +25,47 @@ export const appConfig = {
     path.join(dataDir, "thumbnails"),
   ),
   dbPath: resolvePath(process.env.DB_PATH, path.join(dataDir, "docs-ai.db")),
-  ocrModel:
-    (isDevMode() && process.env.OCR_VLM_DEV_MODEL?.trim()) ??
-    process.env.OCR_VLM_MODEL?.trim() ??
+  ocrModel: fromEnvVar(
+    process.env.OCR_VLM_DEV_MODEL,
+    process.env.OCR_VLM_MODEL,
     "openai/gpt-5.4-mini",
-  metadataModel:
-    (isDevMode() && process.env.METADATA_LLM_DEV_MODEL?.trim()) ??
-    process.env.METADATA_LLM_MODEL?.trim() ??
+  ),
+  metadataModel: fromEnvVar(
+    process.env.METADATA_LLM_DEV_MODEL,
+    process.env.METADATA_LLM_MODEL,
     "openai/gpt-5.4",
-  openaiBaseUrl: openAiCompatibleBaseUrl(),
-  openaiApiKey: openAiCompatibleApiKey(),
+  ),
+  openaiBaseUrl: fromEnvVar(
+    process.env.OPENAI_DEV_URL,
+    process.env.OPENAI_BASE_URL,
+    OPENROUTER_DEFAULT_BASE_URL,
+  ),
+  openaiApiKey: fromEnvVar(
+    process.env.OPENAI_DEV_API_KEY,
+    process.env.OPENROUTER_KEY,
+    process.env.OPENAI_DEV_KEY ?? "",
+  ),
   port: Number(process.env.PORT ?? "3000"),
 } as const;
 
 export type AppConfig = typeof appConfig;
 
-/** Default OpenAI-compatible base when `OPENAI_BASE_URL` is unset or blank. */
-export const OPENROUTER_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
-
-/** Empty `OPENAI_BASE_URL` falls back to OpenRouter (same as omitting the variable). */
-function openAiCompatibleBaseUrl() {
-  const fromDevEnv = process.env.OPENAI_DEV_URL?.trim();
+function fromEnvVar(
+  devEnvVar: string | undefined,
+  envVar: string | undefined,
+  fallback: string,
+) {
+  const fromDevEnv = devEnvVar?.trim();
   if (isDevMode() && fromDevEnv) {
     return fromDevEnv;
   }
 
-  const fromEnv = process.env.OPENAI_BASE_URL?.trim();
+  const fromEnv = envVar?.trim();
   if (fromEnv) {
     return fromEnv;
   }
 
-  return OPENROUTER_DEFAULT_BASE_URL;
-}
-
-/** OpenRouter-first, same preference as eval; ignores empty strings so OPENROUTER_KEY is not shadowed. */
-function openAiCompatibleApiKey() {
-  const fromDevEnv = process.env.OPENAI_DEV_KEY?.trim();
-  if (isDevMode() && fromDevEnv) {
-    return fromDevEnv;
-  }
-
-  const fromOpenRouter = process.env.OPENROUTER_KEY?.trim();
-  if (fromOpenRouter) {
-    return fromOpenRouter;
-  }
-
-  return process.env.OPENAI_API_KEY?.trim() ?? "";
+  return fallback;
 }
 
 function resolvePath(value: string | undefined, fallback: string) {
