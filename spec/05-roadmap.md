@@ -76,7 +76,7 @@ Drop a PDF, scanned image, or DOCX into the ingest folder. Within seconds, the d
 - [ ] `list_recent_documents` tool — recent documents with optional `since` filter
 - [ ] `download_document` tool — return download URLs for one or more original files
 - [ ] Document resources: `document://{id}` URIs via `resources/list` and `resources/read`
-- [ ] Test with at least two MCP clients (e.g. Claude Desktop / Cursor, and Red via mbfai)
+- [ ] Test with at least two MCP clients (e.g. Claude Desktop / Cursor)
 - [ ] Verify tool descriptions are clear enough for AI assistants to use without documentation
 
 ### Definition of Done
