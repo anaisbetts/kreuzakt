@@ -20,6 +20,7 @@ const SEARCH_DEBOUNCE_MS = 750;
 
 export interface SearchPageClientProps {
   initialQuery: string;
+  initialExpandRelatedKeywords: boolean;
   recentDocuments: DocumentCardProps[];
   /** Total documents in the library (for recent-list infinite scroll). */
   recentTotal: number;
@@ -35,6 +36,7 @@ export interface SearchPageClientProps {
 
 export function SearchPageClient({
   initialQuery,
+  initialExpandRelatedKeywords,
   recentDocuments,
   recentTotal,
   recentPageSize,
@@ -47,6 +49,9 @@ export function SearchPageClient({
 }: SearchPageClientProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
+  const [expandRelatedKeywords, setExpandRelatedKeywords] = useState(
+    initialExpandRelatedKeywords,
+  );
   const [isPending, startTransition] = useTransition();
   const [extraRecentDocuments, setExtraRecentDocuments] = useState<
     DocumentCardProps[]
@@ -65,9 +70,11 @@ export function SearchPageClient({
   });
   const hasActiveSearch = initialQuery.trim().length > 0;
   const queryRef = useRef(query);
+  const expandRelatedKeywordsRef = useRef(expandRelatedKeywords);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   queryRef.current = query;
+  expandRelatedKeywordsRef.current = expandRelatedKeywords;
 
   const firstPageKey = recentDocuments.map((d) => d.id).join(",");
 
@@ -198,6 +205,37 @@ export function SearchPageClient({
     setQuery(initialQuery);
   }, [initialQuery]);
 
+  useEffect(() => {
+    setExpandRelatedKeywords(initialExpandRelatedKeywords);
+  }, [initialExpandRelatedKeywords]);
+
+  const buildSearchUrl = useCallback(
+    (
+      nextQuery: string,
+      nextPage = 1,
+      nextExpand = expandRelatedKeywordsRef.current,
+    ) => {
+      const trimmedQuery = nextQuery.trim();
+      const params = new URLSearchParams();
+
+      if (trimmedQuery) {
+        params.set("q", trimmedQuery);
+
+        if (nextPage > 1) {
+          params.set("page", String(nextPage));
+        }
+      }
+
+      if (nextExpand) {
+        params.set("expand", "1");
+      }
+
+      const search = params.toString();
+      return search ? `/?${search}` : "/";
+    },
+    [],
+  );
+
   const clearDebounce = useCallback(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
@@ -209,10 +247,10 @@ export function SearchPageClient({
     clearDebounce();
     setQuery("");
     startTransition(() => {
-      router.push("/");
+      router.push(buildSearchUrl("", 1, expandRelatedKeywordsRef.current));
       router.refresh();
     });
-  }, [router, clearDebounce]);
+  }, [router, clearDebounce, buildSearchUrl]);
 
   useEffect(() => {
     if (!hasActiveSearch) {
@@ -234,32 +272,27 @@ export function SearchPageClient({
   }, [hasActiveSearch, handleClear]);
 
   const navigateToSearch = useCallback(
-    (nextQuery: string, nextPage = 1) => {
-      const trimmedQuery = nextQuery.trim();
-
-      if (!trimmedQuery) {
-        handleClear();
-        return;
-      }
-
-      const params = new URLSearchParams({ q: trimmedQuery });
-
-      if (nextPage > 1) {
-        params.set("page", String(nextPage));
-      }
-
+    (
+      nextQuery: string,
+      nextPage = 1,
+      nextExpand = expandRelatedKeywordsRef.current,
+    ) => {
       startTransition(() => {
-        router.push(`/?${params.toString()}`);
+        router.push(buildSearchUrl(nextQuery, nextPage, nextExpand));
         router.refresh();
       });
     },
-    [router, handleClear],
+    [router, buildSearchUrl],
   );
 
   const navigateToSearchImmediate = useCallback(
-    (nextQuery: string, nextPage = 1) => {
+    (
+      nextQuery: string,
+      nextPage = 1,
+      nextExpand = expandRelatedKeywordsRef.current,
+    ) => {
       clearDebounce();
-      navigateToSearch(nextQuery, nextPage);
+      navigateToSearch(nextQuery, nextPage, nextExpand);
     },
     [clearDebounce, navigateToSearch],
   );
@@ -269,16 +302,22 @@ export function SearchPageClient({
 
     if (trimmed === "") {
       clearDebounce();
-      if (initialQuery.trim() !== "") {
+      if (
+        initialQuery.trim() !== "" ||
+        expandRelatedKeywords !== initialExpandRelatedKeywords
+      ) {
         startTransition(() => {
-          router.push("/");
+          router.push(buildSearchUrl("", 1, expandRelatedKeywords));
           router.refresh();
         });
       }
       return;
     }
 
-    if (trimmed === initialQuery.trim()) {
+    if (
+      trimmed === initialQuery.trim() &&
+      expandRelatedKeywords === initialExpandRelatedKeywords
+    ) {
       clearDebounce();
       return;
     }
@@ -286,17 +325,27 @@ export function SearchPageClient({
     clearDebounce();
     debounceRef.current = setTimeout(() => {
       debounceRef.current = null;
-      navigateToSearch(queryRef.current, 1);
+      navigateToSearch(queryRef.current, 1, expandRelatedKeywordsRef.current);
     }, SEARCH_DEBOUNCE_MS);
 
     return () => {
       clearDebounce();
     };
-  }, [query, initialQuery, navigateToSearch, clearDebounce, router]);
+  }, [
+    query,
+    expandRelatedKeywords,
+    initialQuery,
+    initialExpandRelatedKeywords,
+    navigateToSearch,
+    clearDebounce,
+    router,
+    buildSearchUrl,
+  ]);
 
   return (
     <SearchPage
       query={query}
+      expandRelatedKeywords={expandRelatedKeywords}
       hasActiveSearch={hasActiveSearch}
       recentDocuments={mergedRecentDocuments}
       searchResults={searchResults}
@@ -309,9 +358,12 @@ export function SearchPageClient({
       isUploading={isUploading}
       uploadNotice={notice}
       onQueryChange={setQuery}
+      onExpandRelatedKeywordsChange={setExpandRelatedKeywords}
       onSearch={navigateToSearchImmediate}
       onClear={handleClear}
-      onPageChange={(nextPage) => navigateToSearchImmediate(query, nextPage)}
+      onPageChange={(nextPage) =>
+        navigateToSearchImmediate(query, nextPage, expandRelatedKeywords)
+      }
       onHomeClick={handleClear}
       onDocumentClick={(id) => router.push(`/documents/${id}`)}
       onUploadFiles={(files) => {

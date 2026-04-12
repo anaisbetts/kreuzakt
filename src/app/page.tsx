@@ -12,10 +12,11 @@ const RECENT_PAGE_SIZE = 24;
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; expand?: string }>;
 }) {
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
+  const expandRelatedKeywords = params.expand === "1";
   const page = Number.parseInt(params.page ?? "1", 10);
   const safePage = Number.isFinite(page) && page > 0 ? page : 1;
 
@@ -25,11 +26,13 @@ export default async function Home({
         query,
         page: safePage,
         limit: 20,
+        expandRelatedKeywords,
       });
 
       return (
         <SearchPageClient
           initialQuery={query}
+          initialExpandRelatedKeywords={expandRelatedKeywords}
           recentDocuments={[]}
           recentTotal={0}
           recentPageSize={RECENT_PAGE_SIZE}
@@ -43,6 +46,7 @@ export default async function Home({
       return (
         <SearchPageClient
           initialQuery={query}
+          initialExpandRelatedKeywords={expandRelatedKeywords}
           recentDocuments={[]}
           recentTotal={0}
           recentPageSize={RECENT_PAGE_SIZE}
@@ -65,6 +69,7 @@ export default async function Home({
     return (
       <SearchPageClient
         initialQuery=""
+        initialExpandRelatedKeywords={expandRelatedKeywords}
         recentDocuments={recent.items.map(toDocumentCardProps)}
         recentTotal={recent.total}
         recentPageSize={RECENT_PAGE_SIZE}
@@ -77,6 +82,7 @@ export default async function Home({
     return (
       <SearchPageClient
         initialQuery=""
+        initialExpandRelatedKeywords={expandRelatedKeywords}
         recentDocuments={[]}
         recentTotal={0}
         recentPageSize={RECENT_PAGE_SIZE}
