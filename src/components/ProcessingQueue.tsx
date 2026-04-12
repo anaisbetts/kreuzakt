@@ -21,7 +21,6 @@ function totalCount(counts: QueueCounts) {
   return counts.pending + counts.processing + counts.completed + counts.failed;
 }
 
-
 function StatusDot({ status }: { status: QueueRow["status"] }) {
   if (status === "processing") {
     return (
