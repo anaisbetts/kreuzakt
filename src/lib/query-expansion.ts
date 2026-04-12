@@ -140,6 +140,7 @@ async function fetchExpansionTermsFromModel(
         role: "system",
         content: `Return JSON only.
 Schema: { "related_terms": string[] }
+
 - Include related keywords, synonyms, alternate names, abbreviations, domain terms, and likely document vocabulary.
 - Keep terms concise.
 - Do not include explanations or any fields other than related_terms.
@@ -148,8 +149,14 @@ Schema: { "related_terms": string[] }
       {
         role: "user",
         content: `Please enhance the user's search query by adding as many related terms as possible, to maximize the likelihood they will find their document.
+<userQuery>
+${query}
+</userQuery>
 
-User query: ${query}`,
+<schema>
+{"related_terms": string[]}
+</schema>
+`,
       },
     ],
     response_format: { type: "json_object" },
