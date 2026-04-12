@@ -12,7 +12,8 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "eval": "bun run eval/evaluate.ts",
-    "test:paperless-integration": "tmpdir=\"$(mktemp -d)\" && trap 'rm -rf \"$tmpdir\"' EXIT && DATA_DIR=\"$tmpdir\" bun --env-file=.env.local test src/lib/import/paperless.integration.bun.test.ts"
+    "test": "bun test",
+    "test:integration": "tmpdir=\"$(mktemp -d)\" && trap 'rm -rf \"$tmpdir\"' EXIT && DOCS_AI_RUN_INTEGRATION=1 DATA_DIR=\"$tmpdir\" bun --env-file=.env.local test"
   },
   "dependencies": {
     "@kreuzberg/node": "^4.8.2",
@@ -33,22 +34,17 @@
     "@storybook/addon-a11y": "^10.3.5",
     "@storybook/addon-docs": "^10.3.5",
     "@storybook/addon-onboarding": "^10.3.5",
-    "@storybook/addon-vitest": "^10.3.5",
     "@storybook/nextjs-vite": "^10.3.5",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@typescript/native-preview": "^7.0.0-dev.20260411.1",
-    "@vitest/browser-playwright": "^4.1.4",
-    "@vitest/coverage-v8": "^4.1.4",
     "bun-types": "^1.3.12",
-    "playwright": "^1.59.1",
     "storybook": "^10.3.5",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vite": "^8.0.8",
-    "vitest": "^4.1.4"
+    "vite": "^8.0.8"
   },
   "ignoreScripts": [
     "sharp",
