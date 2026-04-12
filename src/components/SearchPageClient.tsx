@@ -2,8 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { AppHeaderActions } from "./AppHeaderActions";
 import type { DocumentCardProps } from "./DocumentCard";
 import { SearchPage } from "./SearchPage";
+import { useIngestUpload } from "./useIngestUpload";
 
 const SEARCH_DEBOUNCE_MS = 750;
 
@@ -31,6 +33,11 @@ export function SearchPageClient({
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [isPending, startTransition] = useTransition();
+  const { isUploading, notice, uploadFiles } = useIngestUpload({
+    onUploadComplete: () => {
+      router.refresh();
+    },
+  });
   const hasActiveSearch = initialQuery.trim().length > 0;
   const queryRef = useRef(query);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -149,13 +156,27 @@ export function SearchPageClient({
       listError={listError}
       searchError={searchError}
       isNavigating={isPending}
+      isUploading={isUploading}
+      uploadNotice={notice}
       onQueryChange={setQuery}
       onSearch={navigateToSearchImmediate}
       onClear={handleClear}
       onPageChange={(nextPage) => navigateToSearchImmediate(query, nextPage)}
       onHomeClick={handleClear}
       onDocumentClick={(id) => router.push(`/documents/${id}`)}
+      onUploadFiles={(files) => {
+        void uploadFiles(files);
+      }}
       onStatusClick={() => router.push("/settings")}
+      headerActions={
+        <AppHeaderActions
+          isUploading={isUploading}
+          onUploadFiles={(files) => {
+            void uploadFiles(files);
+          }}
+          onStatusClick={() => router.push("/settings")}
+        />
+      }
     />
   );
 }

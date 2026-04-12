@@ -47,6 +47,7 @@ const meta = {
     onToggleText: fn(),
     onPageChange: fn(),
     onStatusClick: fn(),
+    onDeleteDocument: fn(),
   },
 } satisfies Meta<typeof DocumentViewerPage>;
 

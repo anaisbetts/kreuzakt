@@ -1,5 +1,12 @@
 import type { ReactNode } from "react";
 
+import { AppHeaderActions } from "./AppHeaderActions";
+
+type UploadNotice = {
+  kind: "success" | "error";
+  message: string;
+} | null;
+
 export interface DocumentViewerProps {
   id: number;
   title: string;
@@ -18,6 +25,13 @@ export interface DocumentViewerProps {
   onToggleText?: () => void;
   onPageChange?: (page: number) => void;
   onStatusClick?: () => void;
+  onUploadFiles?: (files: File[]) => void | Promise<void>;
+  isUploading?: boolean;
+  uploadNotice?: UploadNotice;
+  headerActions?: ReactNode;
+  onDeleteDocument?: () => void | Promise<void>;
+  isDeleting?: boolean;
+  deleteError?: string | null;
 }
 
 function formatDate(iso: string) {
@@ -46,7 +60,7 @@ function PDFPreview({
   pageCount?: number;
 }) {
   return (
-    <div className="flex h-full flex-col rounded-lg border border-neutral-200 bg-neutral-800 overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-neutral-200 bg-neutral-800">
       <div className="flex items-center gap-2 bg-neutral-700 px-4 py-2">
         <svg
           aria-hidden="true"
@@ -70,9 +84,8 @@ function PDFPreview({
           </span>
         )}
       </div>
-      <div className="relative flex-1 min-h-0">
-        {/* Desktop (default): centered, full page visible in pane. Narrow screens: width-first scale + scroll. */}
-        <div className="absolute inset-0 flex items-center justify-center overflow-hidden p-2 max-md:block max-md:overflow-y-auto max-md:overflow-x-hidden max-md:p-0">
+      <div className="relative min-h-0 flex-1">
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden p-2 max-md:block max-md:overflow-x-hidden max-md:overflow-y-auto max-md:p-0">
           {/* biome-ignore lint/performance/noImgElement: same-origin API page images */}
           <img
             src={`/api/documents/${id}/pages/${currentPage}/image`}
@@ -87,7 +100,7 @@ function PDFPreview({
 
 function ImagePreview({ id, filename }: { id: number; filename: string }) {
   return (
-    <div className="flex h-full flex-col rounded-lg border border-neutral-200 bg-neutral-900 overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-neutral-200 bg-neutral-900">
       <div className="flex items-center gap-2 bg-neutral-800 px-4 py-2">
         <svg
           aria-hidden="true"
@@ -106,8 +119,8 @@ function ImagePreview({ id, filename }: { id: number; filename: string }) {
         </svg>
         <span className="text-xs text-neutral-300">{filename}</span>
       </div>
-      <div className="relative flex-1 min-h-0">
-        <div className="absolute inset-0 flex items-center justify-center overflow-hidden p-2 max-md:block max-md:overflow-y-auto max-md:overflow-x-hidden max-md:p-0">
+      <div className="relative min-h-0 flex-1">
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden p-2 max-md:block max-md:overflow-x-hidden max-md:overflow-y-auto max-md:p-0">
           {/* biome-ignore lint/performance/noImgElement: same-origin API page images */}
           <img
             src={`/api/documents/${id}/pages/1/image`}
@@ -135,10 +148,8 @@ function PageThumbnailStrip({
     <div
       className={[
         "flex shrink-0 gap-3 rounded-lg border border-neutral-200 bg-neutral-100 p-2",
-        // Portrait / narrow: horizontal strip at top
         "flex-row overflow-x-auto overflow-y-hidden [-webkit-overflow-scrolling:touch]",
-        // Tablet+: vertical strip on the left
-        "md:w-20 md:flex-col md:overflow-y-auto md:overflow-x-hidden",
+        "md:w-20 md:flex-col md:overflow-x-hidden md:overflow-y-auto",
       ].join(" ")}
     >
       {Array.from({ length: pageCount }, (_, i) => {
@@ -158,7 +169,7 @@ function PageThumbnailStrip({
               className={[
                 "aspect-[3/4] w-14 overflow-hidden rounded border bg-white shadow-sm transition-all md:w-full",
                 isActive
-                  ? "ring-2 ring-blue-500 border-blue-300"
+                  ? "border-blue-300 ring-2 ring-blue-500"
                   : "border-neutral-200 hover:border-neutral-300",
               ].join(" ")}
             >
@@ -230,6 +241,13 @@ export function DocumentViewerPage({
   onToggleText,
   onPageChange,
   onStatusClick,
+  onUploadFiles,
+  isUploading = false,
+  uploadNotice = null,
+  headerActions,
+  onDeleteDocument,
+  isDeleting = false,
+  deleteError = null,
 }: DocumentViewerProps) {
   const isImage = mimeType.startsWith("image/");
   const isPdf = mimeType === "application/pdf";
@@ -261,37 +279,16 @@ export function DocumentViewerPage({
           </svg>
           Back to search
         </button>
-        <button
-          type="button"
-          onClick={onStatusClick}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600"
-          aria-label="System status"
-        >
-          <svg
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="h-5 w-5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-          </svg>
-        </button>
+        {headerActions ?? (
+          <AppHeaderActions
+            isUploading={isUploading}
+            onUploadFiles={onUploadFiles}
+            onStatusClick={onStatusClick}
+          />
+        )}
       </header>
 
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 overflow-y-auto px-2 py-4 min-h-0 md:flex-row md:gap-6 md:overflow-hidden md:px-6 md:py-6">
-        {/* Narrow: stack viewer then metadata; scroll main to read everything. */}
         <div className="flex flex-1 flex-col gap-3 max-md:flex-none md:min-h-0 md:flex-1 md:flex-row">
           {showPageStrip && pageCount != null ? (
             <PageThumbnailStrip
@@ -301,8 +298,19 @@ export function DocumentViewerPage({
               onPageChange={onPageChange}
             />
           ) : null}
-          {/* Explicit height on mobile so PDF/Image h-full works; desktop keeps flex-1 fill. */}
           <div className="flex min-h-0 flex-1 flex-col max-md:h-[62dvh] max-md:min-h-[45dvh] max-md:flex-none md:min-h-0">
+            {uploadNotice ? (
+              <div
+                className={[
+                  "mb-4 rounded-xl px-4 py-3 text-center text-sm",
+                  uploadNotice.kind === "success"
+                    ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
+                    : "border border-red-200 bg-red-50 text-red-800",
+                ].join(" ")}
+              >
+                {uploadNotice.message}
+              </div>
+            ) : null}
             {showExtractedText ? (
               <TextPreview content={content} />
             ) : isPdf ? (
@@ -384,6 +392,34 @@ export function DocumentViewerPage({
                 </svg>
                 {showExtractedText ? "View Document" : "View Text"}
               </button>
+              <button
+                type="button"
+                disabled={isDeleting || !onDeleteDocument}
+                onClick={() => void onDeleteDocument?.()}
+                className="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <svg
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="h-4 w-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                  />
+                </svg>
+                {isDeleting ? "Deleting…" : "Delete Document"}
+              </button>
+              {deleteError ? (
+                <p className="text-center text-xs text-red-600">
+                  {deleteError}
+                </p>
+              ) : null}
             </div>
           </div>
         </aside>

@@ -1,6 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { DocumentCard, type DocumentCardProps } from "./DocumentCard";
+import { FileDropSurface } from "./FileDropSurface";
 import { SearchBar } from "./SearchBar";
 
 export interface SearchPageProps {
@@ -14,13 +21,20 @@ export interface SearchPageProps {
   listError?: string | null;
   searchError?: string | null;
   isNavigating?: boolean;
+  isUploading?: boolean;
+  uploadNotice?: {
+    kind: "success" | "error";
+    message: string;
+  } | null;
   onQueryChange?: (query: string) => void;
   onSearch?: (query: string) => void;
   onClear?: () => void;
   onPageChange?: (page: number) => void;
   onDocumentClick?: (id: number) => void;
+  onUploadFiles?: (files: File[]) => void | Promise<void>;
   onStatusClick?: () => void;
   onHomeClick?: () => void;
+  headerActions?: ReactNode;
 }
 
 function StatusIcon({ onClick }: { onClick?: () => void }) {
@@ -150,13 +164,16 @@ export function SearchPage({
   listError = null,
   searchError = null,
   isNavigating = false,
+  uploadNotice = null,
   onQueryChange,
   onSearch,
   onClear,
   onPageChange,
   onDocumentClick,
+  onUploadFiles,
   onStatusClick,
   onHomeClick,
+  headerActions,
 }: SearchPageProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [keyboardFocusIndex, setKeyboardFocusIndex] = useState<number | null>(
@@ -264,104 +281,120 @@ export function SearchPage({
   }, [handleResultKeyNavigation]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-50">
-      <header className="flex justify-end px-6 py-4">
-        <StatusIcon onClick={onStatusClick} />
-      </header>
+    <FileDropSurface onFilesDrop={onUploadFiles}>
+      <div className="flex min-h-screen flex-col bg-zinc-50">
+        <header className="flex justify-end px-6 py-4">
+          {headerActions ?? <StatusIcon onClick={onStatusClick} />}
+        </header>
 
-      <main
-        className={[
-          "flex flex-1 flex-col items-center px-6 pb-16 pt-10 transition-opacity duration-200",
-          isNavigating ? "opacity-60" : "opacity-100",
-        ].join(" ")}
-      >
-        <div className="flex w-full max-w-6xl flex-1 flex-col items-center">
-          <div
-            className={[
-              "w-full max-w-3xl",
-              hasQuery
-                ? "flex flex-col items-center pb-10"
-                : "flex flex-1 flex-col items-center justify-center pb-12",
-            ].join(" ")}
-          >
-            <button
-              type="button"
-              onClick={onHomeClick ?? onClear}
-              className="mb-8 text-4xl font-bold tracking-tight text-neutral-900"
+        <main
+          className={[
+            "flex flex-1 flex-col items-center px-6 pb-16 pt-10 transition-opacity duration-200",
+            isNavigating ? "opacity-60" : "opacity-100",
+          ].join(" ")}
+        >
+          <div className="flex w-full max-w-6xl flex-1 flex-col items-center">
+            <div
+              className={[
+                "w-full max-w-3xl",
+                hasQuery
+                  ? "flex flex-col items-center pb-10"
+                  : "flex flex-1 flex-col items-center justify-center pb-12",
+              ].join(" ")}
             >
-              Docs-AI
-            </button>
-            <SearchBar
-              ref={searchInputRef}
-              size="lg"
-              value={query ?? ""}
-              onChange={(event) => onQueryChange?.(event.currentTarget.value)}
-              onSearch={onSearch}
-              onClear={onClear}
-              showClearButton={Boolean(query)}
-              className="w-full max-w-xl"
-            />
-          </div>
+              <button
+                type="button"
+                onClick={onHomeClick ?? onClear}
+                className="mb-8 text-4xl font-bold tracking-tight text-neutral-900"
+              >
+                Docs-AI
+              </button>
+              <SearchBar
+                ref={searchInputRef}
+                size="lg"
+                value={query ?? ""}
+                onChange={(event) => onQueryChange?.(event.currentTarget.value)}
+                onSearch={onSearch}
+                onClear={onClear}
+                showClearButton={Boolean(query)}
+                className="w-full max-w-xl"
+              />
+            </div>
 
-          <div className="w-full">
-            {loadError ? (
-              <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm text-red-800">
-                <p className="font-medium">Something went wrong</p>
-                <p className="mt-1 text-red-700">{loadError}</p>
-                <p className="mt-2 text-xs text-red-600">
-                  Try refreshing the page. If the problem continues, check the
-                  server logs.
+            <div className="w-full">
+              {uploadNotice ? (
+                <div
+                  className={[
+                    "mb-6 rounded-xl px-4 py-3 text-center text-sm",
+                    uploadNotice.kind === "success"
+                      ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
+                      : "border border-red-200 bg-red-50 text-red-800",
+                  ].join(" ")}
+                >
+                  {uploadNotice.message}
+                </div>
+              ) : null}
+
+              {loadError ? (
+                <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm text-red-800">
+                  <p className="font-medium">Something went wrong</p>
+                  <p className="mt-1 text-red-700">{loadError}</p>
+                  <p className="mt-2 text-xs text-red-600">
+                    Try refreshing the page. If the problem continues, check the
+                    server logs.
+                  </p>
+                </div>
+              ) : null}
+
+              {hasQuery && totalResults != null && !loadError && (
+                <p className="mb-6 text-center text-sm text-neutral-500">
+                  {totalResults} {totalResults === 1 ? "result" : "results"}
                 </p>
-              </div>
-            ) : null}
+              )}
 
-            {hasQuery && totalResults != null && !loadError && (
-              <p className="mb-6 text-center text-sm text-neutral-500">
-                {totalResults} {totalResults === 1 ? "result" : "results"}
-              </p>
-            )}
-
-            {hasDocuments ? (
-              <>
-                <p className="mb-6 text-center text-xs font-semibold uppercase tracking-widest text-neutral-400">
-                  {title}
-                </p>
-                <DocumentGrid
-                  documents={documents ?? []}
-                  focusedIndex={keyboardFocusIndex}
-                  onDocumentClick={onDocumentClick}
-                />
-                {hasQuery && (
-                  <Pagination
-                    page={page}
-                    totalPages={totalPages}
-                    onPageChange={onPageChange}
+              {hasDocuments ? (
+                <>
+                  <p className="mb-6 text-center text-xs font-semibold uppercase tracking-widest text-neutral-400">
+                    {title}
+                  </p>
+                  <DocumentGrid
+                    documents={documents ?? []}
+                    focusedIndex={keyboardFocusIndex}
+                    onDocumentClick={onDocumentClick}
                   />
-                )}
-              </>
-            ) : hasQuery && !loadError ? (
-              <div className="flex flex-col items-center gap-2 py-12 text-center">
-                <p className="text-lg font-medium text-neutral-700">
-                  No results found
-                </p>
-                <p className="text-sm text-neutral-500">
-                  Try a different search term or check the spelling.
-                </p>
-              </div>
-            ) : !hasQuery && !loadError ? (
-              <div className="flex flex-col items-center gap-2 py-12 text-center">
-                <p className="text-lg font-medium text-neutral-700">
-                  No documents yet
-                </p>
-                <p className="max-w-md text-sm text-neutral-500">
-                  Drop files into your configured ingest folder to add
-                  documents. They will appear here after processing.
-                </p>
-              </div>
-            ) : null}
+                  {hasQuery && (
+                    <Pagination
+                      page={page}
+                      totalPages={totalPages}
+                      onPageChange={onPageChange}
+                    />
+                  )}
+                </>
+              ) : hasQuery && !loadError ? (
+                <div className="flex flex-col items-center gap-2 py-12 text-center">
+                  <p className="text-lg font-medium text-neutral-700">
+                    No results found
+                  </p>
+                  <p className="text-sm text-neutral-500">
+                    Try a different search term or check the spelling.
+                  </p>
+                </div>
+              ) : !hasQuery && !loadError ? (
+                <div className="flex flex-col items-center gap-2 py-12 text-center">
+                  <p className="text-lg font-medium text-neutral-700">
+                    No documents yet
+                  </p>
+                  <p className="max-w-md text-sm text-neutral-500">
+                    Use Upload or drag files onto the page to copy them into
+                    your configured ingest folder. They will appear here after
+                    processing.
+                  </p>
+                </div>
+              ) : null}
+            </div>
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </FileDropSurface>
   );
 }

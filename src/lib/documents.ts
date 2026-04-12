@@ -305,3 +305,30 @@ export async function getDocumentsForDownload(
     ids,
   );
 }
+
+/** Removes the document row and FTS entry only; does not delete files under originals/. */
+export async function deleteDocumentById(id: number): Promise<boolean> {
+  const db = await getDb();
+
+  return await db.transaction().execute(async (trx) => {
+    const existing = await trx
+      .selectFrom("documents")
+      .select("id")
+      .where("id", "=", id)
+      .executeTakeFirst();
+
+    if (!existing) {
+      return false;
+    }
+
+    await trx
+      .updateTable("processing_queue")
+      .set({ document_id: null })
+      .where("document_id", "=", id)
+      .execute();
+
+    await trx.deleteFrom("documents").where("id", "=", id).execute();
+
+    return true;
+  });
+}
