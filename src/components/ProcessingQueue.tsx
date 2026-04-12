@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { QueueRow } from "@/lib/db/schema";
+import { formatRelativeTime } from "@/lib/format-date";
 import type { QueueCounts } from "@/lib/ingest/queue";
 
 const DEFAULT_LIMIT = 5;
@@ -20,37 +21,6 @@ function totalCount(counts: QueueCounts) {
   return counts.pending + counts.processing + counts.completed + counts.failed;
 }
 
-function formatRelativeTime(value: string | null) {
-  if (!value) {
-    return "Not finished";
-  }
-
-  const deltaSeconds = Math.max(
-    0,
-    Math.round((Date.now() - new Date(value).getTime()) / 1000),
-  );
-
-  if (deltaSeconds < 10) {
-    return "just now";
-  }
-
-  if (deltaSeconds < 60) {
-    return `${deltaSeconds}s ago`;
-  }
-
-  const deltaMinutes = Math.floor(deltaSeconds / 60);
-  if (deltaMinutes < 60) {
-    return `${deltaMinutes}m ago`;
-  }
-
-  const deltaHours = Math.floor(deltaMinutes / 60);
-  if (deltaHours < 24) {
-    return `${deltaHours}h ago`;
-  }
-
-  const deltaDays = Math.floor(deltaHours / 24);
-  return `${deltaDays}d ago`;
-}
 
 function StatusDot({ status }: { status: QueueRow["status"] }) {
   if (status === "processing") {

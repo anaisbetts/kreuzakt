@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { formatDateLong } from "@/lib/format-date";
 import { AppHeaderActions } from "./AppHeaderActions";
 import { FileDropSurface } from "./FileDropSurface";
 
@@ -35,13 +36,7 @@ export interface DocumentViewerProps {
   deleteError?: string | null;
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+const formatDate = formatDateLong;
 
 function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
