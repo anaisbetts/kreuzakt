@@ -34,7 +34,14 @@ services:
 
 Drop this in a `docker-compose.yml`, set `OPENROUTER_KEY` in your environment or a `.env` file, and run `docker compose up -d`. The web UI is at `http://localhost:3000`.
 
-The `./docs` folder will be initialized with directories including `./data/ingest`, `./data/import`, `./data/originals`, and `./data/thumbnails`. To get started, drop all of your documents into the ingest folder - they will eventually all move to the originals folder. You can see the progress at `http://localhost:3000/settings` - if you have a lot of documents it might take a bit.
+The `./docs` folder will be initialized with directories including `./data/ingest`, `./data/originals`, and `./data/thumbnails`. 
+
+### Ok now what do I do?
+
+1. `docker-compose up -d`
+2. Drop all of your documents into the ingest folder - they will eventually all move to the originals folder. You can see the progress at `/settings` - if you have a lot of documents it might take a bit.
+3. If you've got an existing Paperless install, you can run the import
+4. You can also simply drag-drop a bunch of files onto the main page
 
 ### How much is this gonna cost me?
 
