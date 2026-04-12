@@ -1,4 +1,4 @@
-# Docs-AI — Screens
+# Kreuzakt — Screens
 
 ## S-01: Search
 
@@ -12,7 +12,7 @@ The primary screen. Inspired by Google Search — a centered search bar that exp
 │                                                      │
 │                                                      │
 │                                                      │
-│                      Docs-AI                         │
+│                      Kreuzakt                         │
 │                                                      │
 │          ┌──────────────────────────────┐            │
 │          │  Search your documents...    │            │
@@ -50,7 +50,7 @@ The primary screen. Inspired by Google Search — a centered search bar that exp
 ┌─────────────────────────────────────────────────────┐
 │                                            [⚙ Status]│
 │                                                      │
-│                      Docs-AI                         │
+│                      Kreuzakt                         │
 │                                                      │
 │          ┌──────────────────────────────┐            │
 │          │  invoice telekom       [×]   │            │

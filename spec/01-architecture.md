@@ -1,10 +1,10 @@
-# Docs-AI — Architecture
+# Kreuzakt — Architecture
 
 ## System Context
 
 ```
 ┌──────────────┐         ┌──────────────────────────────────────────┐
-│              │  HTTP    │               Docs-AI                    │
+│              │  HTTP    │               Kreuzakt                    │
 │   Browser    │◄────────►│                                          │
 │   (Search)   │         │  ┌──────────┐  ┌───────────┐            │
 │              │         │  │ Next.js  │  │ MCP Server│            │

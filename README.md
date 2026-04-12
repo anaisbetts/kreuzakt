@@ -1,28 +1,28 @@
-# docs-ai - a simple replacement for Paperless
+# Kreuzakt - a simple replacement for Paperless
 
-docs-ai is a project that takes the best parts of [Paperless](https://docs.paperless-ngx.com), drastically improves the OCR using VLLMs, and throws out 99% of the complexity. Take every boring document in your life and make them all instantly easy to find, and (optionally) let AIs search them to answer questions for you.
+Kreuzakt is a project that takes the best parts of [Paperless](https://docs.paperless-ngx.com), drastically improves the OCR using VLLMs, and throws out 99% of the complexity. Take every boring document in your life and make them all instantly easy to find, and (optionally) let AIs search them to answer questions for you.
 
 <img width="2000" height="655" alt="image" src="https://github.com/user-attachments/assets/c04fd7dd-fccd-4c2f-a5b1-70c94b637e19" />
 
 ### What's Different:
 
-- docs-ai uses a single Docker container with an SQLite database, there aren't a ton of moving parts
-- Rather than use Tesseract, docs-ai uses LLMs to do OCR (by default via OpenRouter but Ollama/Local LLMs work as well) via [Kreuzberg](https://kreuzberg.dev). This *drastically* improves OCR accuracy, and by extension, search accuracy.
-- docs-ai provides a remote MCP server - connect Claude Desktop, Cursor, or any other MCP client to docs-ai and ask questions about your documents
-- docs-ai uses an LLM to also derive a title / description / original date for every document, out of the box. Zero manual curation / toil work.
+- Kreuzakt uses a single Docker container with an SQLite database, there aren't a ton of moving parts
+- Rather than use Tesseract, Kreuzakt uses LLMs to do OCR (by default via OpenRouter but Ollama/Local LLMs work as well) via [Kreuzberg](https://kreuzberg.dev). This *drastically* improves OCR accuracy, and by extension, search accuracy.
+- Kreuzakt provides a remote MCP server - connect Claude Desktop, Cursor, or any other MCP client to Kreuzakt and ask questions about your documents
+- Kreuzakt uses an LLM to also derive a title / description / original date for every document, out of the box. Zero manual curation / toil work.
 - Metadata can always be regenerated from the source documents, the only thing you need to migrate is the originals
 
 ### What's the Same:
 
-- docs-ai **always** preserves your original documents, it never edits them directly
+- Kreuzakt **always** preserves your original documents, it never edits them directly
 - Ingestion based on file watches works the same, drop documents into the 'ingest' folder and it will automatically be processed
 
 ## Self-hosting with Docker Compose
 
 ```yaml
 services:
-  docs-ai:
-    image: ghcr.io/anaisbetts/docs-ai:latest
+  kreuzakt:
+    image: ghcr.io/anaisbetts/kreuzakt:latest
     ports:
       - "3000:3000"
     environment:
@@ -72,7 +72,7 @@ Everything lives under `/data` by default — the SQLite database, originals, th
 
 ## MCP setup
 
-docs-ai exposes a remote MCP endpoint at **`/mcp`** (Streamable HTTP). Replace the hostname in the snippets below with wherever you serve the app — for example `https://docs.your-tailnet.ts.net/mcp` when using [Tailscale Serve](https://tailscale.com/docs/features/tailscale-serve). Most clients will not talk to plain `http`, so terminating TLS (Serve, a reverse proxy, etc.) is the usual approach.
+Kreuzakt exposes a remote MCP endpoint at **`/mcp`** (Streamable HTTP). Replace the hostname in the snippets below with wherever you serve the app — for example `https://docs.your-tailnet.ts.net/mcp` when using [Tailscale Serve](https://tailscale.com/docs/features/tailscale-serve). Most clients will not talk to plain `http`, so terminating TLS (Serve, a reverse proxy, etc.) is the usual approach.
 
 <details>
 <summary><strong>Claude Desktop</strong> — <code>npx mcp-remote@latest …</code></summary>

@@ -147,7 +147,7 @@ async function handlePostRequest(request: Request) {
 }
 
 async function createSession(): Promise<McpSession> {
-  const server = createDocsAiMcpServer();
+  const server = createKreuzaktMcpServer();
 
   let session: McpSession | undefined;
   const transport = new WebStandardStreamableHTTPServerTransport({
@@ -197,9 +197,9 @@ async function parseJsonBody(request: Request) {
   }
 }
 
-function createDocsAiMcpServer() {
+function createKreuzaktMcpServer() {
   const server = new McpServer({
-    name: "docs-ai",
+    name: "kreuzakt",
     version: "0.1.0",
   });
 

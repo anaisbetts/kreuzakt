@@ -1,5 +1,5 @@
 {
-  "name": "docs-ai",
+  "name": "kreuzakt",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -13,7 +13,7 @@
     "build-storybook": "storybook build",
     "eval": "bun run eval/evaluate.ts",
     "test": "bun test",
-    "test:integration": "tmpdir=\"$(mktemp -d)\" && trap 'rm -rf \"$tmpdir\"' EXIT && DOCS_AI_RUN_INTEGRATION=1 DATA_DIR=\"$tmpdir\" bun --env-file=.env.local test"
+    "test:integration": "tmpdir=\"$(mktemp -d)\" && trap 'rm -rf \"$tmpdir\"' EXIT && KREUZAKT_RUN_INTEGRATION=1 DATA_DIR=\"$tmpdir\" bun --env-file=.env.local test"
   },
   "dependencies": {
     "@kreuzberg/node": "^4.8.2",

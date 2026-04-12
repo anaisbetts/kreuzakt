@@ -1,4 +1,4 @@
-# Docs-AI — Feature Inventory
+# Kreuzakt — Feature Inventory
 
 ## Search & Browse
 
@@ -121,7 +121,7 @@ One-time migration from an existing paperless-ngx instance.
 - The import connects to the Paperless-ngx API and enumerates every document in the instance
 - For each document, the original file is downloaded into `ingest/`
 - The ingest pipeline preserves the Paperless **added date** by writing it to `documents.added_at`
-- No other Paperless metadata is preserved — title, description, document date, and extracted text are regenerated through the normal Docs-AI ingest pipeline
+- No other Paperless metadata is preserved — title, description, document date, and extracted text are regenerated through the normal Kreuzakt ingest pipeline
 - Progress reporting during bulk import shows overall progress, while the processing queue shows per-file ingest status
 
 ---

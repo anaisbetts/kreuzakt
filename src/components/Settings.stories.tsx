@@ -14,8 +14,8 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     documentCount: 1284,
-    originalsDisplay: "/home/docs-ai/data/originals",
-    ingestDisplay: "/home/docs-ai/data/ingest",
+    originalsDisplay: "/home/kreuzakt/data/originals",
+    ingestDisplay: "/home/kreuzakt/data/ingest",
     ocrModel: "openai/gpt-5.4-mini",
     metadataModel: "openai/gpt-5.4",
     llmEndpoint: "https://openrouter.ai/api/v1",

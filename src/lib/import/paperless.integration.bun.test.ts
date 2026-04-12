@@ -6,8 +6,8 @@ import { importFromPaperless } from "./orchestrator";
 import { PaperlessClient } from "./paperless";
 
 const integrationEnabled =
-  process.env.DOCS_AI_RUN_INTEGRATION === "1" ||
-  process.env.DOCS_AI_RUN_INTEGRATION === "true";
+  process.env.KREUZAKT_RUN_INTEGRATION === "1" ||
+  process.env.KREUZAKT_RUN_INTEGRATION === "true";
 
 const paperlessUrl = process.env.PAPERLESS_DEV_URL?.trim();
 const paperlessApiKey = process.env.PAPERLESS_DEV_API_KEY?.trim();

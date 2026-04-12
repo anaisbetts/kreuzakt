@@ -314,7 +314,7 @@ export function SearchPage({
                 onClick={onHomeClick ?? onClear}
                 className="mb-8 text-4xl font-bold tracking-tight text-neutral-900"
               >
-                Docs-AI
+                Kreuzakt
               </button>
               <SearchBar
                 ref={searchInputRef}

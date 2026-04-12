@@ -1,4 +1,4 @@
-# Docs-AI — OCR Evaluation Framework
+# Kreuzakt — OCR Evaluation Framework
 
 ## Purpose
 

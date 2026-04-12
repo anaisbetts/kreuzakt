@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project is
 
-**docs-ai** is an AI-powered document management system — a lightweight Paperless replacement. It ingests documents via a watched folder or drag-drop upload, uses Vision Language Models (VLMs) for OCR, generates metadata (title, description, date) via LLM, stores everything in SQLite, and exposes a full-text search UI plus an MCP server for integration with Claude Desktop, Cursor, etc.
+**Kreuzakt** is an AI-powered document management system — a lightweight Paperless replacement. It ingests documents via a watched folder or drag-drop upload, uses Vision Language Models (VLMs) for OCR, generates metadata (title, description, date) via LLM, stores everything in SQLite, and exposes a full-text search UI plus an MCP server for integration with Claude Desktop, Cursor, etc.
 
 ## Commands
 
@@ -14,7 +14,7 @@ bun run check             # TypeScript type checking + Biome lint
 bun run f                 # Format & auto-fix (Biome --unsafe)
 bun run build             # Production build (standalone output)
 bun test                  # Run unit tests
-bun run test:integration  # Integration tests (needs DOCS_AI_RUN_INTEGRATION=1)
+bun run test:integration  # Integration tests (needs KREUZAKT_RUN_INTEGRATION=1)
 bun run storybook         # UI component dev server (port 6006)
 bun run eval              # Run evaluation suite
 ```

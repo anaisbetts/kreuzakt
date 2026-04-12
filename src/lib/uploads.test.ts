@@ -19,7 +19,7 @@ afterEach(async () => {
 });
 
 async function createTempDir() {
-  const dirPath = await mkdtemp(path.join(os.tmpdir(), "docs-ai-upload-"));
+  const dirPath = await mkdtemp(path.join(os.tmpdir(), "kreuzakt-upload-"));
   tempDirs.push(dirPath);
   return dirPath;
 }

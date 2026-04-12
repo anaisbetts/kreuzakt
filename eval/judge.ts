@@ -125,7 +125,7 @@ async function renderDocumentImages(filePath: string) {
     };
   }
 
-  const tempDir = await mkdtemp(path.join(tmpdir(), "docs-ai-eval-"));
+  const tempDir = await mkdtemp(path.join(tmpdir(), "kreuzakt-eval-"));
   const prefix = path.join(tempDir, "page");
 
   try {
@@ -190,8 +190,8 @@ export async function judgeExtraction(
     defaultHeaders: {
       "HTTP-Referer":
         process.env.OPENROUTER_HTTP_REFERER ??
-        "https://github.com/anaisbetts/docs-ai",
-      "X-Title": process.env.OPENROUTER_APP_TITLE ?? "docs-ai OCR judge",
+        "https://github.com/anaisbetts/kreuzakt",
+      "X-Title": process.env.OPENROUTER_APP_TITLE ?? "kreuzakt OCR judge",
     },
   });
 

@@ -1,12 +1,12 @@
-# Docs-AI — Project Overview
+# Kreuzakt — Project Overview
 
 ## What This Is
 
-Docs-AI is a personal document management system that replaces paperless-ngx with modern OCR, simple full-text search, and first-class AI access via the Model Context Protocol (MCP).
+Kreuzakt is a personal document management system that replaces paperless-ngx with modern OCR, simple full-text search, and first-class AI access via the Model Context Protocol (MCP).
 
 Paperless-ngx was a reasonable starting point for digitizing a personal document archive, but it has real problems. Tesseract produces bad OCR text — garbled output on anything that isn't pristine typed text. The stack is heavy: four Docker containers, PostgreSQL, Redis, a task queue, all for what amounts to "store PDFs and search them." And there's no native way for an AI assistant to query the archive — you're stuck with a web UI designed for humans clicking through pages of results.
 
-Docs-AI fixes all of that. It's a single Next.js application backed by SQLite that:
+Kreuzakt fixes all of that. It's a single Next.js application backed by SQLite that:
 
 - Uses Kreuzberg with a VLM backend to actually extract text correctly, including from scanned documents, handwritten notes, and complex layouts
 - Provides a Google-style search interface — just a search bar, type a query, see your documents
@@ -18,7 +18,7 @@ Docs-AI fixes all of that. It's a single Next.js application backed by SQLite th
 
 The existing paperless-ngx instance has ~500 documents with bad OCR and bad metadata. The text extraction is unreliable enough that searching for "invoice" might miss half the actual invoices because Tesseract read them as "lnvoice" or "inv0ice" or just garbage. The metadata (titles, dates, correspondents) was either manually entered or auto-generated poorly.
 
-The insight behind Docs-AI is that modern vision LLMs have made document extraction a solved problem — GPT-4o, Claude, and Qwen can read scanned documents with near-human accuracy at trivial cost. For a ~500 document personal archive, re-OCR'ing everything costs less than $10. The bottleneck is no longer extraction quality; it's having a simple system that puts good extraction to work.
+The insight behind Kreuzakt is that modern vision LLMs have made document extraction a solved problem — GPT-4o, Claude, and Qwen can read scanned documents with near-human accuracy at trivial cost. For a ~500 document personal archive, re-OCR'ing everything costs less than $10. The bottleneck is no longer extraction quality; it's having a simple system that puts good extraction to work.
 
 ## Goals
 

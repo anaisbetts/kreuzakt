@@ -6,9 +6,9 @@
 # Tags: `main` tracks the default branch; `latest` matches the latest published GitHub Release (not prerelease).
 
 services:
-  docs-ai:
+  kreuzakt:
     build: .
-    image: docs-ai:local
+    image: kreuzakt:local
     ports:
       - "${PORT:-3000}:3000"
     environment:

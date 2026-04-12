@@ -1,4 +1,4 @@
-# Docs-AI — API & MCP Contract
+# Kreuzakt — API & MCP Contract
 
 ## Overview
 
