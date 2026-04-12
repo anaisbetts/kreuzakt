@@ -92,15 +92,15 @@ An AI assistant configured with the Docs-AI MCP server can: search for documents
 
 ### Deliverables
 
-- [ ] Paperless-ngx import UI on the settings page: URL field, API key field, and Import button
-- [ ] Paperless-ngx API client: list documents, download originals, and stream progress back to the UI
-- [ ] Preserve each document's Paperless added date by writing it to `documents.added_at`
-- [ ] Import the ~500 documents from the existing paperless-ngx instance through the standard ingest pipeline
-- [ ] Search UI polish: highlighted snippets, keyboard navigation (arrow keys + Enter), responsive layout
-- [ ] Search debounce and URL query parameter sync (`?q=invoice+telekom`)
-- [ ] Error handling polish: friendly error states, retry UX, empty state messaging
-- [ ] Dockerfile: single container with Bun, Tesseract (fallback), and Kreuzberg system dependencies
-- [ ] `docker-compose.yml`: volume mounts for `/data/`, environment variable configuration, health check
+- [x] Paperless-ngx import UI on the settings page: URL field, API key field, and Import button
+- [x] Paperless-ngx API client: list documents, download originals, and stream progress back to the UI
+- [x] Preserve each document's Paperless added date by writing it to `documents.added_at`
+- [x] Import the ~500 documents from the existing paperless-ngx instance through the standard ingest pipeline
+- [x] Search UI polish: highlighted snippets, keyboard navigation (arrow keys + Enter), responsive layout
+- [x] Search debounce and URL query parameter sync (`?q=invoice+telekom`)
+- [x] Error handling polish: friendly error states, retry UX, empty state messaging
+- [x] Dockerfile: single container with Bun and Kreuzberg system dependencies
+- [x] `docker-compose.yml`: volume mounts for `/data/`, environment variable configuration, health check
 - [ ] Verify the full loop: ingest → search → view → download → MCP access, all running from Docker
 
 ### Definition of Done
@@ -127,12 +127,7 @@ The existing paperless-ngx instance is fully migrated, searchable, and accessibl
 
 ### System Dependencies (Docker)
 
-| Dependency | Purpose |
-|------------|---------|
-| `tesseract-ocr` | Fallback OCR engine (Kreuzberg default) |
-| `tesseract-ocr-eng` | English language data for Tesseract |
-
-Kreuzberg's VLM backend needs no system dependencies — it makes HTTP calls to cloud APIs. Tesseract is included as a fallback for when VLM is unavailable or for cost-free extraction of simple documents.
+Kreuzberg's VLM backend needs no system dependencies — it makes HTTP calls to cloud APIs.
 
 ---
 

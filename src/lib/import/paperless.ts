@@ -137,23 +137,11 @@ export class PaperlessClient {
   }
 
   private async request(url: string) {
-    console.info("paperless upstream request", {
-      apiKey: summarizeSecret(this.apiKey),
-      url,
-    });
-
     const response = await fetch(url, {
       headers: {
         Authorization: `Token ${this.apiKey}`,
       },
       signal: this.signal,
-    });
-
-    console.info("paperless upstream response", {
-      ok: response.ok,
-      status: response.status,
-      statusText: response.statusText,
-      url,
     });
 
     if (!response.ok) {
@@ -265,18 +253,4 @@ function extensionForMimeType(mimeType: unknown) {
   }
 
   return "";
-}
-
-function summarizeSecret(value: string) {
-  const trimmed = value.trim();
-
-  if (!trimmed) {
-    return "<empty>";
-  }
-
-  if (trimmed.length <= 8) {
-    return `${trimmed[0] ?? ""}...${trimmed.at(-1) ?? ""} (len=${trimmed.length})`;
-  }
-
-  return `${trimmed.slice(0, 4)}...${trimmed.slice(-4)} (len=${trimmed.length})`;
 }

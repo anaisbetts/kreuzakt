@@ -36,11 +36,6 @@ export async function POST(request: NextRequest) {
   }
 
   const apiKey = body.apiKey.trim();
-  console.info("paperless import route received", {
-    apiKey: summarizeSecret(apiKey),
-    contentType: request.headers.get("content-type"),
-    paperlessUrl,
-  });
 
   if (!apiKey) {
     return jsonError(400, "bad_request", "Paperless API key is required");
@@ -61,11 +56,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unable to connect to Paperless";
-    console.error("paperless import connection check failed", {
-      apiKey: summarizeSecret(apiKey),
-      message,
-      paperlessUrl,
-    });
     return jsonError(502, "upstream_error", message);
   }
 
@@ -171,18 +161,4 @@ async function parseRequestBody(request: NextRequest) {
   } catch {
     return null;
   }
-}
-
-function summarizeSecret(value: string) {
-  const trimmed = value.trim();
-
-  if (!trimmed) {
-    return "<empty>";
-  }
-
-  if (trimmed.length <= 8) {
-    return `${trimmed[0] ?? ""}...${trimmed.at(-1) ?? ""} (len=${trimmed.length})`;
-  }
-
-  return `${trimmed.slice(0, 4)}...${trimmed.slice(-4)} (len=${trimmed.length})`;
 }

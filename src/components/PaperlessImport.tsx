@@ -85,11 +85,6 @@ export function PaperlessImport() {
     setProgress(initialProgress);
 
     try {
-      console.info("paperless import submit", {
-        apiKey: summarizeSecret(apiKey),
-        paperlessUrl: paperlessUrl.trim(),
-      });
-
       const response = await fetch("/api/import/paperless", {
         method: "POST",
         headers: {
@@ -103,12 +98,6 @@ export function PaperlessImport() {
 
       if (!response.ok) {
         const body = (await response.json()) as { message?: string };
-        console.error("paperless import request failed", {
-          apiKey: summarizeSecret(apiKey),
-          message: body.message ?? "Paperless import failed",
-          paperlessUrl: paperlessUrl.trim(),
-          status: response.status,
-        });
         throw new Error(body.message ?? "Paperless import failed");
       }
 
@@ -157,7 +146,6 @@ export function PaperlessImport() {
         setError(nextEvent.message);
       });
     } catch (importError) {
-      console.error(importError);
       setError(
         importError instanceof Error
           ? importError.message
@@ -330,18 +318,4 @@ function parseSseChunk(chunk: string, onEvent: (event: ImportEvent) => void) {
   }
 
   onEvent(JSON.parse(data) as ImportEvent);
-}
-
-function summarizeSecret(value: string) {
-  const trimmed = value.trim();
-
-  if (!trimmed) {
-    return "<empty>";
-  }
-
-  if (trimmed.length <= 8) {
-    return `${trimmed[0] ?? ""}...${trimmed.at(-1) ?? ""} (len=${trimmed.length})`;
-  }
-
-  return `${trimmed.slice(0, 4)}...${trimmed.slice(-4)} (len=${trimmed.length})`;
 }

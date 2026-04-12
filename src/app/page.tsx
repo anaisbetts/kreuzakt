@@ -23,6 +23,10 @@ function toCardProps(document: {
   };
 }
 
+function loadErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export default async function Home({
   searchParams,
 }: {
@@ -34,36 +38,63 @@ export default async function Home({
   const safePage = Number.isFinite(page) && page > 0 ? page : 1;
 
   if (query) {
-    const results = await searchDocuments({
-      query,
-      page: safePage,
-      limit: 20,
+    try {
+      const results = await searchDocuments({
+        query,
+        page: safePage,
+        limit: 20,
+      });
+
+      return (
+        <SearchPageClient
+          initialQuery={query}
+          recentDocuments={[]}
+          searchResults={results.items.map(toCardProps)}
+          totalResults={results.total}
+          page={results.page}
+          totalPages={Math.max(1, Math.ceil(results.total / results.limit))}
+        />
+      );
+    } catch (error) {
+      return (
+        <SearchPageClient
+          initialQuery={query}
+          recentDocuments={[]}
+          searchResults={[]}
+          totalResults={0}
+          page={1}
+          totalPages={1}
+          searchError={loadErrorMessage(error, "Search failed")}
+        />
+      );
+    }
+  }
+
+  try {
+    const recent = await listDocuments({
+      page: 1,
+      limit: 12,
     });
 
     return (
       <SearchPageClient
-        initialQuery={query}
+        initialQuery=""
+        recentDocuments={recent.items.map(toCardProps)}
+        searchResults={[]}
+        page={1}
+        totalPages={1}
+      />
+    );
+  } catch (error) {
+    return (
+      <SearchPageClient
+        initialQuery=""
         recentDocuments={[]}
-        searchResults={results.items.map(toCardProps)}
-        totalResults={results.total}
-        page={results.page}
-        totalPages={Math.max(1, Math.ceil(results.total / results.limit))}
+        searchResults={[]}
+        page={1}
+        totalPages={1}
+        listError={loadErrorMessage(error, "Could not load documents")}
       />
     );
   }
-
-  const recent = await listDocuments({
-    page: 1,
-    limit: 12,
-  });
-
-  return (
-    <SearchPageClient
-      initialQuery=""
-      recentDocuments={recent.items.map(toCardProps)}
-      searchResults={[]}
-      page={1}
-      totalPages={1}
-    />
-  );
 }

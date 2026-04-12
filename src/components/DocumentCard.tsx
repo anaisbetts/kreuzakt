@@ -12,6 +12,8 @@ export interface DocumentCardProps {
   snippet?: string;
   thumbnailUrl?: string;
   variant?: "grid" | "list";
+  /** When using arrow-key navigation on the search page */
+  isKeyboardFocused?: boolean;
   onClick?: (id: number) => void;
 }
 
@@ -178,6 +180,7 @@ export function DocumentCard({
   snippet,
   thumbnailUrl,
   variant = "grid",
+  isKeyboardFocused = false,
   onClick,
 }: DocumentCardProps) {
   if (variant === "list") {
@@ -208,7 +211,12 @@ export function DocumentCard({
     <button
       type="button"
       onClick={() => onClick?.(id)}
-      className="flex w-full flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-4 text-left shadow-sm transition-shadow hover:shadow-md"
+      className={[
+        "flex w-full flex-col gap-4 rounded-xl border bg-white p-4 text-left shadow-sm transition-shadow hover:shadow-md",
+        isKeyboardFocused
+          ? "border-blue-500 ring-2 ring-blue-500/30"
+          : "border-neutral-200",
+      ].join(" ")}
     >
       <Thumbnail documentId={id} thumbnailUrl={thumbnailUrl} />
       <div className="flex w-full flex-col gap-2">
