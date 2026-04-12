@@ -110,25 +110,6 @@ Add to `.cursor/mcp.json` or your project’s MCP settings.
 
 </details>
 
-### What the MCP server exposes
-
-- Tools:
-  - `search_documents`
-  - `get_document`
-  - `get_document_content`
-  - `list_recent_documents`
-  - `download_document`
-
-### What to expect
-
-Once connected, your assistant can:
-
-- search the archive by natural language
-- fetch one or more full documents in a single call
-- fetch only extracted text when metadata is unnecessary
-- list recently added documents
-- generate download links for original files
-
 ### Example prompts
 
 - "Find invoices from Deutsche Telekom."
