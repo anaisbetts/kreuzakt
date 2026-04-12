@@ -5,11 +5,15 @@ import * as filesModule from "../files";
 import { importFromPaperless } from "./orchestrator";
 import { PaperlessClient } from "./paperless";
 
+const integrationEnabled =
+  process.env.DOCS_AI_RUN_INTEGRATION === "1" ||
+  process.env.DOCS_AI_RUN_INTEGRATION === "true";
+
 const paperlessUrl = process.env.PAPERLESS_DEV_URL?.trim();
 const paperlessApiKey = process.env.PAPERLESS_DEV_API_KEY?.trim();
 const runPaperlessTest = paperlessUrl && paperlessApiKey ? it : it.skip;
 
-describe("Paperless import integration", () => {
+describe.skipIf(!integrationEnabled)("Paperless import integration", () => {
   runPaperlessTest(
     "imports a single Paperless document and preserves the added date",
     async () => {
