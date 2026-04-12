@@ -72,12 +72,12 @@ Everything lives under `/data` by default — the SQLite database, originals, th
 
 ## MCP setup
 
+docs-ai exposes a remote MCP endpoint at **`/mcp`** (Streamable HTTP). Replace the hostname in the snippets below with wherever you serve the app — for example `https://docs.your-tailnet.ts.net/mcp` when using [Tailscale Serve](https://tailscale.com/docs/features/tailscale-serve). Most clients will not talk to plain `http`, so terminating TLS (Serve, a reverse proxy, etc.) is the usual approach.
+
 <details>
-<summary><strong>Connect Claude Desktop, Cursor, or any MCP client</strong> — HTTPS URL, Tailscale Serve, and example configs</summary>
+<summary><strong>Claude Desktop</strong> — <code>npx mcp-remote@latest …</code></summary>
 
-docs-ai exposes a remote MCP endpoint at **`/mcp`** (Streamable HTTP). Replace the hostname below with wherever you serve the app — for example `https://docs.your-tailnet.ts.net/mcp` when using [Tailscale Serve](https://tailscale.com/docs/features/tailscale-serve). Most clients will not talk to plain `http`, so terminating TLS (Serve, a reverse proxy, etc.) is the usual approach.
-
-**Claude Desktop** — use [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) to bridge the HTTP endpoint:
+[`mcp-remote`](https://www.npmjs.com/package/mcp-remote) bridges the HTTP MCP endpoint for clients that expect a local process.
 
 ```json
 {
@@ -90,7 +90,12 @@ docs-ai exposes a remote MCP endpoint at **`/mcp`** (Streamable HTTP). Replace t
 }
 ```
 
-**Cursor** — native HTTP transport in `.cursor/mcp.json` (or your project MCP config):
+</details>
+
+<details>
+<summary><strong>Cursor</strong> — <code>type: "http"</code> in MCP config</summary>
+
+Add to `.cursor/mcp.json` or your project’s MCP settings.
 
 ```json
 {
@@ -102,6 +107,8 @@ docs-ai exposes a remote MCP endpoint at **`/mcp`** (Streamable HTTP). Replace t
   }
 }
 ```
+
+</details>
 
 ### What the MCP server exposes
 
@@ -127,8 +134,6 @@ Once connected, your assistant can:
 - "Find invoices from Deutsche Telekom."
 - "What was my health insurance number again?"
 - "How much did I pay in taxes last year"
-
-</details>
 
 ## Local development
 
