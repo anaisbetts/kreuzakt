@@ -23,6 +23,16 @@ function toAbsoluteIngestPath(relativePath: string) {
   return path.join(appConfig.ingestDir, relativePath);
 }
 
+/** Queue `filename` values for Paperless imports are relative to `importDir`. */
+const PAPERLESS_IMPORT_QUEUE_PREFIX = "paperless-ngx/";
+
+function toAbsoluteQueueFilePath(relativePath: string) {
+  if (relativePath.startsWith(PAPERLESS_IMPORT_QUEUE_PREFIX)) {
+    return path.join(appConfig.importDir, relativePath);
+  }
+  return toAbsoluteIngestPath(relativePath);
+}
+
 function scheduleProcessing(
   filePath: string,
   queueEntryId: number,
@@ -83,11 +93,11 @@ export async function enqueueQueuedFile(
   relativePath: string,
   queueEntryId: number,
 ) {
-  const absolutePath = toAbsoluteIngestPath(relativePath);
+  const absolutePath = toAbsoluteQueueFilePath(relativePath);
 
   if (!(await fileExists(absolutePath))) {
     await updateQueueStatus(queueEntryId, "failed", {
-      error: `File ${relativePath} no longer exists in ingest/`,
+      error: `File ${relativePath} no longer exists`,
       documentId: null,
     });
     return false;
@@ -98,15 +108,13 @@ export async function enqueueQueuedFile(
 }
 
 export async function enqueueImportedFile(
-  relativePath: string,
+  absolutePath: string,
   queueEntryId: number,
   options: ProcessIngestOptions,
 ) {
-  const absolutePath = toAbsoluteIngestPath(relativePath);
-
   if (!(await fileExists(absolutePath))) {
     await updateQueueStatus(queueEntryId, "failed", {
-      error: `File ${relativePath} no longer exists in ingest/`,
+      error: `Import file no longer exists: ${absolutePath}`,
       documentId: null,
     });
     return null;

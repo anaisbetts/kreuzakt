@@ -72,7 +72,7 @@ export async function importFromPaperless(options: {
       }
 
       const result = await enqueueImportedFile(
-        downloaded.relativePath,
+        downloaded.absolutePath,
         queueEntry.id,
         {
           addedAt: document.addedAt,

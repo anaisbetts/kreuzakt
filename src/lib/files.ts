@@ -15,6 +15,7 @@ export async function ensureAppDirectories() {
   await Promise.all([
     ensureDirectory(appConfig.dataDir),
     ensureDirectory(appConfig.ingestDir),
+    ensureDirectory(appConfig.importDir),
     ensureDirectory(appConfig.originalsDir),
     ensureDirectory(appConfig.thumbnailsDir),
   ]);

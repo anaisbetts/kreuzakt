@@ -68,7 +68,7 @@ export class PaperlessClient {
       .join("paperless-ngx", String(document.id), document.originalFilename)
       .split(path.sep)
       .join("/");
-    const absolutePath = path.join(appConfig.ingestDir, relativePath);
+    const absolutePath = path.join(appConfig.importDir, relativePath);
 
     await ensureDirectory(path.dirname(absolutePath));
 

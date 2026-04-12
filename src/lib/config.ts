@@ -16,6 +16,7 @@ export const OPENROUTER_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
 export const appConfig = {
   dataDir,
   ingestDir: resolvePath(process.env.INGEST_DIR, path.join(dataDir, "ingest")),
+  importDir: resolvePath(process.env.IMPORT_DIR, path.join(dataDir, "import")),
   originalsDir: resolvePath(
     process.env.ORIGINALS_DIR,
     path.join(dataDir, "originals"),
