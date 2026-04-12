@@ -38,9 +38,7 @@ The `./docs` folder will be initialized with three directories - `./data/ingest`
 
 ### Volume mounts
 
-Everything lives under `/data` by default — the SQLite database, originals, thumbnails, and the ingest folder. One volume mount is all you need. To drop documents in for processing, copy them into the container's `/data/ingest/` directory.
-
-If you want to split things up, override with individual env vars and mount each path separately:
+Everything lives under `/data` by default — the SQLite database, originals, thumbnails, and the ingest folder. If you want to split things up, override with individual env vars and mount each path separately:
 
 | Variable | Default | Description |
 |---|---|---|
