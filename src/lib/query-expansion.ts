@@ -133,6 +133,7 @@ async function withTimeout<T>(
 async function fetchExpansionTermsFromModel(
   query: string,
 ): Promise<QueryExpansionResponse | null | undefined> {
+  console.log(`Fetching expansion terms for query: ${query}`);
   const response = await openai.chat.completions.create({
     model: appConfig.ocrModel,
     messages: [
