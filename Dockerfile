@@ -33,6 +33,12 @@ COPY --from=builder --chown=bun:bun /app/public ./public
 COPY --from=builder --chown=bun:bun /app/.next/standalone ./
 COPY --from=builder --chown=bun:bun /app/.next/static ./.next/static
 
+# NAPI-RS native packages use conditional require() calls that @vercel/nft
+# can't trace, so the standalone node_modules is missing native bindings.
+COPY --from=deps --chown=bun:bun /app/node_modules/@kreuzberg ./node_modules/@kreuzberg
+COPY --from=deps --chown=bun:bun /app/node_modules/sharp ./node_modules/sharp
+COPY --from=deps --chown=bun:bun /app/node_modules/@img ./node_modules/@img
+
 USER bun
 
 EXPOSE 3000
