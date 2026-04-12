@@ -26,17 +26,14 @@ ENV HOSTNAME=0.0.0.0
 # Single mount point: ingest, originals, thumbnails, and DB default under /data/
 ENV DATA_DIR=/data
 
-RUN addgroup --system --gid 1001 nodejs \
-  && adduser --system --uid 1001 nextjs
-
-COPY --from=builder /app/public ./public
+COPY --from=builder --chown=bun:bun /app/public ./public
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=bun:bun /app/.next/standalone ./
+COPY --from=builder --chown=bun:bun /app/.next/static ./.next/static
 
-USER nextjs
+USER bun
 
 EXPOSE 3000
 
