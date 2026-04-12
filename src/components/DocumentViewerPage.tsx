@@ -71,12 +71,13 @@ function PDFPreview({
         )}
       </div>
       <div className="relative flex-1 min-h-0">
-        <div className="absolute inset-0 flex items-center justify-center p-2">
+        {/* Desktop (default): centered, full page visible in pane. Narrow screens: width-first scale + scroll. */}
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden p-2 max-md:block max-md:overflow-y-auto max-md:overflow-x-hidden max-md:p-0">
           {/* biome-ignore lint/performance/noImgElement: same-origin API page images */}
           <img
             src={`/api/documents/${id}/pages/${currentPage}/image`}
             alt={`${filename} page ${currentPage}`}
-            className="max-h-full max-w-full rounded bg-white object-contain shadow-2xl"
+            className="max-h-full max-w-full rounded bg-white object-contain shadow-2xl max-md:max-h-none max-md:w-full max-md:rounded-none"
           />
         </div>
       </div>
@@ -106,12 +107,12 @@ function ImagePreview({ id, filename }: { id: number; filename: string }) {
         <span className="text-xs text-neutral-300">{filename}</span>
       </div>
       <div className="relative flex-1 min-h-0">
-        <div className="absolute inset-0 flex items-center justify-center p-2">
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden p-2 max-md:block max-md:overflow-y-auto max-md:overflow-x-hidden max-md:p-0">
           {/* biome-ignore lint/performance/noImgElement: same-origin API page images */}
           <img
             src={`/api/documents/${id}/pages/1/image`}
             alt={filename}
-            className="max-h-full max-w-full rounded shadow-2xl ring-1 ring-white/10"
+            className="max-h-full max-w-full rounded object-contain shadow-2xl ring-1 ring-white/10 max-md:max-h-none max-md:w-full max-md:rounded-none"
           />
         </div>
       </div>
@@ -131,7 +132,15 @@ function PageThumbnailStrip({
   onPageChange?: (page: number) => void;
 }) {
   return (
-    <div className="flex w-20 shrink-0 flex-col gap-3 overflow-y-auto rounded-lg border border-neutral-200 bg-neutral-100 p-2">
+    <div
+      className={[
+        "flex shrink-0 gap-3 rounded-lg border border-neutral-200 bg-neutral-100 p-2",
+        // Portrait / narrow: horizontal strip at top
+        "flex-row overflow-x-auto overflow-y-hidden [-webkit-overflow-scrolling:touch]",
+        // Tablet+: vertical strip on the left
+        "md:w-20 md:flex-col md:overflow-y-auto md:overflow-x-hidden",
+      ].join(" ")}
+    >
       {Array.from({ length: pageCount }, (_, i) => {
         const page = i + 1;
         const isActive = page === currentPage;
@@ -141,13 +150,13 @@ function PageThumbnailStrip({
             type="button"
             onClick={() => onPageChange?.(page)}
             className={[
-              "flex flex-col items-center gap-1",
+              "flex shrink-0 flex-col items-center gap-1",
               isActive ? "opacity-100" : "opacity-60 hover:opacity-80",
             ].join(" ")}
           >
             <div
               className={[
-                "aspect-[3/4] w-full overflow-hidden rounded border bg-white shadow-sm transition-all",
+                "aspect-[3/4] w-14 overflow-hidden rounded border bg-white shadow-sm transition-all md:w-full",
                 isActive
                   ? "ring-2 ring-blue-500 border-blue-300"
                   : "border-neutral-200 hover:border-neutral-300",
@@ -281,8 +290,9 @@ export function DocumentViewerPage({
         </button>
       </header>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-1 gap-6 px-6 py-6 min-h-0">
-        <div className="flex flex-1 gap-3 min-h-0">
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 overflow-y-auto px-2 py-4 min-h-0 md:flex-row md:gap-6 md:overflow-hidden md:px-6 md:py-6">
+        {/* Narrow: stack viewer then metadata; scroll main to read everything. */}
+        <div className="flex flex-1 flex-col gap-3 max-md:flex-none md:min-h-0 md:flex-1 md:flex-row">
           {showPageStrip && pageCount != null ? (
             <PageThumbnailStrip
               id={id}
@@ -291,7 +301,8 @@ export function DocumentViewerPage({
               onPageChange={onPageChange}
             />
           ) : null}
-          <div className="flex-1">
+          {/* Explicit height on mobile so PDF/Image h-full works; desktop keeps flex-1 fill. */}
+          <div className="flex min-h-0 flex-1 flex-col max-md:h-[62dvh] max-md:min-h-[45dvh] max-md:flex-none md:min-h-0">
             {showExtractedText ? (
               <TextPreview content={content} />
             ) : isPdf ? (
@@ -309,7 +320,7 @@ export function DocumentViewerPage({
           </div>
         </div>
 
-        <aside className="w-80 shrink-0 overflow-y-auto">
+        <aside className="w-full shrink-0 md:w-80">
           <div className="flex flex-col gap-5 rounded-xl border border-neutral-200 bg-white p-6">
             <h1 className="text-lg font-semibold text-neutral-900">{title}</h1>
 
