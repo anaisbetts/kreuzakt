@@ -208,17 +208,22 @@ export function DocumentCard({
     <button
       type="button"
       onClick={() => onClick?.(id)}
-      className="flex flex-col items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4 text-left shadow-sm transition-shadow hover:shadow-md"
+      className="flex w-full flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-4 text-left shadow-sm transition-shadow hover:shadow-md"
     >
       <Thumbnail documentId={id} thumbnailUrl={thumbnailUrl} />
-      <div className="flex flex-col gap-1">
-        <h3 className="line-clamp-2 text-sm font-medium text-neutral-900">
+      <div className="flex w-full flex-col gap-2">
+        <h3 className="line-clamp-2 text-base font-medium text-neutral-900">
           {title}
         </h3>
-        <time className="text-xs text-neutral-500">
+        <time className="text-sm text-neutral-500">
           {formatDate(documentDate)}
         </time>
-        <p className="line-clamp-2 text-xs text-neutral-500">{description}</p>
+        <p className="line-clamp-2 text-sm text-neutral-600">{description}</p>
+        {snippet && (
+          <p className="line-clamp-4 text-sm leading-6 text-neutral-600">
+            {renderHighlightedSnippet(snippet)}
+          </p>
+        )}
       </div>
     </button>
   );

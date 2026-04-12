@@ -62,6 +62,8 @@ const mockSearchResults = [
       "Monthly mobile service invoice from Deutsche Telekom for the billing period March 2026.",
     documentDate: "2026-03-15",
     mimeType: "application/pdf",
+    snippet:
+      "Monthly mobile service [[[invoice]]] from Deutsche [[[Telekom]]] covering the March 2026 billing period.",
   },
   {
     id: 38,
@@ -70,6 +72,8 @@ const mockSearchResults = [
       "Monthly mobile service invoice from Deutsche Telekom for the billing period February 2026.",
     documentDate: "2026-02-15",
     mimeType: "application/pdf",
+    snippet:
+      "Your [[[Telekom]]] mobile plan [[[invoice]]] for February 2026 includes roaming and data usage charges.",
   },
   {
     id: 35,
@@ -78,6 +82,8 @@ const mockSearchResults = [
       "Monthly mobile service invoice from Deutsche Telekom for January 2026.",
     documentDate: "2026-01-15",
     mimeType: "application/pdf",
+    snippet:
+      "January [[[invoice]]] summary for your Deutsche [[[Telekom]]] account, including service fees and taxes.",
   },
   {
     id: 31,
@@ -86,6 +92,8 @@ const mockSearchResults = [
       "Monthly mobile service invoice from Deutsche Telekom for December 2025.",
     documentDate: "2025-12-15",
     mimeType: "application/pdf",
+    snippet:
+      "December [[[invoice]]] from [[[Telekom]]] showing device financing and the monthly mobile plan charge.",
   },
   {
     id: 28,
@@ -94,6 +102,8 @@ const mockSearchResults = [
       "Monthly mobile service invoice from Deutsche Telekom for November 2025.",
     documentDate: "2025-11-15",
     mimeType: "application/pdf",
+    snippet:
+      "Archived [[[Telekom]]] [[[invoice]]] for November 2025 with the standard recurring service breakdown.",
   },
   {
     id: 25,
@@ -102,6 +112,8 @@ const mockSearchResults = [
       "Monthly mobile service invoice from Deutsche Telekom for October 2025.",
     documentDate: "2025-10-15",
     mimeType: "application/pdf",
+    snippet:
+      "October 2025 [[[invoice]]] from Deutsche [[[Telekom]]] detailing plan usage and line item totals.",
   },
   {
     id: 22,
@@ -110,6 +122,8 @@ const mockSearchResults = [
       "Monthly mobile service invoice from Deutsche Telekom for September 2025.",
     documentDate: "2025-09-15",
     mimeType: "application/pdf",
+    snippet:
+      "Search match in the September [[[invoice]]] where [[[Telekom]]] service charges are summarized.",
   },
   {
     id: 19,
@@ -118,6 +132,8 @@ const mockSearchResults = [
       "Monthly mobile service invoice from Deutsche Telekom for August 2025.",
     documentDate: "2025-08-15",
     mimeType: "application/pdf",
+    snippet:
+      "August [[[invoice]]] from Deutsche [[[Telekom]]] with taxes, plan pricing, and balance details.",
   },
   {
     id: 16,
@@ -126,6 +142,8 @@ const mockSearchResults = [
       "Monthly mobile service invoice from Deutsche Telekom for July 2025.",
     documentDate: "2025-07-15",
     mimeType: "application/pdf",
+    snippet:
+      "This [[[invoice]]] contains the July 2025 Deutsche [[[Telekom]]] billing statement and due date.",
   },
   {
     id: 13,
@@ -134,6 +152,8 @@ const mockSearchResults = [
       "Monthly mobile service invoice from Deutsche Telekom for June 2025.",
     documentDate: "2025-06-15",
     mimeType: "application/pdf",
+    snippet:
+      "Relevant [[[Telekom]]] [[[invoice]]] context for June 2025, including plan and surcharge details.",
   },
   {
     id: 10,
@@ -142,6 +162,8 @@ const mockSearchResults = [
       "Monthly mobile service invoice from Deutsche Telekom for May 2025.",
     documentDate: "2025-05-15",
     mimeType: "application/pdf",
+    snippet:
+      "May [[[invoice]]] from Deutsche [[[Telekom]]] with recurring charges and service notes.",
   },
   {
     id: 7,
@@ -150,6 +172,8 @@ const mockSearchResults = [
       "Monthly mobile service invoice from Deutsche Telekom for April 2025.",
     documentDate: "2025-04-15",
     mimeType: "application/pdf",
+    snippet:
+      "Older [[[invoice]]] result from [[[Telekom]]] for April 2025 with a matching search excerpt.",
   },
 ];
 
