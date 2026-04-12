@@ -69,6 +69,7 @@ Everything lives under `/data` by default — the SQLite database, originals, th
 | `OCR_VLM_MODEL` | `openai/gpt-5.4-mini` | Model used for OCR |
 | `METADATA_LLM_MODEL` | `openai/gpt-5.4` | Model used for title/description extraction |
 | `PORT` | `3000` | Port inside the container |
+| `TZ` | `UTC` | Timezone for date display (e.g. `Europe/Berlin`, `America/New_York`). Use any [tz database name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones). |
 
 ## MCP setup
 
