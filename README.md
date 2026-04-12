@@ -100,3 +100,17 @@ Once connected, your assistant can:
 - "Show me the full text of documents 12 and 14."
 - "What documents were added in the last week?"
 - "Give me a download link for document 42."
+
+## Local development
+
+Prerequisites: [Bun](https://bun.sh) (the project runs Next.js and scripts through Bun; see `package.json`).
+
+1. Install dependencies: `bun install`
+2. Copy `.env.local.example` to `.env.local` and set at least one way to reach an OpenAI-compatible API. The usual choice is `OPENROUTER_KEY`. For a local LLM, set `OPENAI_DEV_URL`, `OPENAI_DEV_KEY`, and optionally `OCR_VLM_DEV_MODEL` / `METADATA_LLM_DEV_MODEL`. See `.env.local.example` for all variables the app and tooling recognize.
+3. Start the dev server: `bun dev`. The app listens on port 3000 by default (`PORT`). Runtime data defaults to `./data` (SQLite, ingest, originals, thumbnails) unless you override `DATA_DIR` or individual path variables.
+
+Other useful commands:
+
+- `bun test` — unit tests
+- `bun run test:integration` — integration tests (loads `.env.local` via `--env-file`; requires Paperless-related vars when those tests run)
+- `bun storybook` — UI development on port 6006
