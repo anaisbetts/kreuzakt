@@ -6,18 +6,21 @@ import { DateTime } from "luxon";
  *  - SQLite datetime():  "2024-01-15 10:30:00"        (space-separated, implicitly UTC)
  *  - Date-only:          "2024-01-15"                 (SQLite/LLM, no time component)
  *
- * new Date() misparses the SQLite space format as local time, and misparses
- * date-only strings as midnight UTC which then shifts the display day in
- * non-UTC timezones. This always treats the value as UTC.
+ * Full datetimes are stored as UTC and converted to local time for display,
+ * so the server's TZ environment variable (e.g. TZ=Europe/Berlin in Docker)
+ * controls the displayed timezone. Date-only values have no time component
+ * and are shown exactly as stored — no timezone shift applied.
  */
 function parseDbDate(value: string): DateTime {
   if (value.includes("T")) {
-    return DateTime.fromISO(value, { zone: "utc" });
+    // Full ISO datetime: parse as UTC, convert to local zone for display
+    return DateTime.fromISO(value, { zone: "utc" }).toLocal();
   }
   if (value.includes(" ")) {
-    return DateTime.fromSQL(value, { zone: "utc" });
+    // SQLite datetime('now') format: UTC, convert to local zone for display
+    return DateTime.fromSQL(value, { zone: "utc" }).toLocal();
   }
-  // Date-only: YYYY-MM-DD
+  // Date-only (YYYY-MM-DD): no time component, display exactly as-is
   return DateTime.fromISO(value, { zone: "utc" });
 }
 
