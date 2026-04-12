@@ -5,7 +5,7 @@ import { type FSWatcher, watch } from "chokidar";
 import { appConfig } from "@/lib/config";
 import { ensureAppDirectories, fileExists } from "@/lib/files";
 
-import { processIngestFile } from "./pipeline";
+import { type ProcessIngestOptions, processIngestFile } from "./pipeline";
 import { ensurePendingQueueEntry, updateQueueStatus } from "./queue";
 
 declare global {
@@ -23,14 +23,19 @@ function toAbsoluteIngestPath(relativePath: string) {
   return path.join(appConfig.ingestDir, relativePath);
 }
 
-function scheduleProcessing(filePath: string, queueEntryId: number) {
+function scheduleProcessing(
+  filePath: string,
+  queueEntryId: number,
+  options?: ProcessIngestOptions,
+) {
   const normalizedPath = path.resolve(filePath);
 
   if (scheduledPaths.has(normalizedPath)) {
-    return processingChain;
+    return Promise.resolve(null);
   }
 
   scheduledPaths.add(normalizedPath);
+  let result: Awaited<ReturnType<typeof processIngestFile>> | null = null;
 
   processingChain = processingChain.then(async () => {
     try {
@@ -42,7 +47,7 @@ function scheduleProcessing(filePath: string, queueEntryId: number) {
         return;
       }
 
-      await processIngestFile(normalizedPath, queueEntryId);
+      result = await processIngestFile(normalizedPath, queueEntryId, options);
     } catch (error) {
       console.error("ingest pipeline failed", error);
     } finally {
@@ -50,7 +55,7 @@ function scheduleProcessing(filePath: string, queueEntryId: number) {
     }
   });
 
-  return processingChain;
+  return processingChain.then(() => result);
 }
 
 async function handleAddedFile(filePath: string) {
@@ -90,6 +95,24 @@ export async function enqueueQueuedFile(
 
   scheduleProcessing(absolutePath, queueEntryId);
   return true;
+}
+
+export async function enqueueImportedFile(
+  relativePath: string,
+  queueEntryId: number,
+  options: ProcessIngestOptions,
+) {
+  const absolutePath = toAbsoluteIngestPath(relativePath);
+
+  if (!(await fileExists(absolutePath))) {
+    await updateQueueStatus(queueEntryId, "failed", {
+      error: `File ${relativePath} no longer exists in ingest/`,
+      documentId: null,
+    });
+    return null;
+  }
+
+  return scheduleProcessing(absolutePath, queueEntryId, options);
 }
 
 export async function startWatcher() {

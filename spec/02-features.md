@@ -112,13 +112,17 @@ See what's happening in the ingest pipeline.
 
 ### F-11: Bulk Import
 
-One-time migration from an existing paperless-ngx archive.
+One-time migration from an existing paperless-ngx instance.
 
-- Import script that reads the paperless-ngx originals directory
-- Each file is processed through the standard ingest pipeline (extract → metadata → persist)
-- Progress reporting during bulk import
-- Can also be used for any batch of existing documents — not paperless-specific
-- Re-OCRs everything through Kreuzberg regardless of any existing text, since the whole point is better extraction
+- The settings page includes a **Paperless-ngx Import** section with:
+  - a **Paperless URL** field
+  - an **API key** field with instructions for generating a token in Paperless-ngx
+  - an **Import** button
+- The import connects to the Paperless-ngx API and enumerates every document in the instance
+- For each document, the original file is downloaded into `ingest/`
+- The ingest pipeline preserves the Paperless **added date** by writing it to `documents.added_at`
+- No other Paperless metadata is preserved — title, description, document date, and extracted text are regenerated through the normal Docs-AI ingest pipeline
+- Progress reporting during bulk import shows overall progress, while the processing queue shows per-file ingest status
 
 ---
 

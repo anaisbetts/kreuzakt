@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { QueueRow } from "@/lib/db/schema";
 import type { QueueCounts } from "@/lib/ingest/queue";
 
+import { PaperlessImport } from "./PaperlessImport";
 import { ProcessingQueue } from "./ProcessingQueue";
 
 function StatusRow({ label, value }: { label: string; value: string }) {
@@ -64,6 +65,8 @@ export function SystemStatusPage({
         <StatusRow label="Metadata Model" value={metadataModel} />
         <StatusRow label="LLM Endpoint" value={llmEndpoint} />
       </div>
+
+      <PaperlessImport />
 
       <ProcessingQueue
         enablePolling={queue.enablePolling}

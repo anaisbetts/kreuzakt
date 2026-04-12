@@ -21,6 +21,10 @@ export interface ProcessFileResult {
   documentId: number;
 }
 
+export interface ProcessIngestOptions {
+  addedAt?: string;
+}
+
 async function cleanupFailedArtifacts(
   documentId: number,
   storedFilename: string,
@@ -34,6 +38,7 @@ async function cleanupFailedArtifacts(
 export async function processIngestFile(
   filePath: string,
   queueEntryId: number,
+  options?: ProcessIngestOptions,
 ): Promise<ProcessFileResult> {
   let insertedDocumentId: number | null = null;
   let storedFilename: string | null = null;
@@ -82,7 +87,7 @@ export async function processIngestFile(
         description: metadata.description,
         document_date: metadata.document_date,
         content: extracted.content,
-        added_at: new Date().toISOString(),
+        added_at: options?.addedAt ?? new Date().toISOString(),
       })
       .returning("id")
       .executeTakeFirstOrThrow();
