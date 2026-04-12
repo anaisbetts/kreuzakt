@@ -140,7 +140,7 @@ export function FileDropSurface({
         <div className="pointer-events-none absolute inset-0 z-50 hidden items-center justify-center bg-neutral-950/30 px-6 md:flex">
           <div className="w-full max-w-xl rounded-3xl border-2 border-dashed border-white bg-white/95 px-8 py-14 text-center shadow-2xl backdrop-blur">
             <p className="text-3xl font-semibold tracking-tight text-neutral-900">
-              Drop file here
+              Drop files here
             </p>
             <p className="mt-3 text-sm text-neutral-600">
               Uploads are copied into ingest/ and processed automatically.
