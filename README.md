@@ -36,6 +36,10 @@ Drop this in a `docker-compose.yml`, set `OPENROUTER_KEY` in your environment or
 
 The `./docs` folder will be initialized with directories including `./data/ingest`, `./data/import`, `./data/originals`, and `./data/thumbnails`. To get started, drop all of your documents into the ingest folder - they will eventually all move to the originals folder. You can see the progress at `http://localhost:3000/settings` - if you have a lot of documents it might take a bit.
 
+### How much is this gonna cost me?
+
+I'm too lazy to do the math on exactly how much per-page it costs, but for perspective, importing 440 documents from Paperless (a few of which were up to 80pgs long), cost me ~$5.
+
 ### Volume mounts
 
 Everything lives under `/data` by default — the SQLite database, originals, thumbnails, and the ingest folder. If you want to split things up, override with individual env vars and mount each path separately:
@@ -97,9 +101,8 @@ Once connected, your assistant can:
 ### Example prompts
 
 - "Find invoices from Deutsche Telekom."
-- "Show me the full text of documents 12 and 14."
-- "What documents were added in the last week?"
-- "Give me a download link for document 42."
+- "What was my health insurance number again?"
+- "How much did I pay in taxes last year"
 
 ## Local development
 
