@@ -3,6 +3,8 @@
 import type { ReactNode } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
+import { formatDateShort } from "@/lib/format-date";
+
 export interface DocumentCardProps {
   id: number;
   title: string;
@@ -17,13 +19,7 @@ export interface DocumentCardProps {
   onClick?: (id: number) => void;
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+const formatDate = formatDateShort;
 
 function renderHighlightedSnippet(snippet: string) {
   const parts = snippet.split(/(\[\[\[|\]\]\])/g);

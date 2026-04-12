@@ -4,6 +4,10 @@ import { getDb } from "@/lib/db/connection";
 import type { DocumentRow } from "@/lib/db/schema";
 import { expandSearchQuery } from "@/lib/query-expansion";
 
+const SEARCH_WEIGHT_BM25 = 1.0;
+const SEARCH_WEIGHT_RECENCY = 8.0;
+const SEARCH_RECENCY_HALF_LIFE_DAYS = 30;
+
 export interface DocumentSummary {
   id: number;
   title: string;
@@ -242,7 +246,14 @@ export async function searchDocuments({
     FROM documents_fts
     JOIN documents AS d ON d.id = documents_fts.rowid
     WHERE documents_fts MATCH ${matchQuery}
-    ORDER BY bm25(documents_fts)
+    ORDER BY (
+      ${sql.raw(String(SEARCH_WEIGHT_BM25))} * bm25(documents_fts, 10.0, 5.0, 1.0, 3.0)
+      - ${sql.raw(String(SEARCH_WEIGHT_RECENCY))} * exp(
+        -0.693147
+        * COALESCE(julianday('now') - julianday(d.added_at), 9999)
+        / ${sql.raw(String(SEARCH_RECENCY_HALF_LIFE_DAYS))}
+      )
+    )
     LIMIT ${limit}
     OFFSET ${offset}
   `.execute(db);
