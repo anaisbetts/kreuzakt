@@ -41,20 +41,6 @@ export interface DocumentDownload {
   download_url: string;
 }
 
-export interface DocumentResourceSummary {
-  id: number;
-  title: string;
-  description: string;
-}
-
-export interface DocumentResourceDetail extends DocumentResourceSummary {
-  document_date: string | null;
-  added_at: string;
-  original_filename: string;
-  mime_type: string;
-  content: string;
-}
-
 export interface PaginatedDocuments<T> {
   items: T[];
   total: number;
@@ -318,35 +304,4 @@ export async function getDocumentsForDownload(
     })),
     ids,
   );
-}
-
-export async function listDocumentResources() {
-  const db = await getDb();
-  return db
-    .selectFrom("documents")
-    .select(["id", "title", "description"])
-    .orderBy("added_at", "desc")
-    .execute();
-}
-
-export async function getDocumentResourceById(
-  id: number,
-): Promise<DocumentResourceDetail | null> {
-  const db = await getDb();
-  const document = await db
-    .selectFrom("documents")
-    .select([
-      "id",
-      "title",
-      "description",
-      "document_date",
-      "added_at",
-      "original_filename",
-      "mime_type",
-      "content",
-    ])
-    .where("id", "=", id)
-    .executeTakeFirst();
-
-  return document ?? null;
 }

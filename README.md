@@ -82,8 +82,6 @@ Because most MCP clients refuse to connect to servers over `http`, it is recomme
   - `get_document_content`
   - `list_recent_documents`
   - `download_document`
-- Resources:
-  - `document://{id}`
 
 ### What to expect
 
@@ -93,7 +91,6 @@ Once connected, your assistant can:
 - fetch one or more full documents in a single call
 - fetch only extracted text when metadata is unnecessary
 - list recently added documents
-- read `document://{id}` resources directly
 - generate download links for original files
 
 ### Example prompts

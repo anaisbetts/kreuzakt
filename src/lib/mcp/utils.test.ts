@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  formatDocumentResourceText,
-  getBaseUrl,
-  normalizeDocumentIds,
-  stripSnippetMarkers,
-} from "./utils";
+import { getBaseUrl, normalizeDocumentIds, stripSnippetMarkers } from "./utils";
 
 describe("normalizeDocumentIds", () => {
   it("prefers ids arrays and preserves order", () => {
@@ -63,36 +58,5 @@ describe("getBaseUrl", () => {
         url: new URL("http://localhost:3000/mcp"),
       }),
     ).toBe("http://localhost:3000");
-  });
-});
-
-describe("formatDocumentResourceText", () => {
-  it("renders metadata headers followed by a body separator", () => {
-    expect(
-      formatDocumentResourceText({
-        id: 42,
-        title: "Telekom Invoice",
-        description: "Monthly service invoice",
-        document_date: "2026-03-15",
-        added_at: "2026-03-20T14:30:00Z",
-        original_filename: "scan_20260315.pdf",
-        mime_type: "application/pdf",
-        content: "Invoice\nTotal due: 12.34 EUR",
-      }),
-    ).toBe(
-      [
-        "Title: Telekom Invoice",
-        "Description: Monthly service invoice",
-        "Date: 2026-03-15",
-        "Added: 2026-03-20T14:30:00Z",
-        "Original: scan_20260315.pdf",
-        "Mime Type: application/pdf",
-        "",
-        "---",
-        "",
-        "Invoice",
-        "Total due: 12.34 EUR",
-      ].join("\n"),
-    );
   });
 });

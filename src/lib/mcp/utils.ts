@@ -1,7 +1,6 @@
 import type { RequestInfo } from "@modelcontextprotocol/sdk/types.js";
 
 import { appConfig } from "../config";
-import type { DocumentResourceDetail } from "../documents";
 
 export function normalizeDocumentIds(input: {
   id?: number | null | undefined;
@@ -45,21 +44,6 @@ export function getBaseUrl(requestInfo?: RequestInfo) {
   }
 
   return requestInfo?.url?.origin ?? `http://localhost:${appConfig.port}`;
-}
-
-export function formatDocumentResourceText(document: DocumentResourceDetail) {
-  return [
-    `Title: ${document.title}`,
-    `Description: ${document.description}`,
-    `Date: ${document.document_date ?? "Unknown"}`,
-    `Added: ${document.added_at}`,
-    `Original: ${document.original_filename}`,
-    `Mime Type: ${document.mime_type}`,
-    "",
-    "---",
-    "",
-    document.content,
-  ].join("\n");
 }
 
 function getHeader(

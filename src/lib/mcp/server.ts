@@ -1,29 +1,19 @@
 import { randomUUID } from "node:crypto";
 
-import {
-  McpServer,
-  ResourceTemplate,
-} from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import * as z from "zod/v4";
 
 import {
   getDocumentContentsByIds,
-  getDocumentResourceById,
   getDocumentsByIds,
   getDocumentsForDownload,
-  listDocumentResources,
   listDocuments,
   searchDocuments,
 } from "@/lib/documents";
 
-import {
-  formatDocumentResourceText,
-  getBaseUrl,
-  normalizeDocumentIds,
-  stripSnippetMarkers,
-} from "./utils";
+import { getBaseUrl, normalizeDocumentIds, stripSnippetMarkers } from "./utils";
 
 type McpSession = {
   server: McpServer;
@@ -411,69 +401,6 @@ function createDocsAiMcpServer() {
         baseUrl,
       });
       return createArrayToolResult("downloads", downloads);
-    },
-  );
-
-  const documentResourceTemplate = new ResourceTemplate("document://{id}", {
-    list: async () => {
-      const resources = await listDocumentResources();
-
-      return {
-        resources: resources.map((resource) => ({
-          uri: `document://${resource.id}`,
-          name: resource.title,
-          description: resource.description,
-          mimeType: "text/plain",
-        })),
-      };
-    },
-    complete: {
-      id: async (value) => {
-        const resources = await listDocumentResources();
-        const prefix = value.trim();
-
-        return resources
-          .map((resource) => String(resource.id))
-          .filter((id) => id.startsWith(prefix))
-          .slice(0, MAX_LIMIT);
-      },
-    },
-  });
-
-  server.registerResource(
-    "document",
-    documentResourceTemplate,
-    {
-      title: "Document",
-      description:
-        "A document resource containing metadata headers followed by the full extracted text.",
-      mimeType: "text/plain",
-    },
-    async (uri, variables) => {
-      const idValue = Array.isArray(variables.id)
-        ? variables.id[0]
-        : variables.id;
-      const id = Number.parseInt(idValue, 10);
-
-      if (!Number.isInteger(id) || id < 1) {
-        throw new Error(`Invalid document URI: ${uri.href}`);
-      }
-
-      const document = await getDocumentResourceById(id);
-
-      if (!document) {
-        throw new Error(`Document ${id} not found`);
-      }
-
-      return {
-        contents: [
-          {
-            uri: `document://${document.id}`,
-            mimeType: "text/plain",
-            text: formatDocumentResourceText(document),
-          },
-        ],
-      };
     },
   );
 
