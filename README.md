@@ -57,3 +57,45 @@ Everything lives under `/data` by default — the SQLite database, originals, th
 | `OCR_VLM_MODEL` | `openai/gpt-5.4-mini` | Model used for OCR |
 | `METADATA_LLM_MODEL` | `openai/gpt-5.4` | Model used for title/description extraction |
 | `PORT` | `3000` | Port inside the container |
+
+## MCP setup
+
+If your MCP client supports remote Streamable HTTP servers, point it at the `/mcp` URL directly. A typical config looks like this:
+
+```json
+{
+  "mcpServers": {
+    "docs-ai": {
+      "url": "https://docs-ai.tailnet.ts.net/mcp"
+    }
+  }
+}
+```
+
+Because most MCP clients refuse to connect to servers over `http`, it is recommended to use [Tailscale Serve](https://tailscale.com/docs/features/tailscale-serve) - this will give Docs AI an HTTPS endpoint but not expose it to the public Internet.
+
+### What the MCP server exposes
+
+- Tools:
+  - `search_documents`
+  - `get_document`
+  - `get_document_content`
+  - `list_recent_documents`
+  - `download_document`
+
+### What to expect
+
+Once connected, your assistant can:
+
+- search the archive by natural language
+- fetch one or more full documents in a single call
+- fetch only extracted text when metadata is unnecessary
+- list recently added documents
+- generate download links for original files
+
+### Example prompts
+
+- "Find invoices from Deutsche Telekom."
+- "Show me the full text of documents 12 and 14."
+- "What documents were added in the last week?"
+- "Give me a download link for document 42."

@@ -1,6 +1,7 @@
 import { sql } from "kysely";
 
 import { getDb } from "@/lib/db/connection";
+import type { DocumentRow } from "@/lib/db/schema";
 
 export interface DocumentSummary {
   id: number;
@@ -27,6 +28,19 @@ export interface DocumentDetail extends DocumentSummary {
   download_url: string;
 }
 
+export interface DocumentContent {
+  id: number;
+  content: string;
+}
+
+export interface DocumentDownload {
+  id: number;
+  original_filename: string;
+  mime_type: string;
+  file_size: number;
+  download_url: string;
+}
+
 export interface PaginatedDocuments<T> {
   items: T[];
   total: number;
@@ -38,8 +52,75 @@ function buildThumbnailUrl(id: number) {
   return `/api/documents/${id}/thumbnail`;
 }
 
-function buildDownloadUrl(id: number) {
-  return `/api/documents/${id}/original`;
+function buildDownloadUrl(id: number, baseUrl?: string) {
+  const path = `/api/documents/${id}/original`;
+
+  if (!baseUrl) {
+    return path;
+  }
+
+  return new URL(path, ensureTrailingSlash(baseUrl)).toString();
+}
+
+function ensureTrailingSlash(value: string) {
+  return value.endsWith("/") ? value : `${value}/`;
+}
+
+function uniqueIds(ids: number[]) {
+  return [...new Set(ids)];
+}
+
+function reorderByRequestedIds<T extends { id: number }>(
+  rows: T[],
+  requestedIds: number[],
+) {
+  const byId = new Map(rows.map((row) => [row.id, row]));
+
+  return requestedIds.flatMap((id) => {
+    const row = byId.get(id);
+    return row ? [row] : [];
+  });
+}
+
+function mapDocumentSummary(
+  document: Pick<
+    DocumentRow,
+    | "id"
+    | "title"
+    | "description"
+    | "document_date"
+    | "added_at"
+    | "original_filename"
+    | "mime_type"
+  >,
+): DocumentSummary {
+  return {
+    ...document,
+    thumbnail_url: buildThumbnailUrl(document.id),
+  };
+}
+
+function mapDocumentDetail(
+  document: DocumentRow,
+  { baseUrl }: { baseUrl?: string } = {},
+): DocumentDetail {
+  return {
+    id: document.id,
+    title: document.title,
+    description: document.description,
+    document_date: document.document_date,
+    added_at: document.added_at,
+    original_filename: document.original_filename,
+    mime_type: document.mime_type,
+    thumbnail_url: buildThumbnailUrl(document.id),
+    stored_filename: document.stored_filename,
+    file_size: document.file_size,
+    page_count: document.page_count,
+    content: document.content,
+    created_at: document.created_at,
+    updated_at: document.updated_at,
+    download_url: buildDownloadUrl(document.id, baseUrl),
+  };
 }
 
 export async function getDocumentCount() {
@@ -94,10 +175,7 @@ export async function listDocuments({
   ]);
 
   return {
-    items: documents.map((document) => ({
-      ...document,
-      thumbnail_url: buildThumbnailUrl(document.id),
-    })),
+    items: documents.map(mapDocumentSummary),
     total: Number(countRow.count),
     page,
     limit,
@@ -151,8 +229,8 @@ export async function searchDocuments({
 
   return {
     items: results.rows.map((row) => ({
-      ...row,
-      thumbnail_url: buildThumbnailUrl(row.id),
+      ...mapDocumentSummary(row),
+      snippet: row.snippet,
     })),
     total: Number(totalResult.rows[0]?.count ?? 0),
     page,
@@ -162,33 +240,68 @@ export async function searchDocuments({
 
 export async function getDocumentById(
   id: number,
+  options?: { baseUrl?: string },
 ): Promise<DocumentDetail | null> {
-  const db = await getDb();
-  const document = await db
-    .selectFrom("documents")
-    .selectAll()
-    .where("id", "=", id)
-    .executeTakeFirst();
+  const [document] = await getDocumentsByIds([id], options);
+  return document ?? null;
+}
 
-  if (!document) {
-    return null;
+export async function getDocumentsByIds(
+  ids: number[],
+  { baseUrl }: { baseUrl?: string } = {},
+): Promise<DocumentDetail[]> {
+  if (ids.length === 0) {
+    return [];
   }
 
-  return {
-    id: document.id,
-    title: document.title,
-    description: document.description,
-    document_date: document.document_date,
-    added_at: document.added_at,
-    original_filename: document.original_filename,
-    mime_type: document.mime_type,
-    thumbnail_url: buildThumbnailUrl(document.id),
-    stored_filename: document.stored_filename,
-    file_size: document.file_size,
-    page_count: document.page_count,
-    content: document.content,
-    created_at: document.created_at,
-    updated_at: document.updated_at,
-    download_url: buildDownloadUrl(document.id),
-  };
+  const db = await getDb();
+  const documents = await db
+    .selectFrom("documents")
+    .selectAll()
+    .where("id", "in", uniqueIds(ids))
+    .execute();
+
+  return reorderByRequestedIds(
+    documents.map((document) => mapDocumentDetail(document, { baseUrl })),
+    ids,
+  );
+}
+
+export async function getDocumentContentsByIds(ids: number[]) {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const db = await getDb();
+  const documents = await db
+    .selectFrom("documents")
+    .select(["id", "content"])
+    .where("id", "in", uniqueIds(ids))
+    .execute();
+
+  return reorderByRequestedIds(documents, ids);
+}
+
+export async function getDocumentsForDownload(
+  ids: number[],
+  { baseUrl }: { baseUrl?: string } = {},
+): Promise<DocumentDownload[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const db = await getDb();
+  const documents = await db
+    .selectFrom("documents")
+    .select(["id", "original_filename", "mime_type", "file_size"])
+    .where("id", "in", uniqueIds(ids))
+    .execute();
+
+  return reorderByRequestedIds(
+    documents.map((document) => ({
+      ...document,
+      download_url: buildDownloadUrl(document.id, baseUrl),
+    })),
+    ids,
+  );
 }
