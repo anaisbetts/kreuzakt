@@ -16,7 +16,7 @@ COPY . .
 
 RUN bun run build
 
-FROM node:20-alpine AS runner
+FROM oven/bun:1 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -40,4 +40,4 @@ USER nextjs
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["bun", "server.js"]
