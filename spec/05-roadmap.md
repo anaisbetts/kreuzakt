@@ -68,16 +68,15 @@ Drop a PDF, scanned image, or DOCX into the ingest folder. Within seconds, the d
 
 ### Deliverables
 
-- [ ] MCP Streamable HTTP transport mounted at `/mcp`
-- [ ] `search_documents` tool — full-text search with ranked results
-- [ ] Bulk-first MCP tool design — use array inputs/outputs wherever the operation naturally supports batching
-- [ ] `get_document` tool — fetch metadata + full text by ID or `ids[]`, returning an array
-- [ ] `get_document_content` tool — fetch raw text by ID or `ids[]`, returning an array
-- [ ] `list_recent_documents` tool — recent documents with optional `since` filter
-- [ ] `download_document` tool — return download URLs for one or more original files
-- [ ] Document resources: `document://{id}` URIs via `resources/list` and `resources/read`
-- [ ] Test with at least two MCP clients (e.g. Claude Desktop / Cursor)
-- [ ] Verify tool descriptions are clear enough for AI assistants to use without documentation
+- [x] MCP Streamable HTTP transport mounted at `/mcp`
+- [x] `search_documents` tool — full-text search with ranked results
+- [x] Bulk-first MCP tool design — use array inputs/outputs wherever the operation naturally supports batching
+- [x] `get_document` tool — fetch metadata + full text by ID or `ids[]`, returning an array
+- [x] `get_document_content` tool — fetch raw text by ID or `ids[]`, returning an array
+- [x] `list_recent_documents` tool — recent documents with optional `since` filter
+- [x] `download_document` tool — return download URLs for one or more original files
+- [x] Verify tool descriptions are clear enough for AI assistants to use without documentation
+- [x] Test with at least two MCP clients (e.g. Claude Desktop / Cursor)
 
 ### Definition of Done
 
