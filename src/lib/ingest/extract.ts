@@ -37,8 +37,8 @@ export async function extractDocument(
   const { detectMimeTypeFromPath, extractFile } = getKreuzberg();
   const mimeType = detectMimeTypeFromPath(filePath);
   const result = await extractFile(filePath, null, {
-    forceOcr: false,
-    force_ocr: false,
+    forceOcr: true,
+    force_ocr: true,
     ocr: {
       backend: "vlm",
       vlmConfig: buildVlmConfig(),
