@@ -67,10 +67,25 @@ export async function processIngestFile(
     const originalFilename = path.basename(filePath);
     const fileStats = await stat(filePath);
     const extracted = await extractDocument(filePath);
+
+    console.log("[ingest] generating title/description metadata", {
+      queueEntryId,
+      originalFilename,
+      extractedContentChars: extracted.content.length,
+    });
+
     const metadata = await generateDocumentMetadata(
       extracted.content,
       originalFilename,
     );
+
+    console.log("[ingest] metadata ready for insert", {
+      queueEntryId,
+      originalFilename,
+      titleLength: metadata.title.length,
+      descriptionLength: metadata.description.length,
+      document_date: metadata.document_date,
+    });
 
     storedFilename = buildStoredFilename(fileHash, originalFilename);
 
