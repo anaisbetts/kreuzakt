@@ -34,6 +34,9 @@ export interface DocumentViewerProps {
   onDeleteDocument?: () => void | Promise<void>;
   isDeleting?: boolean;
   deleteError?: string | null;
+  onRescanDocument?: () => void | Promise<void>;
+  isRescanning?: boolean;
+  rescanError?: string | null;
 }
 
 const formatDate = formatDateLong;
@@ -244,6 +247,9 @@ export function DocumentViewerPage({
   onDeleteDocument,
   isDeleting = false,
   deleteError = null,
+  onRescanDocument,
+  isRescanning = false,
+  rescanError = null,
 }: DocumentViewerProps) {
   const isImage = mimeType.startsWith("image/");
   const isPdf = mimeType === "application/pdf";
@@ -371,6 +377,34 @@ export function DocumentViewerPage({
                   </svg>
                   Download
                 </button>
+                <button
+                  type="button"
+                  disabled={isRescanning || !onRescanDocument}
+                  onClick={() => void onRescanDocument?.()}
+                  className="flex items-center justify-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <svg
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className="h-4 w-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M16.023 9.348h4.992V4.356m-.983 4.992A9 9 0 105.477 19.644M3 19.644h4.992v-4.992"
+                    />
+                  </svg>
+                  {isRescanning ? "Regenerating…" : "Regenerate Metadata"}
+                </button>
+                {rescanError ? (
+                  <p className="text-center text-xs text-red-600">
+                    {rescanError}
+                  </p>
+                ) : null}
                 <button
                   type="button"
                   onClick={onToggleText}

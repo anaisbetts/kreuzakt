@@ -2,6 +2,10 @@ import { sql } from "kysely";
 
 import { getDb } from "@/lib/db/connection";
 import type { DocumentRow } from "@/lib/db/schema";
+import { fileExists, getOriginalFilePath } from "@/lib/files";
+import { extractDocument } from "@/lib/ingest/extract";
+import { generateDocumentMetadata } from "@/lib/ingest/metadata";
+import { generateThumbnail } from "@/lib/ingest/thumbnail";
 import { expandSearchQuery } from "@/lib/query-expansion";
 
 const SEARCH_WEIGHT_BM25 = 1.0;
@@ -51,6 +55,13 @@ export interface PaginatedDocuments<T> {
   total: number;
   page: number;
   limit: number;
+}
+
+export class DocumentOriginalNotFoundError extends Error {
+  constructor(documentId: number) {
+    super(`Original file for document ${documentId} not found`);
+    this.name = "DocumentOriginalNotFoundError";
+  }
 }
 
 function buildThumbnailUrl(id: number) {
@@ -362,4 +373,55 @@ export async function deleteDocumentById(id: number): Promise<boolean> {
 
     return true;
   });
+}
+
+export async function rescanDocumentById(
+  id: number,
+  options?: { baseUrl?: string },
+): Promise<DocumentDetail | null> {
+  const db = await getDb();
+  const existing = await db
+    .selectFrom("documents")
+    .selectAll()
+    .where("id", "=", id)
+    .executeTakeFirst();
+
+  if (!existing) {
+    return null;
+  }
+
+  const originalPath = getOriginalFilePath(existing.stored_filename);
+
+  if (!(await fileExists(originalPath))) {
+    throw new DocumentOriginalNotFoundError(id);
+  }
+
+  const extracted = await extractDocument(originalPath);
+  const metadata = await generateDocumentMetadata(
+    extracted.content,
+    existing.original_filename,
+  );
+
+  await generateThumbnail(
+    originalPath,
+    extracted.mimeType,
+    id,
+    extracted.pageCount,
+  );
+
+  await db
+    .updateTable("documents")
+    .set({
+      mime_type: extracted.mimeType,
+      page_count: extracted.pageCount,
+      title: metadata.title,
+      description: metadata.description,
+      document_date: metadata.document_date,
+      content: extracted.content,
+      updated_at: sql<string>`datetime('now')`,
+    })
+    .where("id", "=", id)
+    .execute();
+
+  return getDocumentById(id, options);
 }

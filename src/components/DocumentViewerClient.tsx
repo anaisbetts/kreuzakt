@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import {
   DocumentViewerPage,
@@ -29,6 +29,9 @@ export interface DocumentViewerClientProps
     | "onDeleteDocument"
     | "isDeleting"
     | "deleteError"
+    | "onRescanDocument"
+    | "isRescanning"
+    | "rescanError"
   > {}
 
 export function DocumentViewerClient({
@@ -44,6 +47,9 @@ export function DocumentViewerClient({
   const [currentPage, setCurrentPage] = useState(initialPage ?? 1);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isRescanning, setIsRescanning] = useState(false);
+  const [rescanError, setRescanError] = useState<string | null>(null);
+  const [isRefreshing, startRefreshTransition] = useTransition();
   const { isUploading, notice, uploadFiles } = useIngestUpload();
 
   async function handleDeleteDocument() {
@@ -77,6 +83,36 @@ export function DocumentViewerClient({
       );
     } finally {
       setIsDeleting(false);
+    }
+  }
+
+  async function handleRescanDocument() {
+    setIsRescanning(true);
+    setRescanError(null);
+
+    try {
+      const response = await fetch(`/api/documents/${id}/rescan`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as {
+          message?: string;
+        } | null;
+        throw new Error(body?.message ?? "Could not regenerate metadata");
+      }
+
+      startRefreshTransition(() => {
+        router.refresh();
+      });
+    } catch (error) {
+      setRescanError(
+        error instanceof Error
+          ? error.message
+          : "Could not regenerate metadata",
+      );
+    } finally {
+      setIsRescanning(false);
     }
   }
 
@@ -154,6 +190,9 @@ export function DocumentViewerClient({
       onDeleteDocument={handleDeleteDocument}
       isDeleting={isDeleting}
       deleteError={deleteError}
+      onRescanDocument={handleRescanDocument}
+      isRescanning={isRescanning || isRefreshing}
+      rescanError={rescanError}
     />
   );
 }
