@@ -1,0 +1,7 @@
+{
+  "plugins": {
+    "cursor-team-kit": {
+      "enabled": true
+    }
+  }
+}

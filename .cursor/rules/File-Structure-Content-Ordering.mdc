@@ -1,0 +1,24 @@
+---
+description: 
+alwaysApply: true
+---
+
+Every code file must follow a strict top-to-bottom ordering that reflects a "newspaper" hierarchy — the headline goes first, the fine print goes last. A reader skimming from line 1 should immediately understand what this file is about, and should only encounter supporting details as they scroll further.
+
+Required ordering
+
+Imports — external dependencies first, then internal/relative imports, separated by a blank line.
+Constants — module-level configuration, magic numbers pulled into named values, environment lookups, default values.
+Types and Interfaces — type aliases, interfaces, enums, Zod schemas, or any shape definitions that the rest of the file depends on.
+Primary export / "headline" — the single class, function, or component that defines why this file exists. If someone reads only this, they should understand the file's purpose. This is the thing the filename describes.
+Supporting actors — secondary classes, functions, or components that the headline depends on or that extend it. Ordered by relevance to the headline, most related first.
+Utilities and helpers — pure functions, formatters, validators, mappers, and anything that could plausibly live in a utils/ file but is only used here. These are the least thematically central items.
+
+Why this matters
+
+Readability: new contributors orient themselves in seconds, not minutes.
+Code review: reviewers see intent before implementation details.
+Merge conflicts: keeping a consistent structure means different authors' changes land in predictable zones.
+
+When you're unsure where something belongs
+Ask: "If I deleted everything else in this file, would this item alone still justify the file's name?" If yes, it's the headline. If it supports the headline, it's a supporting actor. If it supports anything generically, it's a utility.
