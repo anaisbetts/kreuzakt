@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { QueueRow } from "@/lib/db/schema";
 import type { QueueCounts } from "@/lib/ingest/queue";
 
+import { McpSetupSection } from "./McpSetupSection";
 import { PaperlessImport } from "./PaperlessImport";
 import { ProcessingQueue } from "./ProcessingQueue";
 
@@ -65,6 +66,8 @@ export function SystemStatusPage({
         <StatusRow label="Metadata Model" value={metadataModel} />
         <StatusRow label="LLM Endpoint" value={llmEndpoint} />
       </div>
+
+      <McpSetupSection />
 
       <PaperlessImport />
 
