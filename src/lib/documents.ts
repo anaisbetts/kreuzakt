@@ -3,10 +3,13 @@ import { sql } from "kysely";
 import { getDb } from "@/lib/db/connection";
 import type { DocumentRow } from "@/lib/db/schema";
 import { fileExists, getOriginalFilePath } from "@/lib/files";
+import { deleteFtsEntry, updateFtsEntry } from "@/lib/fts";
 import { extractDocument } from "@/lib/ingest/extract";
 import { generateDocumentMetadata } from "@/lib/ingest/metadata";
 import { generateThumbnail } from "@/lib/ingest/thumbnail";
 import { expandSearchQuery } from "@/lib/query-expansion";
+import { extractSnippet } from "@/lib/search-snippets";
+import { stemQueryMultilingual } from "@/lib/stemming";
 
 const SEARCH_WEIGHT_BM25 = 1.0;
 const SEARCH_WEIGHT_RECENCY = 8.0;
@@ -227,12 +230,13 @@ export async function searchDocuments({
     ? await expandSearchQuery(query)
     : [];
   const matchQuery = buildExpandedMatchQuery(query, relatedTerms);
-  console.log("sqlite fts MATCH query", matchQuery);
+  const stemmedMatchQuery = stemQueryMultilingual(matchQuery);
+  console.log("sqlite fts MATCH query", stemmedMatchQuery);
 
   const totalResult = await sql<{ count: number }>`
     SELECT COUNT(*) AS count
     FROM documents_fts
-    WHERE documents_fts MATCH ${matchQuery}
+    WHERE documents_fts MATCH ${stemmedMatchQuery}
   `.execute(db);
 
   const results = await sql<{
@@ -243,7 +247,7 @@ export async function searchDocuments({
     added_at: string;
     original_filename: string;
     mime_type: string;
-    snippet: string;
+    content: string;
   }>`
     SELECT
       d.id,
@@ -253,10 +257,10 @@ export async function searchDocuments({
       d.added_at,
       d.original_filename,
       d.mime_type,
-      snippet(documents_fts, -1, '[[[', ']]]', '...', 18) AS snippet
+      d.content
     FROM documents_fts
     JOIN documents AS d ON d.id = documents_fts.rowid
-    WHERE documents_fts MATCH ${matchQuery}
+    WHERE documents_fts MATCH ${stemmedMatchQuery}
     ORDER BY (
       ${sql.raw(String(SEARCH_WEIGHT_BM25))} * bm25(documents_fts, 10.0, 5.0, 1.0, 3.0)
       - ${sql.raw(String(SEARCH_WEIGHT_RECENCY))} * exp(
@@ -269,10 +273,12 @@ export async function searchDocuments({
     OFFSET ${offset}
   `.execute(db);
 
+  const queryTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+
   return {
     items: results.rows.map((row) => ({
       ...mapDocumentSummary(row),
-      snippet: row.snippet,
+      snippet: extractSnippet(row.content, queryTerms),
     })),
     total: Number(totalResult.rows[0]?.count ?? 0),
     page,
@@ -369,6 +375,7 @@ export async function deleteDocumentById(id: number): Promise<boolean> {
       .where("document_id", "=", id)
       .execute();
 
+    await deleteFtsEntry(trx, id);
     await trx.deleteFrom("documents").where("id", "=", id).execute();
 
     return true;
@@ -418,10 +425,20 @@ export async function rescanDocumentById(
       description: metadata.description,
       document_date: metadata.document_date,
       content: extracted.content,
+      language: metadata.language,
       updated_at: sql<string>`datetime('now')`,
     })
     .where("id", "=", id)
     .execute();
+
+  await updateFtsEntry(db, {
+    id,
+    title: metadata.title,
+    description: metadata.description,
+    content: extracted.content,
+    original_filename: existing.original_filename,
+    language: metadata.language,
+  });
 
   return getDocumentById(id, options);
 }
