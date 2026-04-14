@@ -10,6 +10,7 @@ import {
   getDocumentThumbnailDir,
   getOriginalFilePath,
 } from "@/lib/files";
+import { deleteFtsEntry, insertFtsEntry } from "@/lib/fts";
 import { extractDocument } from "./extract";
 import { generateDocumentMetadata } from "./metadata";
 import { isDuplicateFileHashConstraintError } from "./pipeline-errors";
@@ -41,6 +42,7 @@ export async function processIngestFile(
   options?: ProcessIngestOptions,
 ): Promise<ProcessFileResult> {
   let insertedDocumentId: number | null = null;
+  let ftsInserted = false;
   let fileHash: string | null = null;
   let storedFilename: string | null = null;
 
@@ -103,12 +105,23 @@ export async function processIngestFile(
         description: metadata.description,
         document_date: metadata.document_date,
         content: extracted.content,
+        language: metadata.language,
         added_at: options?.addedAt ?? new Date().toISOString(),
       })
       .returning("id")
       .executeTakeFirstOrThrow();
 
     insertedDocumentId = inserted.id;
+
+    await insertFtsEntry(db, {
+      id: insertedDocumentId,
+      title: metadata.title,
+      description: metadata.description,
+      content: extracted.content,
+      original_filename: originalFilename,
+      language: metadata.language,
+    });
+    ftsInserted = true;
 
     await copyOriginalToArchive(filePath, originalFilename, fileHash);
     await unlink(filePath);
@@ -149,6 +162,9 @@ export async function processIngestFile(
 
     if (insertedDocumentId != null) {
       const db = await getDb();
+      if (ftsInserted) {
+        await deleteFtsEntry(db, insertedDocumentId);
+      }
       await db
         .deleteFrom("documents")
         .where("id", "=", insertedDocumentId)

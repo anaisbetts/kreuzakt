@@ -3,11 +3,13 @@ import path from "node:path";
 import OpenAI from "openai";
 
 import { appConfig } from "@/lib/config";
+import { isStemSupported } from "@/lib/stemming";
 
 export interface GeneratedMetadata {
   title: string;
   description: string;
   document_date: string | null;
+  language: string;
 }
 
 const LOG_PREFIX = "[metadata]";
@@ -56,6 +58,7 @@ function fallbackMetadata(originalFilename: string): GeneratedMetadata {
     title: fallbackTitle(originalFilename),
     description: "",
     document_date: null,
+    language: "en",
   };
 }
 
@@ -80,6 +83,11 @@ function parseMetadataResponse(
       typeof parsed.document_date === "string" && parsed.document_date.trim()
         ? parsed.document_date.trim()
         : null;
+    const rawLanguage =
+      typeof parsed.language === "string"
+        ? parsed.language.trim().toLowerCase().slice(0, 5)
+        : "en";
+    const language = isStemSupported(rawLanguage) ? rawLanguage : "en";
 
     const usedTitleFallback = !parsed.title?.trim();
     logMetadata("parsed LLM JSON successfully", {
@@ -88,12 +96,14 @@ function parseMetadataResponse(
       titleLength: title.length,
       descriptionLength: description.length,
       document_date,
+      language,
     });
 
     return {
       title,
       description,
       document_date,
+      language,
     };
   } catch (parseError) {
     logMetadataWarn("failed to parse metadata JSON; using filename fallback", {
@@ -143,10 +153,11 @@ export async function generateDocumentMetadata(
         {
           role: "system",
           content: `Extract metadata from the following document text.
-Return JSON: { "title": "...", "description": "...", "document_date": "YYYY-MM-DD" | null }
+Return JSON: { "title": "...", "description": "...", "document_date": "YYYY-MM-DD" | null, "language": "xx" }
 - title: A concise, descriptive title for the document
 - description: 1-2 sentences describing the document's content and purpose
-- document_date: The date the document pertains to (not today's date), or null if unclear`,
+- document_date: The date the document pertains to (not today's date), or null if unclear
+- language: ISO 639-1 code for the primary language of the document (e.g. "en", "de", "fr", "es", "it", "pt", "nl", "sv", "no", "da", "fi", "ru", "cs", "ro", "hu")`,
         },
         {
           role: "user",
@@ -186,6 +197,7 @@ Return JSON: { "title": "...", "description": "...", "document_date": "YYYY-MM-D
       titlePreview: truncateForLog(parsed.title, 120),
       descriptionPreview: truncateForLog(parsed.description, 200),
       document_date: parsed.document_date,
+      language: parsed.language,
     });
 
     return parsed;

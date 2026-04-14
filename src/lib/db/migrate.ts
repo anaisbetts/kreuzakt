@@ -1,6 +1,10 @@
 import { type Kysely, sql } from "kysely";
 
+import { rebuildFtsIndex } from "@/lib/fts";
+
 import type { DB } from "./schema";
+
+const CURRENT_FTS_VERSION = "2";
 
 export async function migrateDatabase(db: Kysely<DB>) {
   await sql`
@@ -36,37 +40,67 @@ export async function migrateDatabase(db: Kysely<DB>) {
   `.execute(db);
 
   await sql`
-    CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts USING fts5(
-      title,
-      description,
-      content,
-      original_filename,
-      content='documents',
-      content_rowid='id',
-      tokenize='porter unicode61'
+    CREATE TABLE IF NOT EXISTS schema_meta (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
     )
   `.execute(db);
 
-  await sql`
-    CREATE TRIGGER IF NOT EXISTS documents_ai AFTER INSERT ON documents BEGIN
-      INSERT INTO documents_fts(rowid, title, description, content, original_filename)
-      VALUES (new.id, new.title, new.description, new.content, new.original_filename);
-    END
-  `.execute(db);
+  // Add language column if it doesn't exist (idempotent)
+  try {
+    await sql`ALTER TABLE documents ADD COLUMN language TEXT NOT NULL DEFAULT 'en'`.execute(
+      db,
+    );
+  } catch {
+    // Column already exists, ignore
+  }
 
-  await sql`
-    CREATE TRIGGER IF NOT EXISTS documents_ad AFTER DELETE ON documents BEGIN
-      INSERT INTO documents_fts(documents_fts, rowid, title, description, content, original_filename)
-      VALUES ('delete', old.id, old.title, old.description, old.content, old.original_filename);
-    END
-  `.execute(db);
+  // Check FTS schema version and migrate if needed
+  const ftsVersionRow = await db
+    .selectFrom("schema_meta")
+    .select("value")
+    .where("key", "=", "fts_version")
+    .executeTakeFirst();
 
-  await sql`
-    CREATE TRIGGER IF NOT EXISTS documents_au AFTER UPDATE ON documents BEGIN
-      INSERT INTO documents_fts(documents_fts, rowid, title, description, content, original_filename)
-      VALUES ('delete', old.id, old.title, old.description, old.content, old.original_filename);
-      INSERT INTO documents_fts(rowid, title, description, content, original_filename)
-      VALUES (new.id, new.title, new.description, new.content, new.original_filename);
-    END
-  `.execute(db);
+  const needsFtsMigration =
+    !ftsVersionRow || ftsVersionRow.value !== CURRENT_FTS_VERSION;
+
+  if (needsFtsMigration) {
+    console.log(
+      "[migrate] upgrading FTS schema to version",
+      CURRENT_FTS_VERSION,
+    );
+
+    // Drop old triggers
+    await sql`DROP TRIGGER IF EXISTS documents_ai`.execute(db);
+    await sql`DROP TRIGGER IF EXISTS documents_ad`.execute(db);
+    await sql`DROP TRIGGER IF EXISTS documents_au`.execute(db);
+
+    // Drop old FTS table (may be content-synced or not exist yet)
+    await sql`DROP TABLE IF EXISTS documents_fts`.execute(db);
+
+    // Create standalone FTS table (no content= sync; managed in application code)
+    await sql`
+      CREATE VIRTUAL TABLE documents_fts USING fts5(
+        title,
+        description,
+        content,
+        original_filename,
+        tokenize='unicode61'
+      )
+    `.execute(db);
+
+    // Rebuild FTS index from all existing documents
+    await rebuildFtsIndex(db);
+
+    await db
+      .insertInto("schema_meta")
+      .values({ key: "fts_version", value: CURRENT_FTS_VERSION })
+      .onConflict((oc) =>
+        oc.column("key").doUpdateSet({ value: CURRENT_FTS_VERSION }),
+      )
+      .execute();
+
+    console.log("[migrate] FTS schema upgrade complete");
+  }
 }

@@ -18,9 +18,15 @@ export interface DocumentsTable {
   description: string;
   document_date: string | null;
   content: string;
+  language: Generated<string>;
   added_at: string;
   created_at: Generated<string>;
   updated_at: Generated<string>;
+}
+
+export interface SchemaMetaTable {
+  key: string;
+  value: string;
 }
 
 export interface DocumentsFtsTable {
@@ -44,6 +50,7 @@ export interface DB {
   documents: DocumentsTable;
   documents_fts: DocumentsFtsTable;
   processing_queue: ProcessingQueueTable;
+  schema_meta: SchemaMetaTable;
 }
 
 export type DocumentRow = Selectable<DocumentsTable>;
