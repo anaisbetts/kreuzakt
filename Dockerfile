@@ -41,6 +41,9 @@ COPY --from=deps --chown=bun:bun /app/node_modules/@img ./node_modules/@img
 
 USER bun
 
+# Bun as PID 1 receives SIGTERM from `docker stop`; allow time via `docker stop --time` / compose stop_grace_period.
+STOPSIGNAL SIGTERM
+
 EXPOSE 3000
 
 CMD ["bun", "server.js"]

@@ -1,3 +1,4 @@
+import { registerSqliteMaintenance } from "@/lib/db/maintenance";
 import { ensureAppDirectories } from "@/lib/files";
 import { startWatcher } from "@/lib/ingest/watcher";
 
@@ -11,5 +12,6 @@ if (!globalThis.__docsAiInstrumentationStarted) {
   void (async () => {
     await ensureAppDirectories();
     await startWatcher();
+    registerSqliteMaintenance();
   })();
 }

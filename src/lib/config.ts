@@ -47,6 +47,13 @@ export const appConfig = {
     process.env.OPENAI_DEV_KEY ?? "",
   ),
   port: Number(process.env.PORT ?? "3000"),
+  /** Periodic WAL checkpoint; 0 disables the timer. */
+  sqliteMaintenanceIntervalMs: intFromEnv(
+    process.env.SQLITE_MAINTENANCE_INTERVAL_MS,
+    1800_000,
+  ),
+  /** Optional periodic VACUUM (compaction); 0 disables. */
+  sqliteVacuumIntervalMs: intFromEnv(process.env.SQLITE_VACUUM_INTERVAL_MS, 0),
 } as const;
 
 export type AppConfig = typeof appConfig;
@@ -75,4 +82,12 @@ function resolvePath(value: string | undefined, fallback: string) {
   }
 
   return path.isAbsolute(value) ? value : path.resolve(process.cwd(), value);
+}
+
+function intFromEnv(value: string | undefined, fallback: number): number {
+  if (value === undefined || value.trim() === "") {
+    return fallback;
+  }
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) ? n : fallback;
 }
