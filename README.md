@@ -131,3 +131,7 @@ Other useful commands:
 - `bun test` — unit tests
 - `bun run test:integration` — integration tests (loads `.env.local` via `--env-file`; requires Paperless-related vars when those tests run)
 - `bun storybook` — UI development on port 6006
+
+### So.... why's it called "Kreuzakt"?
+
+It uses the library Kreuzberg, and it is a tool to help you with your "Akte" (files/documents). Just like "Berghain" is a portmanteau of "Kreuzberg" and "Friedrichshain", the two districts in Berlin that it sits between. (today you learn!)
