@@ -25,9 +25,34 @@ type QueryExpansionResponse = {
 
 export type QueryExpansionFetcher = (
   query: string,
+  languages: string[],
 ) => Promise<QueryExpansionResponse | null | undefined>;
 
 const queryExpansionCache = new Map<string, QueryExpansionCacheEntry>();
+
+function normalizeCorpusLanguages(languages: string[] | undefined): string[] {
+  if (!languages?.length) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+
+  for (const raw of languages) {
+    const code = raw.trim().toLowerCase();
+    if (!code || seen.has(code)) {
+      continue;
+    }
+    seen.add(code);
+    normalized.push(code);
+  }
+
+  return normalized.sort();
+}
+
+function buildExpansionCacheKey(query: string, languages: string[]) {
+  return `${query}\u0000${languages.join(",")}`;
+}
 
 function normalizeExpansionTerm(term: string) {
   return term
@@ -76,25 +101,25 @@ export function normalizeExpansionTerms(
   return normalizedTerms;
 }
 
-function getCachedTerms(query: string, now: number) {
-  const cached = queryExpansionCache.get(query);
+function getCachedTerms(cacheKey: string, now: number) {
+  const cached = queryExpansionCache.get(cacheKey);
   if (!cached) {
     return null;
   }
 
   if (cached.expiresAt <= now) {
-    queryExpansionCache.delete(query);
+    queryExpansionCache.delete(cacheKey);
     return null;
   }
 
-  queryExpansionCache.delete(query);
-  queryExpansionCache.set(query, cached);
+  queryExpansionCache.delete(cacheKey);
+  queryExpansionCache.set(cacheKey, cached);
   return cached.terms;
 }
 
-function setCachedTerms(query: string, terms: string[], now: number) {
-  queryExpansionCache.delete(query);
-  queryExpansionCache.set(query, {
+function setCachedTerms(cacheKey: string, terms: string[], now: number) {
+  queryExpansionCache.delete(cacheKey);
+  queryExpansionCache.set(cacheKey, {
     terms,
     expiresAt: now + QUERY_EXPANSION_CACHE_TTL_MS,
   });
@@ -132,8 +157,26 @@ async function withTimeout<T>(
 
 async function fetchExpansionTermsFromModel(
   query: string,
+  languages: string[],
 ): Promise<QueryExpansionResponse | null | undefined> {
-  console.log(`Fetching expansion terms for query: ${query}`);
+  const multiLanguage = languages.length > 1;
+  const languageList = languages.join(", ");
+
+  console.log(
+    `Fetching expansion terms for query: ${query}${multiLanguage ? ` (corpus languages: ${languageList})` : ""}`,
+  );
+
+  const systemCrossLanguage = multiLanguage
+    ? `
+- The indexed document corpus includes multiple languages (ISO 639-1 codes are given in the user message). Include equivalent and native terms in each of those languages for the concepts in the query, in addition to synonyms and related terms in the query's own language.`
+    : "";
+
+  const userCrossLanguage = multiLanguage
+    ? `
+The corpus contains documents in these languages (ISO 639-1): ${languageList}. Include equivalent terms in each of these languages for the user's query, in addition to synonyms in the query's own language.
+`
+    : "";
+
   const response = await openai.chat.completions.create({
     model: appConfig.ocrModel,
     messages: [
@@ -142,7 +185,7 @@ async function fetchExpansionTermsFromModel(
         content: `Return JSON only.
 Schema: { "related_terms": string[] }
 
-- Include related keywords, synonyms, alternate names, abbreviations, domain terms, and likely document vocabulary.
+- Include related keywords, synonyms, alternate names, abbreviations, domain terms, and likely document vocabulary.${systemCrossLanguage}
 - Keep terms concise.
 - Do not include explanations or any fields other than related_terms.
 - Do not repeat the user's exact query.`,
@@ -153,7 +196,7 @@ Schema: { "related_terms": string[] }
 <userQuery>
 ${query}
 </userQuery>
-
+${userCrossLanguage}
 <schema>
 {"related_terms": string[]}
 </schema>
@@ -179,6 +222,7 @@ export async function expandSearchQuery(
   query: string,
   options: {
     fetcher?: QueryExpansionFetcher;
+    languages?: string[];
     now?: () => number;
     timeoutMs?: number;
   } = {},
@@ -188,8 +232,11 @@ export async function expandSearchQuery(
     return [];
   }
 
+  const normalizedLanguages = normalizeCorpusLanguages(options.languages);
+  const cacheKey = buildExpansionCacheKey(trimmedQuery, normalizedLanguages);
+
   const now = options.now?.() ?? Date.now();
-  const cachedTerms = getCachedTerms(trimmedQuery, now);
+  const cachedTerms = getCachedTerms(cacheKey, now);
   if (cachedTerms) {
     return cachedTerms;
   }
@@ -197,7 +244,7 @@ export async function expandSearchQuery(
   try {
     const fetcher = options.fetcher ?? fetchExpansionTermsFromModel;
     const response = await withTimeout(
-      fetcher(trimmedQuery),
+      fetcher(trimmedQuery, normalizedLanguages),
       options.timeoutMs ?? QUERY_EXPANSION_TIMEOUT_MS,
     );
     const normalizedTerms = normalizeExpansionTerms(
@@ -205,7 +252,7 @@ export async function expandSearchQuery(
       response?.related_terms ?? response?.relatedTerms,
     );
 
-    setCachedTerms(trimmedQuery, normalizedTerms, now);
+    setCachedTerms(cacheKey, normalizedTerms, now);
     return normalizedTerms;
   } catch (error) {
     console.error("query expansion failed", error);

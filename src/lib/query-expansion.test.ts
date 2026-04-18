@@ -38,6 +38,53 @@ describe("expandSearchQuery", () => {
     expect(first).toEqual(["billing statement"]);
     expect(second).toEqual(["billing statement"]);
     expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher).toHaveBeenCalledWith("invoice", []);
+  });
+
+  it("passes normalized corpus languages to the fetcher", async () => {
+    const fetcher = mock(async () => ({
+      related_terms: ["a"],
+    }));
+
+    await expandSearchQuery("tax", {
+      fetcher,
+      languages: ["DE", "en", "de"],
+    });
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher).toHaveBeenCalledWith("tax", ["de", "en"]);
+  });
+
+  it("uses separate cache entries when languages differ", async () => {
+    const fetcher = mock(async () => ({
+      related_terms: ["x"],
+    }));
+
+    await expandSearchQuery("q", { fetcher, languages: ["en", "de"] });
+    await expandSearchQuery("q", { fetcher, languages: ["en"] });
+
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher).toHaveBeenNthCalledWith(1, "q", ["de", "en"]);
+    expect(fetcher).toHaveBeenNthCalledWith(2, "q", ["en"]);
+  });
+
+  it("hits cache when query and languages match", async () => {
+    const fetcher = mock(async () => ({
+      related_terms: ["cached"],
+    }));
+
+    const first = await expandSearchQuery("same", {
+      fetcher,
+      languages: ["en", "de"],
+    });
+    const second = await expandSearchQuery("same", {
+      fetcher,
+      languages: ["de", "en"],
+    });
+
+    expect(first).toEqual(["cached"]);
+    expect(second).toEqual(["cached"]);
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
   it("falls back to no extra terms when expansion fails", async () => {

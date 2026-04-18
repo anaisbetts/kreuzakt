@@ -15,6 +15,13 @@ const SEARCH_WEIGHT_BM25 = 1.0;
 const SEARCH_WEIGHT_RECENCY = 8.0;
 const SEARCH_RECENCY_HALF_LIFE_DAYS = 30;
 
+const CORPUS_LANGUAGES_CACHE_TTL_MS = 5 * 60 * 1000;
+
+let corpusLanguagesCache: {
+  value: string[];
+  expiresAt: number;
+} | null = null;
+
 export interface DocumentSummary {
   id: number;
   title: string;
@@ -213,6 +220,35 @@ export async function listDocuments({
   };
 }
 
+export async function getCorpusLanguages(now = Date.now()): Promise<string[]> {
+  if (corpusLanguagesCache && corpusLanguagesCache.expiresAt > now) {
+    return corpusLanguagesCache.value;
+  }
+
+  const db = await getDb();
+  const rows = await db
+    .selectFrom("documents")
+    .select("language")
+    .distinct()
+    .execute();
+
+  const langs = rows
+    .map((r) => r.language?.trim().toLowerCase())
+    .filter((l): l is string => !!l)
+    .sort();
+
+  corpusLanguagesCache = {
+    value: langs,
+    expiresAt: now + CORPUS_LANGUAGES_CACHE_TTL_MS,
+  };
+
+  return langs;
+}
+
+export function resetCorpusLanguagesCache() {
+  corpusLanguagesCache = null;
+}
+
 export async function searchDocuments({
   query,
   page,
@@ -226,8 +262,18 @@ export async function searchDocuments({
 }): Promise<PaginatedDocuments<SearchResultDocument>> {
   const db = await getDb();
   const offset = (page - 1) * limit;
+
+  let corpusLanguages: string[] = [];
+  if (expandRelatedKeywords) {
+    try {
+      corpusLanguages = await getCorpusLanguages();
+    } catch (error) {
+      console.error("getCorpusLanguages failed", error);
+    }
+  }
+
   const relatedTerms = expandRelatedKeywords
-    ? await expandSearchQuery(query)
+    ? await expandSearchQuery(query, { languages: corpusLanguages })
     : [];
   const matchQuery = buildExpandedMatchQuery(query, relatedTerms);
   const stemmedMatchQuery = stemQueryMultilingual(matchQuery);
