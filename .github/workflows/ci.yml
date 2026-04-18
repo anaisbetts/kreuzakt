@@ -1,5 +1,10 @@
 name: CI
 
+# Workflow artifact retention is set per upload below (7d vs max on release/tags).
+# Workflow run logs follow repository Settings → Actions → Artifact and log retention;
+# set that to 7 days if you want logs to match. Indefinite “pins” for releases use
+# GitHub Release assets and GHCR image tags, not workflow artifact storage.
+
 on:
   push:
     branches: [main]
@@ -31,6 +36,18 @@ jobs:
 
       - name: Build
         run: bun run build
+
+      - name: Write CI run marker
+        run: |
+          printf '%s\n' "${{ github.sha }}" "${{ github.event_name }}" "${{ github.ref }}" > ci-run-marker.txt
+
+      - name: Upload CI run marker
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-run-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ci-run-marker.txt
+          if-no-files-found: error
+          retention-days: ${{ (github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v')) && (github.event.repository.private && 400 || 90) || 7 }}
 
   docker:
     needs: check-and-build
