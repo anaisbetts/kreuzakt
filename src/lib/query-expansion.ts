@@ -8,6 +8,16 @@ const QUERY_EXPANSION_MAX_TERMS = 12;
 const QUERY_EXPANSION_MAX_TERM_LENGTH = 80;
 const QUERY_EXPANSION_TIMEOUT_MS = isDevMode() ? 30 * 1000 : 4 * 1000;
 
+// Anything that isn't a Unicode letter, digit, or whitespace is stripped from
+// LLM-provided expansion terms. This keeps FTS5-reserved characters (quotes,
+// parens, `*`, `:`, `^`, `+`, `-`, etc.) out of the MATCH query we later build.
+const FTS_UNSAFE_CHARS = /[^\p{L}\p{N}\s]/gu;
+
+// FTS5 boolean operator keywords. A bare operator word leaking into an expansion
+// term would turn an innocuous phrase into FTS syntax (e.g. "risk management"
+// becoming `risk (management OR manag)` after stemming), so we drop them.
+const FTS_OPERATOR_WORDS = new Set(["and", "or", "not", "near"]);
+
 const openai = new OpenAI({
   baseURL: appConfig.openaiBaseUrl,
   apiKey: appConfig.openaiApiKey || "local-llm",
@@ -55,11 +65,20 @@ function buildExpansionCacheKey(query: string, languages: string[]) {
 }
 
 function normalizeExpansionTerm(term: string) {
-  return term
+  const stripped = term
+    .replace(FTS_UNSAFE_CHARS, " ")
     .replace(/\s+/g, " ")
-    .replace(/^["'`]+|["'`]+$/g, "")
-    .trim()
-    .slice(0, QUERY_EXPANSION_MAX_TERM_LENGTH);
+    .trim();
+
+  if (!stripped) {
+    return "";
+  }
+
+  const safeTokens = stripped
+    .split(" ")
+    .filter((token) => !FTS_OPERATOR_WORDS.has(token.toLowerCase()));
+
+  return safeTokens.join(" ").slice(0, QUERY_EXPANSION_MAX_TERM_LENGTH).trim();
 }
 
 export function normalizeExpansionTerms(

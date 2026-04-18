@@ -97,11 +97,19 @@ function quoteFtsPhrase(value: string) {
 }
 
 export function buildExpandedMatchQuery(query: string, relatedTerms: string[]) {
+  // Stem the user's query here so that we only ever stem raw user text, never
+  // the constructed MATCH expression. Running a stemmer over a string that
+  // already contains `OR`, quotes, or parens would destroy the FTS5 syntax
+  // (lowercasing `OR` into a literal token, stripping quotes, etc.).
+  const stemmedQuery = stemQueryMultilingual(query);
+
   if (relatedTerms.length === 0) {
-    return query;
+    return stemmedQuery;
   }
 
-  return [`(${query})`, ...relatedTerms.map(quoteFtsPhrase)].join(" OR ");
+  return [`(${stemmedQuery})`, ...relatedTerms.map(quoteFtsPhrase)].join(
+    " OR ",
+  );
 }
 
 function uniqueIds(ids: number[]) {
@@ -276,13 +284,12 @@ export async function searchDocuments({
     ? await expandSearchQuery(query, { languages: corpusLanguages })
     : [];
   const matchQuery = buildExpandedMatchQuery(query, relatedTerms);
-  const stemmedMatchQuery = stemQueryMultilingual(matchQuery);
-  console.log("sqlite fts MATCH query", stemmedMatchQuery);
+  console.log("sqlite fts MATCH query", matchQuery);
 
   const totalResult = await sql<{ count: number }>`
     SELECT COUNT(*) AS count
     FROM documents_fts
-    WHERE documents_fts MATCH ${stemmedMatchQuery}
+    WHERE documents_fts MATCH ${matchQuery}
   `.execute(db);
 
   const results = await sql<{
@@ -306,7 +313,7 @@ export async function searchDocuments({
       d.content
     FROM documents_fts
     JOIN documents AS d ON d.id = documents_fts.rowid
-    WHERE documents_fts MATCH ${stemmedMatchQuery}
+    WHERE documents_fts MATCH ${matchQuery}
     ORDER BY (
       ${sql.raw(String(SEARCH_WEIGHT_BM25))} * bm25(documents_fts, 10.0, 5.0, 1.0, 3.0)
       - ${sql.raw(String(SEARCH_WEIGHT_RECENCY))} * exp(

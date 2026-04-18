@@ -24,6 +24,32 @@ describe("normalizeExpansionTerms", () => {
       ]),
     ).toEqual(["1040", "income tax"]);
   });
+
+  it("strips FTS5 reserved characters and operator words", () => {
+    expect(
+      normalizeExpansionTerms("home", [
+        'insurance OR policy OR "coverage"',
+        "(risk management)",
+        "claim*",
+        "health:insurance",
+        "AND",
+        "OR NOT NEAR",
+        "premium-plan",
+      ]),
+    ).toEqual([
+      "insurance policy coverage",
+      "risk management",
+      "claim",
+      "health insurance",
+      "premium plan",
+    ]);
+  });
+
+  it("drops terms that become empty after sanitization", () => {
+    expect(
+      normalizeExpansionTerms("q", ['"*"', "(((", "OR", "and", "...", "/"]),
+    ).toEqual([]);
+  });
 });
 
 describe("expandSearchQuery", () => {
@@ -117,7 +143,7 @@ describe("expandSearchQuery", () => {
 });
 
 describe("buildExpandedMatchQuery", () => {
-  it("preserves the original query and ORs in quoted related phrases", () => {
+  it("wraps the stemmed query and ORs in quoted related phrases", () => {
     expect(
       buildExpandedMatchQuery("annual report", [
         "financial statement",
@@ -128,7 +154,20 @@ describe("buildExpandedMatchQuery", () => {
     );
   });
 
-  it("leaves the query unchanged without extra terms", () => {
-    expect(buildExpandedMatchQuery("annual report", [])).toBe("annual report");
+  it("stems the user query portion", () => {
+    expect(buildExpandedMatchQuery("invoices", [])).toBe(
+      "(invoices OR invoic)",
+    );
+  });
+
+  it("leaves related terms as literal quoted phrases even when they look like FTS syntax", () => {
+    // normalizeExpansionTerms is the first line of defence, but buildExpandedMatchQuery
+    // must still emit a syntactically valid MATCH query if a caller slips something
+    // weird through.
+    expect(
+      buildExpandedMatchQuery("insurance", ["risk management", "liability"]),
+    ).toBe(
+      '((insurance OR insur OR insuranc)) OR "risk management" OR "liability"',
+    );
   });
 });
