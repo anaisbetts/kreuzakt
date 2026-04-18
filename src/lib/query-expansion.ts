@@ -6,7 +6,7 @@ const QUERY_EXPANSION_CACHE_TTL_MS = 5 * 60 * 1000;
 const QUERY_EXPANSION_CACHE_MAX_ENTRIES = 100;
 const QUERY_EXPANSION_MAX_TERMS = 12;
 const QUERY_EXPANSION_MAX_TERM_LENGTH = 80;
-const QUERY_EXPANSION_TIMEOUT_MS = isDevMode() ? 30 * 1000 : 4 * 1000;
+const QUERY_EXPANSION_TIMEOUT_MS = isDevMode() ? 60 * 1000 : 8 * 1000;
 
 // Anything that isn't a Unicode letter, digit, or whitespace is stripped from
 // LLM-provided expansion terms. This keeps FTS5-reserved characters (quotes,
@@ -174,6 +174,109 @@ async function withTimeout<T>(
   }
 }
 
+const multiLanguagePromptTemplate = (query: string, languageList: string) => `
+  You are a search query expansion assistant. Your task is to take a user's search query and generate related terms that will help them find relevant documents in a multilingual corpus. Here is the user's search query:
+
+   <query>
+   ${query}
+   </query>
+
+   Here are the languages present in the document corpus (provided as ISO 639-1 language codes):
+
+   <languages>
+   ${languageList}
+   </languages>
+
+   Your goal is to expand the search query by generating related terms that will maximize the likelihood that the user finds their document.
+
+   Before generating your final output, work through the following steps in <expansion_process> tags:
+
+   1. List out the core concepts in the user's query
+   2. Generate related terms in the query's own language, including:
+      - Synonyms
+      - Related keywords
+      - Alternate names
+      - Abbreviations
+      - Domain-specific terminology
+      - Likely vocabulary that might appear in relevant documents
+   3. **For EACH language code listed in the languages section**, systematically generate equivalent terms and native language terms for the concepts in the query. Go through the language list one by one - literally process each language code individually and generate terms for that specific language. First, create a checklist of all the language codes, then work through each one, marking it off as you complete it. It's OK for this section to be quite long.
+   4. Review all generated terms to ensure they are concise
+   5. Explicitly list any terms that exactly match the user's original query, then remove them from your final list
+
+   Important requirements:
+   - You must generate terms in ALL languages listed in the <languages> section, not just English
+   - Each language in the list should be processed - generate equivalent and native terms for that language
+   - Keep all terms concise (typically 1-3 words)
+   - Do not include the user's exact query text in your output
+   - Do not include any explanations or commentary
+
+   After your expansion process, output your results as valid JSON matching this exact schema:
+   <schema>
+   {
+     "related_terms": ["term1", "term2", "term3", "..."]
+   }
+   </schema>
+
+   Example output structure (with generic placeholder terms):
+   <schema>
+   {
+     "related_terms": ["synonym1", "related_concept", "abbreviation", "term_in_language2", "term_in_language3", "alternate_name", "domain_term"]
+   }
+   </schema>
+
+   Your output must:
+   - Be valid JSON only
+   - Contain only the "related_terms" field
+   - Have "related_terms" as an array of strings
+   - Include no other fields, explanations, or text outside the JSON`;
+
+const singleLanguagePromptTemplate = (query: string) => `
+  You are a search query expansion assistant. Your task is to take a user's search query and generate related terms that will help them find relevant documents. Here is the user's search query:
+
+  <query>
+  ${query}
+  </query>
+
+  Your goal is to expand the search query by generating related terms that will maximize the likelihood that the user finds their document.
+
+  Before generating your final output, work through the following steps in <expansion_process> tags:
+
+  1. List out the core concepts in the user's query
+  2. Generate related terms in the query's own language, including:
+     - Synonyms
+     - Related keywords
+     - Alternate names
+     - Abbreviations
+     - Domain-specific terminology
+     - Likely vocabulary that might appear in relevant documents
+  3. Review all generated terms to ensure they are concise
+  4. Explicitly list any terms that exactly match the user's original query, then remove them from your final list
+
+  Important requirements:
+  - Keep all terms concise (typically 1-3 words)
+  - Do not include the user's exact query text in your output
+  - Do not include any explanations or commentary
+
+  After your expansion process, output your results as valid JSON matching this exact schema:
+  <schema>
+  {
+    "related_terms": ["term1", "term2", "term3", "..."]
+  }
+  </schema>
+
+  Example output structure (with generic placeholder terms):
+  <schema>
+  {
+    "related_terms": ["synonym1", "related_concept", "abbreviation", "alternate_name", "domain_term"]
+  }
+  </schema>
+
+  Your output must:
+  - Be valid JSON only
+  - Contain only the "related_terms" field
+  - Have "related_terms" as an array of strings
+  - Include no other fields, explanations, or text outside the JSON`;
+
 async function fetchExpansionTermsFromModel(
   query: string,
   languages: string[],
@@ -185,50 +288,29 @@ async function fetchExpansionTermsFromModel(
     `Fetching expansion terms for query: ${query}${multiLanguage ? ` (corpus languages: ${languageList})` : ""}`,
   );
 
-  const systemCrossLanguage = multiLanguage
-    ? `
-- The indexed document corpus includes multiple languages (ISO 639-1 codes are given in the user message). Include equivalent and native terms in each of those languages for the concepts in the query, in addition to synonyms and related terms in the query's own language.`
-    : "";
-
-  const userCrossLanguage = multiLanguage
-    ? `
-The corpus contains documents in these languages (ISO 639-1): ${languageList}. Include equivalent terms in each of these languages for the user's query, in addition to synonyms in the query's own language.
-`
-    : "";
+  const prompt = multiLanguage
+    ? multiLanguagePromptTemplate(query, languageList)
+    : singleLanguagePromptTemplate(query);
 
   const response = await openai.chat.completions.create({
     model: appConfig.ocrModel,
     messages: [
       {
-        role: "system",
-        content: `Return JSON only.
-Schema: { "related_terms": string[] }
-
-- Include related keywords, synonyms, alternate names, abbreviations, domain terms, and likely document vocabulary.${systemCrossLanguage}
-- Keep terms concise.
-- Do not include explanations or any fields other than related_terms.
-- Do not repeat the user's exact query.`,
-      },
-      {
         role: "user",
-        content: `Please enhance the user's search query by adding as many related terms as possible, to maximize the likelihood they will find their document.
-<userQuery>
-${query}
-</userQuery>
-${userCrossLanguage}
-<schema>
-{"related_terms": string[]}
-</schema>
-`,
+        content: prompt,
       },
     ],
     response_format: { type: "json_object" },
   });
 
-  const content = response.choices[0]?.message?.content;
+  let content = response.choices[0]?.message?.content;
   if (!content) {
     return null;
   }
+
+  content = removeThinkingFromResponse(content);
+
+  //console.log(`Sent: ${prompt}\nReceived: ${content}`);
 
   try {
     return JSON.parse(content) as QueryExpansionResponse;
@@ -281,4 +363,9 @@ export async function expandSearchQuery(
 
 export function resetQueryExpansionCache() {
   queryExpansionCache.clear();
+}
+
+const thinkingRegex = /<think(ing)?>[\s\S]*?<\/think(ing)?>/gi;
+function removeThinkingFromResponse(response: string) {
+  return response.replace(thinkingRegex, "").trim();
 }
