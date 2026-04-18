@@ -143,20 +143,28 @@ describe("expandSearchQuery", () => {
 });
 
 describe("buildExpandedMatchQuery", () => {
-  it("wraps the stemmed query and ORs in quoted related phrases", () => {
-    expect(
-      buildExpandedMatchQuery("annual report", [
-        "financial statement",
-        'directors "summary"',
-      ]),
-    ).toBe(
-      '(annual report) OR "financial statement" OR "directors ""summary"""',
+  it("joins multi-word queries with explicit AND (FTS5 rejects implicit AND with parens)", () => {
+    // Regression: "insurance number" used to stem to "(insurance OR ...) (number OR ...)",
+    // which FTS5 parses as a syntax error. It must be joined with explicit AND.
+    expect(buildExpandedMatchQuery("insurance number", [])).toBe(
+      "(insurance OR insur OR insuranc) AND (number OR numb)",
     );
   });
 
   it("stems the user query portion", () => {
     expect(buildExpandedMatchQuery("invoices", [])).toBe(
       "(invoices OR invoic)",
+    );
+  });
+
+  it("wraps the stemmed query and ORs in quoted related phrases", () => {
+    expect(
+      buildExpandedMatchQuery("invoices", [
+        "financial statement",
+        'directors "summary"',
+      ]),
+    ).toBe(
+      '((invoices OR invoic)) OR "financial statement" OR "directors ""summary"""',
     );
   });
 

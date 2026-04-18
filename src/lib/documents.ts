@@ -96,6 +96,44 @@ function quoteFtsPhrase(value: string) {
   return `"${value.replace(/"/g, '""')}"`;
 }
 
+function isFtsSyntaxError(error: unknown): error is Error {
+  return (
+    error instanceof Error &&
+    typeof error.message === "string" &&
+    error.message.toLowerCase().includes("fts5: syntax error")
+  );
+}
+
+async function runFtsMatchQueries<T>(
+  matchQuery: string,
+  {
+    query,
+    relatedTerms,
+    run,
+  }: {
+    query: string;
+    relatedTerms: string[];
+    run: () => Promise<T>;
+  },
+): Promise<T> {
+  try {
+    return await run();
+  } catch (error) {
+    if (isFtsSyntaxError(error)) {
+      console.error(
+        [
+          "[fts] FTS5 syntax error while executing MATCH query",
+          `  userQuery:   ${JSON.stringify(query)}`,
+          `  relatedTerms: ${JSON.stringify(relatedTerms)}`,
+          `  matchQuery:  ${JSON.stringify(matchQuery)}`,
+          `  sqliteError: ${error.message}`,
+        ].join("\n"),
+      );
+    }
+    throw error;
+  }
+}
+
 export function buildExpandedMatchQuery(query: string, relatedTerms: string[]) {
   // Stem the user's query here so that we only ever stem raw user text, never
   // the constructed MATCH expression. Running a stemmer over a string that
@@ -286,22 +324,26 @@ export async function searchDocuments({
   const matchQuery = buildExpandedMatchQuery(query, relatedTerms);
   console.log("sqlite fts MATCH query", matchQuery);
 
-  const totalResult = await sql<{ count: number }>`
+  const [totalResult, results] = await runFtsMatchQueries(matchQuery, {
+    query,
+    relatedTerms,
+    run: () =>
+      Promise.all([
+        sql<{ count: number }>`
     SELECT COUNT(*) AS count
     FROM documents_fts
     WHERE documents_fts MATCH ${matchQuery}
-  `.execute(db);
-
-  const results = await sql<{
-    id: number;
-    title: string;
-    description: string;
-    document_date: string | null;
-    added_at: string;
-    original_filename: string;
-    mime_type: string;
-    content: string;
-  }>`
+  `.execute(db),
+        sql<{
+          id: number;
+          title: string;
+          description: string;
+          document_date: string | null;
+          added_at: string;
+          original_filename: string;
+          mime_type: string;
+          content: string;
+        }>`
     SELECT
       d.id,
       d.title,
@@ -324,7 +366,9 @@ export async function searchDocuments({
     )
     LIMIT ${limit}
     OFFSET ${offset}
-  `.execute(db);
+  `.execute(db),
+      ]),
+  });
 
   const queryTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
 
