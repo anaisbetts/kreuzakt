@@ -9,6 +9,7 @@ import {
   getDocumentContentsByIds,
   getDocumentsByIds,
   getDocumentsForDownload,
+  getDocumentsForUserLink,
   listDocuments,
   searchDocuments,
 } from "@/lib/documents";
@@ -21,7 +22,8 @@ type McpSession = {
 };
 
 const sessions = new Map<string, McpSession>();
-const MAX_LIMIT = 100;
+/** Upper bound for MCP `limit` parameters (search, list recent, etc.). */
+const MAX_LIMIT = 512;
 const DEFAULT_LIMIT = 10;
 
 const searchResultSchema = z.object({
@@ -54,6 +56,7 @@ const documentSchema = z.object({
   created_at: z.string(),
   updated_at: z.string(),
   download_url: z.string(),
+  link_for_user: z.string(),
 });
 
 const documentOutputSchema = {
@@ -91,6 +94,18 @@ const downloadSchema = z.object({
 
 const downloadOutputSchema = {
   downloads: z.array(downloadSchema),
+};
+
+const userLinkSchema = z.object({
+  id: z.number(),
+  original_filename: z.string(),
+  mime_type: z.string(),
+  file_size: z.number(),
+  link_for_user: z.string(),
+});
+
+const userLinkOutputSchema = {
+  links: z.array(userLinkSchema),
 };
 
 export async function handleMcpRequest(request: Request) {
@@ -327,21 +342,31 @@ function createKreuzaktMcpServer() {
   server.registerTool(
     "list_recent_documents",
     {
-      description:
-        "List recently added documents, newest first. Optionally filter to documents added after a specific ISO 8601 timestamp.",
+      description: [
+        "List recently added documents, newest first.",
+        "",
+        "Both inputs are optional and can be combined freely:",
+        "- Pass neither `limit` nor `since` to get the 10 most recent documents (the default).",
+        "- Pass only `limit` to get the N most recent documents regardless of when they were added.",
+        "- Pass only `since` to get every document added after that ISO 8601 timestamp, capped at the default of 10.",
+        "- Pass both to get up to `limit` documents added after `since` (newest first).",
+        `\`limit\` is clamped to a maximum of ${MAX_LIMIT}. \`since\` must be a valid ISO 8601 timestamp.`,
+      ].join("\n"),
       inputSchema: {
         limit: z
           .number()
           .int()
           .positive()
           .max(MAX_LIMIT)
-          .default(DEFAULT_LIMIT)
-          .describe("Maximum number of recent documents to return."),
+          .optional()
+          .describe(
+            `Optional. Maximum number of recent documents to return. Defaults to ${DEFAULT_LIMIT} when omitted, capped at ${MAX_LIMIT}.`,
+          ),
         since: z
           .string()
           .optional()
           .describe(
-            "Optional ISO 8601 timestamp. Only documents added after this timestamp are returned.",
+            "Optional ISO 8601 timestamp. When provided, only documents added strictly after this timestamp are returned.",
           ),
       },
       outputSchema: recentDocumentsOutputSchema,
@@ -356,7 +381,7 @@ function createKreuzaktMcpServer() {
 
       const documents = await listDocuments({
         page: 1,
-        limit,
+        limit: limit ?? DEFAULT_LIMIT,
         since,
       });
       const items = documents.items.map((item) => ({
@@ -401,6 +426,37 @@ function createKreuzaktMcpServer() {
         baseUrl,
       });
       return createArrayToolResult("downloads", downloads);
+    },
+  );
+
+  server.registerTool(
+    "get_document_link_for_user",
+    {
+      description:
+        "Get shareable links to the in-app document viewer (not the raw file download). Same metadata shape as `download_document`, with `link_for_user` for URLs you can send to a person.",
+      inputSchema: {
+        ids: z
+          .array(z.number().int().positive())
+          .min(1)
+          .optional()
+          .describe("Document IDs to build viewer links for."),
+        id: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe("Convenience form for a single document link."),
+      },
+      outputSchema: userLinkOutputSchema,
+      annotations: {
+        readOnlyHint: true,
+      },
+    },
+    async ({ id, ids }, extra) => {
+      const normalizedIds = normalizeDocumentIds({ id, ids });
+      const baseUrl = getBaseUrl(extra.requestInfo);
+      const links = await getDocumentsForUserLink(normalizedIds, { baseUrl });
+      return createArrayToolResult("links", links);
     },
   );
 

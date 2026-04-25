@@ -45,6 +45,8 @@ export interface DocumentDetail extends DocumentSummary {
   created_at: string;
   updated_at: string;
   download_url: string;
+  /** Absolute or site-root document viewer URL, suitable to share with a person (opens the app, not a raw file download). */
+  link_for_user: string;
 }
 
 export interface DocumentContent {
@@ -58,6 +60,14 @@ export interface DocumentDownload {
   mime_type: string;
   file_size: number;
   download_url: string;
+}
+
+export interface DocumentUserLink {
+  id: number;
+  original_filename: string;
+  mime_type: string;
+  file_size: number;
+  link_for_user: string;
 }
 
 export interface PaginatedDocuments<T> {
@@ -80,6 +90,16 @@ function buildThumbnailUrl(id: number) {
 
 function buildDownloadUrl(id: number, baseUrl?: string) {
   const path = `/api/documents/${id}/original`;
+
+  if (!baseUrl) {
+    return path;
+  }
+
+  return new URL(path, ensureTrailingSlash(baseUrl)).toString();
+}
+
+function buildUserDocumentPageUrl(id: number, baseUrl?: string) {
+  const path = `/documents/${id}`;
 
   if (!baseUrl) {
     return path;
@@ -204,6 +224,7 @@ function mapDocumentDetail(
     created_at: document.created_at,
     updated_at: document.updated_at,
     download_url: buildDownloadUrl(document.id, baseUrl),
+    link_for_user: buildUserDocumentPageUrl(document.id, baseUrl),
   };
 }
 
@@ -446,6 +467,30 @@ export async function getDocumentsForDownload(
     documents.map((document) => ({
       ...document,
       download_url: buildDownloadUrl(document.id, baseUrl),
+    })),
+    ids,
+  );
+}
+
+export async function getDocumentsForUserLink(
+  ids: number[],
+  { baseUrl }: { baseUrl?: string } = {},
+): Promise<DocumentUserLink[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const db = await getDb();
+  const documents = await db
+    .selectFrom("documents")
+    .select(["id", "original_filename", "mime_type", "file_size"])
+    .where("id", "in", uniqueIds(ids))
+    .execute();
+
+  return reorderByRequestedIds(
+    documents.map((document) => ({
+      ...document,
+      link_for_user: buildUserDocumentPageUrl(document.id, baseUrl),
     })),
     ids,
   );
