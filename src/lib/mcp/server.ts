@@ -1,9 +1,14 @@
 import { randomUUID } from "node:crypto";
-
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+import type { ZodRawShapeCompat } from "@modelcontextprotocol/sdk/server/zod-compat.js";
+import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type {
+  ServerNotification,
+  ServerRequest,
+} from "@modelcontextprotocol/sdk/types.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-import * as z from "zod/v4";
+import * as z from "zod/v3";
 
 import {
   getDocumentContentsByIds,
@@ -16,15 +21,126 @@ import {
 
 import { getBaseUrl, normalizeDocumentIds, stripSnippetMarkers } from "./utils";
 
+/** Upper bound for MCP `limit` parameters (search, list recent, etc.). */
+const MAX_LIMIT = 512;
+const DEFAULT_LIMIT = 10;
+
+const sessions = new Map<string, McpSession>();
+
 type McpSession = {
   server: McpServer;
   transport: WebStandardStreamableHTTPServerTransport;
 };
 
-const sessions = new Map<string, McpSession>();
-/** Upper bound for MCP `limit` parameters (search, list recent, etc.). */
-const MAX_LIMIT = 512;
-const DEFAULT_LIMIT = 10;
+type McpToolExtra = RequestHandlerExtra<ServerRequest, ServerNotification>;
+
+type SearchToolArgs = {
+  query: string;
+  limit: number;
+};
+
+type DocumentIdToolArgs = {
+  id?: number;
+  ids?: number[];
+};
+
+type RecentDocumentsToolArgs = {
+  limit?: number;
+  since?: string;
+};
+
+const searchInputSchema = mcpShape({
+  query: z
+    .string()
+    .trim()
+    .min(1)
+    .describe(
+      "Search query. Uses SQLite FTS5 with stemming, so natural language and partial word variations work well.",
+    ),
+  limit: z
+    .number()
+    .int()
+    .positive()
+    .max(MAX_LIMIT)
+    .default(DEFAULT_LIMIT)
+    .describe("Maximum number of matching documents to return."),
+});
+
+const documentIdInputSchema = mcpShape({
+  ids: z
+    .array(z.number().int().positive())
+    .min(1)
+    .optional()
+    .describe(
+      "Document IDs to fetch. Preferred when reading multiple documents.",
+    ),
+  id: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe("Convenience form for reading a single document."),
+});
+
+const documentContentInputSchema = mcpShape({
+  ids: z
+    .array(z.number().int().positive())
+    .min(1)
+    .optional()
+    .describe("Document IDs to fetch content for."),
+  id: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe("Convenience form for reading a single document's content."),
+});
+
+const recentDocumentsInputSchema = mcpShape({
+  limit: z
+    .number()
+    .int()
+    .positive()
+    .max(MAX_LIMIT)
+    .optional()
+    .describe(
+      `Optional. Maximum number of recent documents to return. Defaults to ${DEFAULT_LIMIT} when omitted, capped at ${MAX_LIMIT}.`,
+    ),
+  since: z
+    .string()
+    .optional()
+    .describe(
+      "Optional ISO 8601 timestamp. When provided, only documents added strictly after this timestamp are returned.",
+    ),
+});
+
+const downloadInputSchema = mcpShape({
+  ids: z
+    .array(z.number().int().positive())
+    .min(1)
+    .optional()
+    .describe("Document IDs to generate download URLs for."),
+  id: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe("Convenience form for a single document download URL."),
+});
+
+const userLinkInputSchema = mcpShape({
+  ids: z
+    .array(z.number().int().positive())
+    .min(1)
+    .optional()
+    .describe("Document IDs to build viewer links for."),
+  id: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe("Convenience form for a single document link."),
+});
 
 const searchResultSchema = z.object({
   id: z.number(),
@@ -36,9 +152,9 @@ const searchResultSchema = z.object({
   snippet: z.string(),
 });
 
-const searchOutputSchema = {
+const searchOutputSchema = mcpShape({
   results: z.array(searchResultSchema),
-};
+});
 
 const documentSchema = z.object({
   id: z.number(),
@@ -59,18 +175,18 @@ const documentSchema = z.object({
   link_for_user: z.string(),
 });
 
-const documentOutputSchema = {
+const documentOutputSchema = mcpShape({
   documents: z.array(documentSchema),
-};
+});
 
 const documentContentSchema = z.object({
   id: z.number(),
   content: z.string(),
 });
 
-const documentContentOutputSchema = {
+const documentContentOutputSchema = mcpShape({
   contents: z.array(documentContentSchema),
-};
+});
 
 const recentDocumentSchema = z.object({
   id: z.number(),
@@ -80,9 +196,9 @@ const recentDocumentSchema = z.object({
   added_at: z.string(),
 });
 
-const recentDocumentsOutputSchema = {
+const recentDocumentsOutputSchema = mcpShape({
   documents: z.array(recentDocumentSchema),
-};
+});
 
 const downloadSchema = z.object({
   id: z.number(),
@@ -92,9 +208,9 @@ const downloadSchema = z.object({
   download_url: z.string(),
 });
 
-const downloadOutputSchema = {
+const downloadOutputSchema = mcpShape({
   downloads: z.array(downloadSchema),
-};
+});
 
 const userLinkSchema = z.object({
   id: z.number(),
@@ -104,9 +220,9 @@ const userLinkSchema = z.object({
   link_for_user: z.string(),
 });
 
-const userLinkOutputSchema = {
+const userLinkOutputSchema = mcpShape({
   links: z.array(userLinkSchema),
-};
+});
 
 export async function handleMcpRequest(request: Request) {
   if (request.method === "POST") {
@@ -223,55 +339,13 @@ function createKreuzaktMcpServer() {
     {
       description:
         "Search the document archive by natural-language query. Returns ranked document matches with snippets for quick triage.",
-      inputSchema: {
-        query: z
-          .string()
-          .trim()
-          .min(1)
-          .describe(
-            "Search query. Uses SQLite FTS5 with stemming, so natural language and partial word variations work well.",
-          ),
-        limit: z
-          .number()
-          .int()
-          .positive()
-          .max(MAX_LIMIT)
-          .default(DEFAULT_LIMIT)
-          .describe("Maximum number of matching documents to return."),
-      },
+      inputSchema: searchInputSchema,
       outputSchema: searchOutputSchema,
       annotations: {
         readOnlyHint: true,
       },
     },
-    async ({ query, limit }) => {
-      const results = await (async () => {
-        try {
-          return await searchDocuments({ query, page: 1, limit });
-        } catch (error) {
-          if (
-            error instanceof Error &&
-            /fts5|syntax error/i.test(error.message)
-          ) {
-            throw new Error("Invalid FTS query syntax");
-          }
-
-          throw error;
-        }
-      })();
-
-      const items = results.items.map((item) => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        document_date: item.document_date,
-        added_at: item.added_at,
-        original_filename: item.original_filename,
-        snippet: stripSnippetMarkers(item.snippet),
-      }));
-
-      return createArrayToolResult("results", items);
-    },
+    (args) => searchDocumentsTool(args as SearchToolArgs),
   );
 
   server.registerTool(
@@ -279,32 +353,13 @@ function createKreuzaktMcpServer() {
     {
       description:
         "Fetch one or more documents with full metadata and complete extracted text. Prefer `ids` for bulk reads.",
-      inputSchema: {
-        ids: z
-          .array(z.number().int().positive())
-          .min(1)
-          .optional()
-          .describe(
-            "Document IDs to fetch. Preferred when reading multiple documents.",
-          ),
-        id: z
-          .number()
-          .int()
-          .positive()
-          .optional()
-          .describe("Convenience form for reading a single document."),
-      },
+      inputSchema: documentIdInputSchema,
       outputSchema: documentOutputSchema,
       annotations: {
         readOnlyHint: true,
       },
     },
-    async ({ id, ids }, extra) => {
-      const normalizedIds = normalizeDocumentIds({ id, ids });
-      const baseUrl = getBaseUrl(extra.requestInfo);
-      const documents = await getDocumentsByIds(normalizedIds, { baseUrl });
-      return createArrayToolResult("documents", documents);
-    },
+    (args, extra) => getDocumentsTool(args as DocumentIdToolArgs, extra),
   );
 
   server.registerTool(
@@ -312,31 +367,13 @@ function createKreuzaktMcpServer() {
     {
       description:
         "Fetch only the extracted text for one or more documents. Prefer `ids` for bulk reads when metadata is not needed.",
-      inputSchema: {
-        ids: z
-          .array(z.number().int().positive())
-          .min(1)
-          .optional()
-          .describe("Document IDs to fetch content for."),
-        id: z
-          .number()
-          .int()
-          .positive()
-          .optional()
-          .describe(
-            "Convenience form for reading a single document's content.",
-          ),
-      },
+      inputSchema: documentContentInputSchema,
       outputSchema: documentContentOutputSchema,
       annotations: {
         readOnlyHint: true,
       },
     },
-    async ({ id, ids }) => {
-      const normalizedIds = normalizeDocumentIds({ id, ids });
-      const documents = await getDocumentContentsByIds(normalizedIds);
-      return createArrayToolResult("contents", documents);
-    },
+    (args) => getDocumentContentTool(args as DocumentIdToolArgs),
   );
 
   server.registerTool(
@@ -352,48 +389,13 @@ function createKreuzaktMcpServer() {
         "- Pass both to get up to `limit` documents added after `since` (newest first).",
         `\`limit\` is clamped to a maximum of ${MAX_LIMIT}. \`since\` must be a valid ISO 8601 timestamp.`,
       ].join("\n"),
-      inputSchema: {
-        limit: z
-          .number()
-          .int()
-          .positive()
-          .max(MAX_LIMIT)
-          .optional()
-          .describe(
-            `Optional. Maximum number of recent documents to return. Defaults to ${DEFAULT_LIMIT} when omitted, capped at ${MAX_LIMIT}.`,
-          ),
-        since: z
-          .string()
-          .optional()
-          .describe(
-            "Optional ISO 8601 timestamp. When provided, only documents added strictly after this timestamp are returned.",
-          ),
-      },
+      inputSchema: recentDocumentsInputSchema,
       outputSchema: recentDocumentsOutputSchema,
       annotations: {
         readOnlyHint: true,
       },
     },
-    async ({ limit, since }) => {
-      if (since && Number.isNaN(Date.parse(since))) {
-        throw new Error("`since` must be a valid ISO 8601 timestamp");
-      }
-
-      const documents = await listDocuments({
-        page: 1,
-        limit: limit ?? DEFAULT_LIMIT,
-        since,
-      });
-      const items = documents.items.map((item) => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        document_date: item.document_date,
-        added_at: item.added_at,
-      }));
-
-      return createArrayToolResult("documents", items);
-    },
+    (args) => listRecentDocumentsTool(args as RecentDocumentsToolArgs),
   );
 
   server.registerTool(
@@ -401,32 +403,13 @@ function createKreuzaktMcpServer() {
     {
       description:
         "Get absolute download URLs for one or more original document files so a client can present or fetch the originals directly.",
-      inputSchema: {
-        ids: z
-          .array(z.number().int().positive())
-          .min(1)
-          .optional()
-          .describe("Document IDs to generate download URLs for."),
-        id: z
-          .number()
-          .int()
-          .positive()
-          .optional()
-          .describe("Convenience form for a single document download URL."),
-      },
+      inputSchema: downloadInputSchema,
       outputSchema: downloadOutputSchema,
       annotations: {
         readOnlyHint: true,
       },
     },
-    async ({ id, ids }, extra) => {
-      const normalizedIds = normalizeDocumentIds({ id, ids });
-      const baseUrl = getBaseUrl(extra.requestInfo);
-      const downloads = await getDocumentsForDownload(normalizedIds, {
-        baseUrl,
-      });
-      return createArrayToolResult("downloads", downloads);
-    },
+    (args, extra) => downloadDocumentTool(args as DocumentIdToolArgs, extra),
   );
 
   server.registerTool(
@@ -434,33 +417,105 @@ function createKreuzaktMcpServer() {
     {
       description:
         "Get shareable links to the in-app document viewer (not the raw file download). Same metadata shape as `download_document`, with `link_for_user` for URLs you can send to a person.",
-      inputSchema: {
-        ids: z
-          .array(z.number().int().positive())
-          .min(1)
-          .optional()
-          .describe("Document IDs to build viewer links for."),
-        id: z
-          .number()
-          .int()
-          .positive()
-          .optional()
-          .describe("Convenience form for a single document link."),
-      },
+      inputSchema: userLinkInputSchema,
       outputSchema: userLinkOutputSchema,
       annotations: {
         readOnlyHint: true,
       },
     },
-    async ({ id, ids }, extra) => {
-      const normalizedIds = normalizeDocumentIds({ id, ids });
-      const baseUrl = getBaseUrl(extra.requestInfo);
-      const links = await getDocumentsForUserLink(normalizedIds, { baseUrl });
-      return createArrayToolResult("links", links);
-    },
+    (args, extra) =>
+      getDocumentLinkForUserTool(args as DocumentIdToolArgs, extra),
   );
 
   return server;
+}
+
+async function searchDocumentsTool({ query, limit }: SearchToolArgs) {
+  const results = await (async () => {
+    try {
+      return await searchDocuments({ query, page: 1, limit });
+    } catch (error) {
+      if (error instanceof Error && /fts5|syntax error/i.test(error.message)) {
+        throw new Error("Invalid FTS query syntax");
+      }
+
+      throw error;
+    }
+  })();
+
+  const items = results.items.map((item) => ({
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    document_date: item.document_date,
+    added_at: item.added_at,
+    original_filename: item.original_filename,
+    snippet: stripSnippetMarkers(item.snippet),
+  }));
+
+  return createArrayToolResult("results", items);
+}
+
+async function getDocumentsTool(
+  { id, ids }: DocumentIdToolArgs,
+  extra: McpToolExtra,
+) {
+  const normalizedIds = normalizeDocumentIds({ id, ids });
+  const baseUrl = getBaseUrl(extra.requestInfo);
+  const documents = await getDocumentsByIds(normalizedIds, { baseUrl });
+  return createArrayToolResult("documents", documents);
+}
+
+async function getDocumentContentTool({ id, ids }: DocumentIdToolArgs) {
+  const normalizedIds = normalizeDocumentIds({ id, ids });
+  const documents = await getDocumentContentsByIds(normalizedIds);
+  return createArrayToolResult("contents", documents);
+}
+
+async function listRecentDocumentsTool({
+  limit,
+  since,
+}: RecentDocumentsToolArgs) {
+  if (since && Number.isNaN(Date.parse(since))) {
+    throw new Error("`since` must be a valid ISO 8601 timestamp");
+  }
+
+  const documents = await listDocuments({
+    page: 1,
+    limit: limit ?? DEFAULT_LIMIT,
+    since,
+  });
+  const items = documents.items.map((item) => ({
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    document_date: item.document_date,
+    added_at: item.added_at,
+  }));
+
+  return createArrayToolResult("documents", items);
+}
+
+async function downloadDocumentTool(
+  { id, ids }: DocumentIdToolArgs,
+  extra: McpToolExtra,
+) {
+  const normalizedIds = normalizeDocumentIds({ id, ids });
+  const baseUrl = getBaseUrl(extra.requestInfo);
+  const downloads = await getDocumentsForDownload(normalizedIds, {
+    baseUrl,
+  });
+  return createArrayToolResult("downloads", downloads);
+}
+
+async function getDocumentLinkForUserTool(
+  { id, ids }: DocumentIdToolArgs,
+  extra: McpToolExtra,
+) {
+  const normalizedIds = normalizeDocumentIds({ id, ids });
+  const baseUrl = getBaseUrl(extra.requestInfo);
+  const links = await getDocumentsForUserLink(normalizedIds, { baseUrl });
+  return createArrayToolResult("links", links);
 }
 
 function createArrayToolResult<T>(key: string, items: T[]) {
@@ -475,6 +530,10 @@ function createArrayToolResult<T>(key: string, items: T[]) {
       },
     ],
   };
+}
+
+function mcpShape(shape: unknown): ZodRawShapeCompat {
+  return shape as ZodRawShapeCompat;
 }
 
 function createJsonRpcErrorResponse(
