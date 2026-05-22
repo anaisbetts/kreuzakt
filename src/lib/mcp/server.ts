@@ -14,7 +14,12 @@ import {
   searchDocuments,
 } from "@/lib/documents";
 
-import { getBaseUrl, normalizeDocumentIds, stripSnippetMarkers } from "./utils";
+import {
+  buildUploadCurlCommand,
+  getBaseUrl,
+  normalizeDocumentIds,
+  stripSnippetMarkers,
+} from "./utils";
 
 type McpSession = {
   server: McpServer;
@@ -106,6 +111,10 @@ const userLinkSchema = z.object({
 
 const userLinkOutputSchema = {
   links: z.array(userLinkSchema),
+};
+
+const uploadCommandOutputSchema = {
+  curl_command: z.string(),
 };
 
 export async function handleMcpRequest(request: Request) {
@@ -426,6 +435,42 @@ function createKreuzaktMcpServer() {
         baseUrl,
       });
       return createArrayToolResult("downloads", downloads);
+    },
+  );
+
+  server.registerTool(
+    "get_upload_command",
+    {
+      description:
+        "Return a ready-to-run curl command that uploads a new document file to Kreuzakt via POST /api/upload. The file is queued for ingest automatically after upload.",
+      inputSchema: {
+        file_path: z
+          .string()
+          .trim()
+          .min(1)
+          .optional()
+          .describe(
+            "Optional absolute or relative path to the file on the machine where curl will run. Defaults to /path/to/file when omitted.",
+          ),
+      },
+      outputSchema: uploadCommandOutputSchema,
+      annotations: {
+        readOnlyHint: true,
+      },
+    },
+    async ({ file_path }, extra) => {
+      const baseUrl = getBaseUrl(extra.requestInfo);
+      const curl_command = buildUploadCurlCommand(baseUrl, file_path);
+
+      return {
+        structuredContent: { curl_command },
+        content: [
+          {
+            type: "text" as const,
+            text: curl_command,
+          },
+        ],
+      };
     },
   );
 

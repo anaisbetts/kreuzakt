@@ -31,6 +31,18 @@ export function stripSnippetMarkers(snippet: string) {
   return snippet.replaceAll("[[[", "").replaceAll("]]]", "");
 }
 
+const DEFAULT_UPLOAD_FILE_PATH = "/path/to/file";
+
+export function buildUploadCurlCommand(
+  baseUrl: string,
+  filePath = DEFAULT_UPLOAD_FILE_PATH,
+) {
+  const uploadUrl = `${baseUrl.replace(/\/$/, "")}/api/upload`;
+  const shellPath = filePath.replaceAll("'", "'\\''");
+
+  return `curl -X POST ${uploadUrl} -F 'files=@${shellPath}'`;
+}
+
 export function getBaseUrl(requestInfo?: RequestInfo) {
   const headers = requestInfo?.headers;
   const forwardedHost = getHeader(headers, "x-forwarded-host");

@@ -478,6 +478,36 @@ The URL is only accessible within the Tailscale network. The AI assistant can pr
 
 ---
 
+#### get_upload_command
+
+Return a ready-to-run `curl` command that uploads a new document to Kreuzakt. The uploaded file is written to `ingest/` and queued for processing automatically.
+
+**Input Schema:**
+
+```json
+{
+    "type": "object",
+    "properties": {
+        "file_path": {
+            "type": "string",
+            "description": "Optional path to the file on the machine where curl will run. Defaults to /path/to/file when omitted."
+        }
+    }
+}
+```
+
+**Output:**
+
+```json
+{
+    "curl_command": "curl -X POST http://<host>:3000/api/upload -F 'files=@/path/to/file'"
+}
+```
+
+The host in the command is derived from the MCP request (forwarded headers when present), matching `download_document` URL generation.
+
+---
+
 ### Resources
 
 Documents are also exposed as MCP resources for clients that prefer resource-based access.
