@@ -1,6 +1,11 @@
 import { describe, expect, it } from "bun:test";
 
-import { getBaseUrl, normalizeDocumentIds, stripSnippetMarkers } from "./utils";
+import {
+  buildUploadCurlCommand,
+  getBaseUrl,
+  normalizeDocumentIds,
+  stripSnippetMarkers,
+} from "./utils";
 
 describe("normalizeDocumentIds", () => {
   it("prefers ids arrays and preserves order", () => {
@@ -31,6 +36,22 @@ describe("stripSnippetMarkers", () => {
   it("removes internal FTS highlight markers", () => {
     expect(stripSnippetMarkers("...[[[invoice]]] from [[[Telekom]]]...")).toBe(
       "...invoice from Telekom...",
+    );
+  });
+});
+
+describe("buildUploadCurlCommand", () => {
+  it("builds a curl command for the upload API with a default file placeholder", () => {
+    expect(buildUploadCurlCommand("http://localhost:3000")).toBe(
+      "curl -X POST http://localhost:3000/api/upload -F 'files=@/path/to/file'",
+    );
+  });
+
+  it("uses the provided file path and strips trailing slashes from the base URL", () => {
+    expect(
+      buildUploadCurlCommand("https://docs.example.ts.net/", "/tmp/scan.pdf"),
+    ).toBe(
+      "curl -X POST https://docs.example.ts.net/api/upload -F 'files=@/tmp/scan.pdf'",
     );
   });
 });
