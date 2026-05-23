@@ -133,6 +133,9 @@ export async function startWatcher() {
   const watcher = watch(appConfig.ingestDir, {
     persistent: true,
     ignoreInitial: false,
+    usePolling: appConfig.ingestWatchPoll,
+    interval: appConfig.ingestWatchPollIntervalMs,
+    binaryInterval: appConfig.ingestWatchPollIntervalMs,
     awaitWriteFinish: {
       stabilityThreshold: 2000,
       pollInterval: 100,

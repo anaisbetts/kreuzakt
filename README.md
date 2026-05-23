@@ -71,6 +71,8 @@ Everything lives under `/data` by default — the SQLite database, originals, th
 | `METADATA_LLM_MODEL` | `openai/gpt-5.4` | Model used for title/description extraction |
 | `PORT` | `3000` | Port inside the container |
 | `TZ` | `UTC` | Timezone for date display (e.g. `Europe/Berlin`, `America/New_York`). Use any [tz database name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones). |
+| `INGEST_WATCH_POLL` | `false` | Poll `INGEST_DIR` instead of using inotify. Enable when the ingest folder is on NFS, SMB, or a FUSE mount — inotify does not see changes made on the remote side. |
+| `INGEST_WATCH_POLL_INTERVAL_MS` | `2000` | Poll interval in ms when `INGEST_WATCH_POLL` is enabled. |
 
 ## MCP setup
 
