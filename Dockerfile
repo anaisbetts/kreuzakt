@@ -16,7 +16,7 @@ COPY . .
 
 RUN bun run build
 
-FROM rust:1-bookworm AS rust-builder
+FROM rust:1-trixie AS rust-builder
 WORKDIR /app
 
 RUN apt-get update \
