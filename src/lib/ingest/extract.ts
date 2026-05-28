@@ -9,6 +9,7 @@ import {
 
 /** Substring from Kreuzberg when VLM/OCR backends fail transiently (network, rate limits). */
 const TRANSIENT_OCR_PIPELINE_FAILURE = "All OCR pipeline backends failed";
+const VLM_MAX_IMAGE_DIMENSION = 1200;
 
 type KreuzbergVlmConfig = {
   model: string;
@@ -18,9 +19,15 @@ type KreuzbergVlmConfig = {
   api_key?: string;
 };
 
+type KreuzbergImageExtractionConfig = {
+  maxImageDimension: number;
+  max_image_dimension: number;
+};
+
 type KreuzbergExtractOptions = {
   forceOcr: true;
   force_ocr: true;
+  images: KreuzbergImageExtractionConfig;
   ocr: {
     backend: "vlm";
     vlmConfig: KreuzbergVlmConfig;
@@ -65,11 +72,19 @@ function buildExtractOptions(): KreuzbergExtractOptions {
   return {
     forceOcr: true,
     force_ocr: true,
+    images: buildImageExtractionConfig(),
     ocr: {
       backend: "vlm",
       vlmConfig,
       vlm_config: vlmConfig,
     },
+  };
+}
+
+function buildImageExtractionConfig(): KreuzbergImageExtractionConfig {
+  return {
+    maxImageDimension: VLM_MAX_IMAGE_DIMENSION,
+    max_image_dimension: VLM_MAX_IMAGE_DIMENSION,
   };
 }
 
