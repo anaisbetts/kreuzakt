@@ -19,6 +19,7 @@ export const Default: Story = {
     ocrModel: "openai/gpt-5.4-mini",
     metadataModel: "openai/gpt-5.4",
     llmEndpoint: "https://openrouter.ai/api/v1",
+    preferredLanguage: null,
     queue: {
       enablePolling: false,
       initialCounts: {

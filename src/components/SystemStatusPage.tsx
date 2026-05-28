@@ -5,6 +5,7 @@ import type { ReindexAllStatus } from "@/lib/ingest/reindex";
 
 import { McpSetupSection } from "./McpSetupSection";
 import { PaperlessImport } from "./PaperlessImport";
+import { PreferredLanguageSetting } from "./PreferredLanguageSetting";
 import { ProcessingQueue } from "./ProcessingQueue";
 import { ReindexAllPanel } from "./ReindexAllPanel";
 
@@ -15,6 +16,7 @@ export type SystemStatusPageProps = {
   ocrModel: string;
   metadataModel: string;
   llmEndpoint: string;
+  preferredLanguage: string | null;
   queue: {
     initialEntries: QueueEntry[];
     initialCounts: QueueCounts;
@@ -32,6 +34,7 @@ export function SystemStatusPage({
   ocrModel,
   metadataModel,
   llmEndpoint,
+  preferredLanguage,
   queue,
   reindex,
 }: SystemStatusPageProps) {
@@ -56,6 +59,8 @@ export function SystemStatusPage({
         documentCount={documentCount}
         initialStatus={reindex.initialStatus}
       />
+
+      <PreferredLanguageSetting initialPreferredLanguage={preferredLanguage} />
 
       <PaperlessImport />
 
