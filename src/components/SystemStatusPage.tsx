@@ -1,7 +1,6 @@
 import Link from "next/link";
 
-import type { QueueRow } from "@/lib/db/schema";
-import type { QueueCounts } from "@/lib/ingest/queue";
+import type { QueueCounts, QueueEntry } from "@/lib/ingest/queue";
 import type { ReindexAllStatus } from "@/lib/ingest/reindex";
 
 import { McpSetupSection } from "./McpSetupSection";
@@ -17,7 +16,7 @@ export type SystemStatusPageProps = {
   metadataModel: string;
   llmEndpoint: string;
   queue: {
-    initialEntries: QueueRow[];
+    initialEntries: QueueEntry[];
     initialCounts: QueueCounts;
     enablePolling?: boolean;
   };

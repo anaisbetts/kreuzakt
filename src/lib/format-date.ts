@@ -1,5 +1,7 @@
 import { DateTime } from "luxon";
 
+const FALLBACK_PAGE_COUNT = 1;
+
 /**
  * Parse a date/timestamp from the database, handling two formats:
  *  - ISO 8601 with T/Z:  "2024-01-15T10:30:00.000Z"  (from JS toISOString())
@@ -35,4 +37,24 @@ export function formatDateLong(value: string): string {
 export function formatRelativeTime(value: string | null): string {
   if (!value) return "Not finished";
   return parseDbDate(value).toRelative() ?? formatDateShort(value);
+}
+
+export function formatProcessingDuration(
+  createdAt: string,
+  completedAt: string,
+  pageCount: number | null,
+): string {
+  const elapsedSeconds = Math.max(
+    0,
+    parseDbDate(completedAt).diff(parseDbDate(createdAt), "seconds").seconds,
+  );
+  const pages = pageCount && pageCount > 0 ? pageCount : FALLBACK_PAGE_COUNT;
+
+  return `Processed in ${formatSeconds(elapsedSeconds)} (${formatSeconds(
+    elapsedSeconds / pages,
+  )} per page)`;
+}
+
+function formatSeconds(seconds: number): string {
+  return `${Math.round(seconds)} seconds`;
 }

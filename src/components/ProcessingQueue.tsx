@@ -2,16 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import type { QueueRow } from "@/lib/db/schema";
-import { formatRelativeTime } from "@/lib/format-date";
-import type { QueueCounts } from "@/lib/ingest/queue";
+import type { ProcessingStatus } from "@/lib/db/schema";
+import {
+  formatProcessingDuration,
+  formatRelativeTime,
+} from "@/lib/format-date";
+import type { QueueCounts, QueueEntry } from "@/lib/ingest/queue";
 
 const DEFAULT_LIMIT = 5;
 const SHOW_ALL_LIMIT = 100;
 const REFRESH_INTERVAL_MS = 5000;
 
 type ProcessingQueueProps = {
-  initialEntries: QueueRow[];
+  initialEntries: QueueEntry[];
   initialCounts: QueueCounts;
   /** When false, keeps the initial snapshot and does not poll `/api/queue` (e.g. Storybook). */
   enablePolling?: boolean;
@@ -21,7 +24,7 @@ function totalCount(counts: QueueCounts) {
   return counts.pending + counts.processing + counts.completed + counts.failed;
 }
 
-function StatusDot({ status }: { status: QueueRow["status"] }) {
+function StatusDot({ status }: { status: ProcessingStatus }) {
   if (status === "processing") {
     return (
       <span className="inline-flex h-3 w-3 rounded-full border-2 border-blue-200 border-t-blue-600 animate-spin" />
@@ -38,7 +41,7 @@ function StatusDot({ status }: { status: QueueRow["status"] }) {
   return <span className={`inline-flex h-3 w-3 rounded-full ${className}`} />;
 }
 
-function StatusBadge({ status }: { status: QueueRow["status"] }) {
+function StatusBadge({ status }: { status: ProcessingStatus }) {
   const label =
     status.charAt(0).toUpperCase() + status.slice(1).replace("_", " ");
 
@@ -70,9 +73,21 @@ async function fetchQueue(limit: number) {
   }
 
   return response.json() as Promise<{
-    entries: QueueRow[];
+    entries: QueueEntry[];
     counts: QueueCounts;
   }>;
+}
+
+function formatQueueTiming(entry: QueueEntry) {
+  if (entry.status === "completed" && entry.completed_at) {
+    return formatProcessingDuration(
+      entry.created_at,
+      entry.completed_at,
+      entry.page_count,
+    );
+  }
+
+  return `Queued ${formatRelativeTime(entry.created_at)}`;
 }
 
 export function ProcessingQueue({
@@ -232,7 +247,7 @@ export function ProcessingQueue({
                     </div>
 
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
-                      <span>Queued {formatRelativeTime(entry.created_at)}</span>
+                      <span>{formatQueueTiming(entry)}</span>
                       <span>
                         {entry.completed_at
                           ? `Updated ${formatRelativeTime(entry.completed_at)}`
