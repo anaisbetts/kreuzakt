@@ -19,6 +19,7 @@ export const Default: Story = {
     ocrModel: "openai/gpt-5.4-mini",
     metadataModel: "openai/gpt-5.4",
     llmEndpoint: "https://openrouter.ai/api/v1",
+    preferredLanguage: null,
     queue: {
       enablePolling: false,
       initialCounts: {
@@ -36,6 +37,7 @@ export const Default: Story = {
           document_id: null,
           created_at: new Date(Date.now() - 15_000).toISOString(),
           completed_at: null,
+          page_count: null,
         },
         {
           id: 103,
@@ -45,6 +47,7 @@ export const Default: Story = {
           document_id: null,
           created_at: new Date(Date.now() - 60_000).toISOString(),
           completed_at: null,
+          page_count: null,
         },
         {
           id: 102,
@@ -54,6 +57,7 @@ export const Default: Story = {
           document_id: 42,
           created_at: new Date(Date.now() - 5 * 60_000).toISOString(),
           completed_at: new Date(Date.now() - 4 * 60_000).toISOString(),
+          page_count: 2,
         },
         {
           id: 101,
@@ -63,6 +67,7 @@ export const Default: Story = {
           document_id: null,
           created_at: new Date(Date.now() - 10 * 60_000).toISOString(),
           completed_at: new Date(Date.now() - 9 * 60_000).toISOString(),
+          page_count: 2,
         },
         {
           id: 100,
@@ -72,8 +77,22 @@ export const Default: Story = {
           document_id: 41,
           created_at: new Date(Date.now() - 20 * 60_000).toISOString(),
           completed_at: new Date(Date.now() - 18 * 60_000).toISOString(),
+          page_count: 2,
         },
       ],
+    },
+    reindex: {
+      initialStatus: {
+        batchId: "storybook",
+        total: 1284,
+        pending: 1200,
+        processing: 1,
+        completed: 80,
+        failed: 3,
+        processed: 83,
+        active: true,
+        percentComplete: 6,
+      },
     },
   },
 };

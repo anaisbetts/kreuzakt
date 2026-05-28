@@ -3,6 +3,7 @@ import path from "node:path";
 import OpenAI from "openai";
 
 import { appConfig } from "@/lib/config";
+import { getPreferredLanguage } from "@/lib/settings";
 import { isStemSupported } from "@/lib/stemming";
 
 export interface GeneratedMetadata {
@@ -116,6 +117,25 @@ function parseMetadataResponse(
   }
 }
 
+const METADATA_SYSTEM_PROMPT_BASE = `Extract metadata from the following document text.
+Return JSON: { "title": "...", "description": "...", "document_date": "YYYY-MM-DD" | null, "language": "xx" }
+- title: A concise, descriptive title for the document
+- description: 1-2 sentences describing the document's content and purpose
+- document_date: The date the document pertains to (not today's date), or null if unclear
+- language: ISO 639-1 code for the primary language of the document (e.g. "en", "de", "fr", "es", "it", "pt", "nl", "sv", "no", "da", "fi", "ru", "cs", "ro", "hu")`;
+
+export function buildMetadataSystemPrompt(
+  preferredLanguage?: string | null,
+): string {
+  const trimmed = preferredLanguage?.trim();
+  if (!trimmed) {
+    return METADATA_SYSTEM_PROMPT_BASE;
+  }
+
+  return `${METADATA_SYSTEM_PROMPT_BASE}
+Generate all text in the following language: ${trimmed}`;
+}
+
 export async function generateDocumentMetadata(
   extractedText: string,
   originalFilename: string,
@@ -142,9 +162,12 @@ export async function generateDocumentMetadata(
   const startedAt = performance.now();
 
   try {
+    const preferredLanguage = await getPreferredLanguage();
+
     logMetadata("calling metadata LLM", {
       originalFilename,
       model: appConfig.metadataModel,
+      preferredLanguage,
     });
 
     const response = await openai.chat.completions.create({
@@ -152,12 +175,7 @@ export async function generateDocumentMetadata(
       messages: [
         {
           role: "system",
-          content: `Extract metadata from the following document text.
-Return JSON: { "title": "...", "description": "...", "document_date": "YYYY-MM-DD" | null, "language": "xx" }
-- title: A concise, descriptive title for the document
-- description: 1-2 sentences describing the document's content and purpose
-- document_date: The date the document pertains to (not today's date), or null if unclear
-- language: ISO 639-1 code for the primary language of the document (e.g. "en", "de", "fr", "es", "it", "pt", "nl", "sv", "no", "da", "fi", "ru", "cs", "ro", "hu")`,
+          content: buildMetadataSystemPrompt(preferredLanguage),
         },
         {
           role: "user",

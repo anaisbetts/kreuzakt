@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 
 import { jsonError } from "@/lib/api";
 import { retryQueueEntry } from "@/lib/ingest/queue";
+import {
+  enqueueReindexQueueEntry,
+  isReindexQueueEntry,
+} from "@/lib/ingest/reindex";
 import { enqueueQueuedFile } from "@/lib/ingest/watcher";
 
 export const runtime = "nodejs";
@@ -37,7 +41,11 @@ export async function POST(
       );
     }
 
-    await enqueueQueuedFile(result.entry.filename, result.entry.id);
+    if (isReindexQueueEntry(result.entry)) {
+      enqueueReindexQueueEntry(result.entry);
+    } else {
+      await enqueueQueuedFile(result.entry.filename, result.entry.id);
+    }
 
     return NextResponse.json({
       id: result.entry.id,

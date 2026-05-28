@@ -29,6 +29,11 @@ export interface SchemaMetaTable {
   value: string;
 }
 
+export interface AppSettingsTable {
+  key: string;
+  value: string;
+}
+
 export interface DocumentsFtsTable {
   title: string;
   description: string;
@@ -47,6 +52,7 @@ export interface ProcessingQueueTable {
 }
 
 export interface DB {
+  app_settings: AppSettingsTable;
   documents: DocumentsTable;
   documents_fts: DocumentsFtsTable;
   processing_queue: ProcessingQueueTable;

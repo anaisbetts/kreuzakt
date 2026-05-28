@@ -46,6 +46,13 @@ export async function migrateDatabase(db: Kysely<DB>) {
     )
   `.execute(db);
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )
+  `.execute(db);
+
   // Add language column if it doesn't exist (idempotent)
   try {
     await sql`ALTER TABLE documents ADD COLUMN language TEXT NOT NULL DEFAULT 'en'`.execute(

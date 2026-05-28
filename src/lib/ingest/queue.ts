@@ -10,6 +10,10 @@ export interface QueueCounts {
   failed: number;
 }
 
+export interface QueueEntry extends QueueRow {
+  page_count: number | null;
+}
+
 export async function createQueueEntry(filename: string) {
   const db = await getDb();
 
@@ -30,6 +34,25 @@ export async function createQueueEntry(filename: string) {
   }
 
   return getLatestQueueEntryForFilename(filename);
+}
+
+export async function createDocumentQueueEntry(
+  filename: string,
+  documentId: number,
+) {
+  const db = await getDb();
+
+  return db
+    .insertInto("processing_queue")
+    .values({
+      filename,
+      status: "pending",
+      error: null,
+      document_id: documentId,
+      completed_at: null,
+    })
+    .returningAll()
+    .executeTakeFirstOrThrow();
 }
 
 export async function getQueueEntryById(id: number) {
@@ -107,19 +130,21 @@ export async function updateQueueStatus(
 export async function getQueueEntries(options?: {
   limit?: number;
   status?: ProcessingStatus;
-}) {
+}): Promise<QueueEntry[]> {
   const db = await getDb();
   const limit = options?.limit ?? 20;
 
   let query = db
-    .selectFrom("processing_queue")
-    .selectAll()
-    .orderBy("created_at", "desc")
-    .orderBy("id", "desc")
+    .selectFrom("processing_queue as queue")
+    .leftJoin("documents as document", "document.id", "queue.document_id")
+    .selectAll("queue")
+    .select("document.page_count as page_count")
+    .orderBy("queue.created_at", "desc")
+    .orderBy("queue.id", "desc")
     .limit(limit);
 
   if (options?.status) {
-    query = query.where("status", "=", options.status);
+    query = query.where("queue.status", "=", options.status);
   }
 
   return query.execute();
@@ -173,7 +198,7 @@ export async function retryQueueEntry(id: number) {
 
   const updated = await updateQueueStatus(id, "pending", {
     error: null,
-    documentId: null,
+    documentId: existing.document_id,
     completedAt: null,
   });
 

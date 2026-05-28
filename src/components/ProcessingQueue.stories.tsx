@@ -29,6 +29,7 @@ export const Default: Story = {
         document_id: null,
         created_at: new Date(Date.now() - 15_000).toISOString(),
         completed_at: null,
+        page_count: null,
       },
       {
         id: 103,
@@ -38,6 +39,7 @@ export const Default: Story = {
         document_id: null,
         created_at: new Date(Date.now() - 60_000).toISOString(),
         completed_at: null,
+        page_count: null,
       },
       {
         id: 102,
@@ -47,6 +49,7 @@ export const Default: Story = {
         document_id: 42,
         created_at: new Date(Date.now() - 5 * 60_000).toISOString(),
         completed_at: new Date(Date.now() - 4 * 60_000).toISOString(),
+        page_count: 2,
       },
       {
         id: 101,
@@ -56,6 +59,7 @@ export const Default: Story = {
         document_id: null,
         created_at: new Date(Date.now() - 10 * 60_000).toISOString(),
         completed_at: new Date(Date.now() - 9 * 60_000).toISOString(),
+        page_count: 2,
       },
       {
         id: 100,
@@ -65,6 +69,7 @@ export const Default: Story = {
         document_id: 41,
         created_at: new Date(Date.now() - 20 * 60_000).toISOString(),
         completed_at: new Date(Date.now() - 18 * 60_000).toISOString(),
+        page_count: 2,
       },
     ],
   },
