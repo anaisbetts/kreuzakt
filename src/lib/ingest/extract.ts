@@ -1,4 +1,4 @@
-import { appConfig } from "@/lib/config";
+import { type AppConfig, appConfig } from "@/lib/config";
 
 import {
   detectMimeTypeFromPathWithNativeBinding,
@@ -23,7 +23,12 @@ type KreuzbergImageExtractionConfig = {
   max_image_dimension: number;
 };
 
-type KreuzbergExtractOptions = {
+type KreuzbergExtractConfig = Pick<
+  AppConfig,
+  "ocrModel" | "openaiApiKey" | "openaiBaseUrl"
+>;
+
+type KreuzbergVlmExtractOptions = {
   forceOcr: true;
   force_ocr: true;
   images: KreuzbergImageExtractionConfig;
@@ -33,6 +38,8 @@ type KreuzbergExtractOptions = {
     vlm_config: KreuzbergVlmConfig;
   };
 };
+
+type KreuzbergExtractOptions = KreuzbergVlmExtractOptions | null;
 
 export interface ExtractedDocument {
   content: string;
@@ -65,8 +72,14 @@ export async function extractDocument(
   };
 }
 
-function buildExtractOptions(): KreuzbergExtractOptions {
-  const vlmConfig = buildVlmConfig();
+export function buildExtractOptions(
+  config: KreuzbergExtractConfig = appConfig,
+): KreuzbergExtractOptions {
+  if (!config.openaiApiKey) {
+    return null;
+  }
+
+  const vlmConfig = buildVlmConfig(config);
 
   return {
     forceOcr: true,
@@ -87,19 +100,16 @@ function buildImageExtractionConfig(): KreuzbergImageExtractionConfig {
   };
 }
 
-function buildVlmConfig(): KreuzbergVlmConfig {
-  const config: KreuzbergVlmConfig = {
-    model: appConfig.ocrModel,
-    baseUrl: appConfig.openaiBaseUrl,
-    base_url: appConfig.openaiBaseUrl,
+function buildVlmConfig(config: KreuzbergExtractConfig): KreuzbergVlmConfig {
+  const vlmConfig: KreuzbergVlmConfig = {
+    model: config.ocrModel,
+    baseUrl: config.openaiBaseUrl,
+    base_url: config.openaiBaseUrl,
+    apiKey: config.openaiApiKey,
+    api_key: config.openaiApiKey,
   };
 
-  if (appConfig.openaiApiKey) {
-    config.apiKey = appConfig.openaiApiKey;
-    config.api_key = appConfig.openaiApiKey;
-  }
-
-  return config;
+  return vlmConfig;
 }
 
 function isTransientOcrPipelineFailure(error: unknown): boolean {
