@@ -66,18 +66,18 @@ export function SystemStatusPage({
 
       <McpSetupSection />
 
-      <PaperlessImport />
+      <ProcessingQueue
+        enablePolling={queue.enablePolling}
+        initialEntries={queue.initialEntries}
+        initialCounts={queue.initialCounts}
+      />
 
       <ReindexAllPanel
         documentCount={documentCount}
         initialStatus={reindex.initialStatus}
       />
 
-      <ProcessingQueue
-        enablePolling={queue.enablePolling}
-        initialEntries={queue.initialEntries}
-        initialCounts={queue.initialCounts}
-      />
+      <PaperlessImport />
     </main>
   );
 }

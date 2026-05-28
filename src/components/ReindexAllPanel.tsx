@@ -23,6 +23,7 @@ export function ReindexAllPanel({
 
   const hasDocuments = documentCount > 0;
   const isActive = status.active || isQueueing;
+  const progressPercent = status.total > 0 ? status.percentComplete : 0;
   const progressLabel = useMemo(() => {
     if (status.total === 0) {
       return "No reindex job has been queued yet.";
@@ -152,7 +153,7 @@ export function ReindexAllPanel({
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-neutral-100">
           <div
             className="h-full rounded-full bg-amber-500 transition-all"
-            style={{ width: `${status.percentComplete}%` }}
+            style={{ width: `${progressPercent}%` }}
           />
         </div>
         {status.total > 0 ? (
