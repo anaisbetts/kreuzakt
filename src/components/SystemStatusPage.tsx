@@ -45,6 +45,21 @@ export function SystemStatusPage({
         ← Back to search
       </Link>
 
+      <McpSetupSection />
+
+      <ProcessingQueue
+        enablePolling={queue.enablePolling}
+        initialEntries={queue.initialEntries}
+        initialCounts={queue.initialCounts}
+      />
+
+      <ReindexAllPanel
+        documentCount={documentCount}
+        initialStatus={reindex.initialStatus}
+      />
+
+      <PaperlessImport />
+
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">
           System Status
@@ -63,21 +78,6 @@ export function SystemStatusPage({
         <StatusRow label="Metadata Model" value={metadataModel} />
         <StatusRow label="LLM Endpoint" value={llmEndpoint} />
       </div>
-
-      <McpSetupSection />
-
-      <ProcessingQueue
-        enablePolling={queue.enablePolling}
-        initialEntries={queue.initialEntries}
-        initialCounts={queue.initialCounts}
-      />
-
-      <ReindexAllPanel
-        documentCount={documentCount}
-        initialStatus={reindex.initialStatus}
-      />
-
-      <PaperlessImport />
     </main>
   );
 }

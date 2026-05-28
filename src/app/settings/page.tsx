@@ -5,6 +5,28 @@ import { ensureAppDirectories, fileExists } from "@/lib/files";
 import { getQueueCounts, getQueueEntries } from "@/lib/ingest/queue";
 import { getLatestReindexAllStatus } from "@/lib/ingest/reindex";
 
+export default async function SettingsPage() {
+  const status = await loadStatus();
+
+  return (
+    <SystemStatusPage
+      documentCount={status.documents}
+      originalsDisplay={
+        status.originalsDir ? appConfig.originalsDir : "Missing"
+      }
+      ingestDisplay={status.ingestDir ? appConfig.ingestDir : "Missing"}
+      ocrModel={appConfig.ocrModel}
+      metadataModel={appConfig.metadataModel}
+      llmEndpoint={appConfig.openaiBaseUrl}
+      queue={{
+        initialEntries: status.queueEntries,
+        initialCounts: status.queueCounts,
+      }}
+      reindex={{ initialStatus: status.reindexStatus }}
+    />
+  );
+}
+
 async function loadStatus() {
   await ensureAppDirectories();
 
@@ -32,26 +54,4 @@ async function loadStatus() {
     queueCounts,
     reindexStatus,
   };
-}
-
-export default async function SettingsPage() {
-  const status = await loadStatus();
-
-  return (
-    <SystemStatusPage
-      documentCount={status.documents}
-      originalsDisplay={
-        status.originalsDir ? appConfig.originalsDir : "Missing"
-      }
-      ingestDisplay={status.ingestDir ? appConfig.ingestDir : "Missing"}
-      ocrModel={appConfig.ocrModel}
-      metadataModel={appConfig.metadataModel}
-      llmEndpoint={appConfig.openaiBaseUrl}
-      queue={{
-        initialEntries: status.queueEntries,
-        initialCounts: status.queueCounts,
-      }}
-      reindex={{ initialStatus: status.reindexStatus }}
-    />
-  );
 }
