@@ -1,8 +1,11 @@
-import { type ExtractionResult, ParsingError } from "@kreuzberg/node";
+import type { ExtractionResult } from "@kreuzberg/node";
 
 import { appConfig } from "@/lib/config";
 
-import { getKreuzberg } from "./kreuzberg";
+import {
+  detectMimeTypeFromPathWithNativeBinding,
+  extractFileWithNativeConfig,
+} from "./kreuzberg";
 
 /** Substring from Kreuzberg when VLM/OCR backends fail transiently (network, rate limits). */
 const TRANSIENT_OCR_PIPELINE_FAILURE = "All OCR pipeline backends failed";
@@ -15,10 +18,59 @@ type KreuzbergVlmConfig = {
   api_key?: string;
 };
 
+type KreuzbergExtractOptions = {
+  forceOcr: true;
+  force_ocr: true;
+  ocr: {
+    backend: "vlm";
+    vlmConfig: KreuzbergVlmConfig;
+    vlm_config: KreuzbergVlmConfig;
+  };
+};
+
 export interface ExtractedDocument {
   content: string;
   mimeType: string;
   pageCount: number | null;
+}
+
+export async function extractDocument(
+  filePath: string,
+): Promise<ExtractedDocument> {
+  const mimeType = await detectMimeTypeFromPathWithNativeBinding(filePath);
+  const extractOptions = buildExtractOptions();
+
+  let result: ExtractionResult;
+  try {
+    result = await extractFileWithNativeConfig(filePath, null, extractOptions);
+  } catch (error) {
+    if (!isTransientOcrPipelineFailure(error)) {
+      throw error;
+    }
+    result = await extractFileWithNativeConfig(filePath, null, extractOptions);
+  }
+
+  const metadata = result.metadata as { pageCount?: number } | undefined;
+
+  return {
+    content: result.content.trim(),
+    mimeType: result.mimeType || mimeType,
+    pageCount: metadata?.pageCount ?? null,
+  };
+}
+
+function buildExtractOptions(): KreuzbergExtractOptions {
+  const vlmConfig = buildVlmConfig();
+
+  return {
+    forceOcr: true,
+    force_ocr: true,
+    ocr: {
+      backend: "vlm",
+      vlmConfig,
+      vlm_config: vlmConfig,
+    },
+  };
 }
 
 function buildVlmConfig(): KreuzbergVlmConfig {
@@ -36,43 +88,9 @@ function buildVlmConfig(): KreuzbergVlmConfig {
   return config;
 }
 
-export async function extractDocument(
-  filePath: string,
-): Promise<ExtractedDocument> {
-  const { detectMimeTypeFromPath, extractFile } = getKreuzberg();
-  const mimeType = detectMimeTypeFromPath(filePath);
-  const extractOptions = {
-    forceOcr: true,
-    force_ocr: true,
-    ocr: {
-      backend: "vlm",
-      vlmConfig: buildVlmConfig(),
-      vlm_config: buildVlmConfig(),
-    },
-  } as never;
-
-  let result: ExtractionResult;
-  try {
-    result = await extractFile(filePath, null, extractOptions);
-  } catch (error) {
-    if (!isTransientOcrPipelineFailure(error)) {
-      throw error;
-    }
-    result = await extractFile(filePath, null, extractOptions);
-  }
-
-  const metadata = result.metadata as { pageCount?: number } | undefined;
-
-  return {
-    content: result.content.trim(),
-    mimeType: result.mimeType || mimeType,
-    pageCount: metadata?.pageCount ?? null,
-  };
-}
-
 function isTransientOcrPipelineFailure(error: unknown): boolean {
   return (
-    error instanceof ParsingError &&
+    error instanceof Error &&
     error.message.includes(TRANSIENT_OCR_PIPELINE_FAILURE)
   );
 }

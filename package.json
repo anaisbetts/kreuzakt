@@ -16,7 +16,7 @@
     "test:integration": "tmpdir=\"$(mktemp -d)\" && trap 'rm -rf \"$tmpdir\"' EXIT && KREUZAKT_RUN_INTEGRATION=1 DATA_DIR=\"$tmpdir\" bun --env-file=.env.local test"
   },
   "dependencies": {
-    "@kreuzberg/node": "^4.9.8",
+    "@kreuzberg/node": "4.9.8",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "chokidar": "^5.0.0",
     "kysely": "^0.28.17",
