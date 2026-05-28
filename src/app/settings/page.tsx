@@ -6,6 +6,8 @@ import { getQueueCounts, getQueueEntries } from "@/lib/ingest/queue";
 import { getLatestReindexAllStatus } from "@/lib/ingest/reindex";
 import { getPreferredLanguage } from "@/lib/settings";
 
+export const dynamic = "force-dynamic";
+
 export default async function SettingsPage() {
   const status = await loadStatus();
 
