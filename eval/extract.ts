@@ -2,9 +2,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
 
-import { extractFile } from "@kreuzberg/node";
-
 import { computeFileHash } from "../src/lib/files";
+import { extractFileWithNativeConfig } from "../src/lib/ingest/kreuzberg";
 
 import type { BackendConfig, CachedExtraction, FixtureInfo } from "./types";
 
@@ -42,7 +41,7 @@ export async function extractFixture(
   }
 
   const startedAt = performance.now();
-  const result = await extractFile(
+  const result = await extractFileWithNativeConfig(
     fixture.filePath,
     null,
     backend.kreuzbergConfig,

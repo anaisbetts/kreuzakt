@@ -4,6 +4,7 @@ node_modules
 out
 build
 coverage
+target
 
 # Git and tooling
 .git

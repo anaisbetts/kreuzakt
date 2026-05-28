@@ -61,7 +61,7 @@ The application is built on:
 - **Next.js** for the web UI and API routes
 - **Kysely** as a type-safe SQL query builder over SQLite (via `bun:sqlite` and a Bun SQLite dialect)
 - **SQLite FTS5** for full-text search with BM25 ranking
-- **Kreuzberg** (`@kreuzberg/node`) for document text extraction, with a VLM backend for scanned documents
+- **Kreuzberg** via Kreuzakt's Rust CLI for document text extraction, with a VLM backend for scanned documents
 - **Chokidar** for watching the ingest folder
 - **MCP SDK** for the remote MCP server (Streamable HTTP transport)
 - **Tailwind CSS** for the search UI

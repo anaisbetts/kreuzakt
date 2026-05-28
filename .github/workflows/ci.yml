@@ -85,9 +85,9 @@ jobs:
             type=ref,event=tag
             type=raw,value=latest,enable=${{ github.event_name == 'release' && !github.event.release.prerelease }}
 
-      # amd64 only: sharp + @kreuzberg ship arm64 binaries, but multi-arch CI builds
-      # run arm64 under QEMU and bun install for that graph is brittle. Revisit with
-      # native arm64 runners or a proven bake matrix if we need linux/arm64 images.
+      # amd64 only: sharp native packages and the Rust extraction CLI are built for
+      # the current Docker platform. Revisit with native arm64 runners or a proven
+      # bake matrix if we need linux/arm64 images.
       - name: Build and push
         id: push
         uses: docker/build-push-action@v6

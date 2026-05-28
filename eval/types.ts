@@ -2,7 +2,7 @@ export interface BackendConfig {
   name: string;
   label: string;
   costPerPageEstimate: number;
-  /** Pass-through to `extractFile(..., config)`. */
+  /** Pass-through to the Kreuzakt Kreuzberg CLI extraction config. */
   kreuzbergConfig: Record<string, unknown>;
 }
 
