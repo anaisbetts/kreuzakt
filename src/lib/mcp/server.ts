@@ -1,9 +1,12 @@
 import { randomUUID } from "node:crypto";
-
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-import * as z from "zod/v4";
+import type { AnySchema } from "@modelcontextprotocol/sdk/server/zod-compat.js";
+import {
+  isInitializeRequest,
+  type RequestInfo,
+} from "@modelcontextprotocol/sdk/types.js";
+import * as z from "zod/v3";
 
 import {
   getDocumentContentsByIds,
@@ -21,15 +24,38 @@ import {
   stripSnippetMarkers,
 } from "./utils";
 
+const sessions = new Map<string, McpSession>();
+/** Upper bound for MCP `limit` parameters (search, list recent, etc.). */
+const MAX_LIMIT = 512;
+const DEFAULT_LIMIT = 10;
+
+type DocumentIdArgs = {
+  id?: number;
+  ids?: number[];
+};
+
 type McpSession = {
   server: McpServer;
   transport: WebStandardStreamableHTTPServerTransport;
 };
 
-const sessions = new Map<string, McpSession>();
-/** Upper bound for MCP `limit` parameters (search, list recent, etc.). */
-const MAX_LIMIT = 512;
-const DEFAULT_LIMIT = 10;
+type McpToolExtra = {
+  requestInfo?: RequestInfo;
+};
+
+type RecentDocumentsArgs = {
+  limit?: number;
+  since?: string;
+};
+
+type SearchDocumentsArgs = {
+  query: string;
+  limit: number;
+};
+
+type UploadCommandArgs = {
+  file_path?: string;
+};
 
 const searchResultSchema = z.object({
   id: z.number(),
@@ -41,9 +67,11 @@ const searchResultSchema = z.object({
   snippet: z.string(),
 });
 
-const searchOutputSchema = {
-  results: z.array(searchResultSchema),
-};
+const searchOutputSchema = mcpSchema(
+  z.object({
+    results: z.array(searchResultSchema),
+  }),
+);
 
 const documentSchema = z.object({
   id: z.number(),
@@ -64,18 +92,22 @@ const documentSchema = z.object({
   link_for_user: z.string(),
 });
 
-const documentOutputSchema = {
-  documents: z.array(documentSchema),
-};
+const documentOutputSchema = mcpSchema(
+  z.object({
+    documents: z.array(documentSchema),
+  }),
+);
 
 const documentContentSchema = z.object({
   id: z.number(),
   content: z.string(),
 });
 
-const documentContentOutputSchema = {
-  contents: z.array(documentContentSchema),
-};
+const documentContentOutputSchema = mcpSchema(
+  z.object({
+    contents: z.array(documentContentSchema),
+  }),
+);
 
 const recentDocumentSchema = z.object({
   id: z.number(),
@@ -85,9 +117,11 @@ const recentDocumentSchema = z.object({
   added_at: z.string(),
 });
 
-const recentDocumentsOutputSchema = {
-  documents: z.array(recentDocumentSchema),
-};
+const recentDocumentsOutputSchema = mcpSchema(
+  z.object({
+    documents: z.array(recentDocumentSchema),
+  }),
+);
 
 const downloadSchema = z.object({
   id: z.number(),
@@ -97,9 +131,11 @@ const downloadSchema = z.object({
   download_url: z.string(),
 });
 
-const downloadOutputSchema = {
-  downloads: z.array(downloadSchema),
-};
+const downloadOutputSchema = mcpSchema(
+  z.object({
+    downloads: z.array(downloadSchema),
+  }),
+);
 
 const userLinkSchema = z.object({
   id: z.number(),
@@ -109,13 +145,17 @@ const userLinkSchema = z.object({
   link_for_user: z.string(),
 });
 
-const userLinkOutputSchema = {
-  links: z.array(userLinkSchema),
-};
+const userLinkOutputSchema = mcpSchema(
+  z.object({
+    links: z.array(userLinkSchema),
+  }),
+);
 
-const uploadCommandOutputSchema = {
-  curl_command: z.string(),
-};
+const uploadCommandOutputSchema = mcpSchema(
+  z.object({
+    curl_command: z.string(),
+  }),
+);
 
 export async function handleMcpRequest(request: Request) {
   if (request.method === "POST") {
@@ -232,28 +272,30 @@ function createKreuzaktMcpServer() {
     {
       description:
         "Search the document archive by natural-language query. Returns ranked document matches with snippets for quick triage.",
-      inputSchema: {
-        query: z
-          .string()
-          .trim()
-          .min(1)
-          .describe(
-            "Search query. Uses SQLite FTS5 with stemming, so natural language and partial word variations work well.",
-          ),
-        limit: z
-          .number()
-          .int()
-          .positive()
-          .max(MAX_LIMIT)
-          .default(DEFAULT_LIMIT)
-          .describe("Maximum number of matching documents to return."),
-      },
+      inputSchema: mcpSchema(
+        z.object({
+          query: z
+            .string()
+            .trim()
+            .min(1)
+            .describe(
+              "Search query. Uses SQLite FTS5 with stemming, so natural language and partial word variations work well.",
+            ),
+          limit: z
+            .number()
+            .int()
+            .positive()
+            .max(MAX_LIMIT)
+            .default(DEFAULT_LIMIT)
+            .describe("Maximum number of matching documents to return."),
+        }),
+      ),
       outputSchema: searchOutputSchema,
       annotations: {
         readOnlyHint: true,
       },
     },
-    async ({ query, limit }) => {
+    async ({ query, limit }: SearchDocumentsArgs) => {
       const results = await (async () => {
         try {
           return await searchDocuments({ query, page: 1, limit });
@@ -288,27 +330,29 @@ function createKreuzaktMcpServer() {
     {
       description:
         "Fetch one or more documents with full metadata and complete extracted text. Prefer `ids` for bulk reads.",
-      inputSchema: {
-        ids: z
-          .array(z.number().int().positive())
-          .min(1)
-          .optional()
-          .describe(
-            "Document IDs to fetch. Preferred when reading multiple documents.",
-          ),
-        id: z
-          .number()
-          .int()
-          .positive()
-          .optional()
-          .describe("Convenience form for reading a single document."),
-      },
+      inputSchema: mcpSchema(
+        z.object({
+          ids: z
+            .array(z.number().int().positive())
+            .min(1)
+            .optional()
+            .describe(
+              "Document IDs to fetch. Preferred when reading multiple documents.",
+            ),
+          id: z
+            .number()
+            .int()
+            .positive()
+            .optional()
+            .describe("Convenience form for reading a single document."),
+        }),
+      ),
       outputSchema: documentOutputSchema,
       annotations: {
         readOnlyHint: true,
       },
     },
-    async ({ id, ids }, extra) => {
+    async ({ id, ids }: DocumentIdArgs, extra: McpToolExtra) => {
       const normalizedIds = normalizeDocumentIds({ id, ids });
       const baseUrl = getBaseUrl(extra.requestInfo);
       const documents = await getDocumentsByIds(normalizedIds, { baseUrl });
@@ -321,27 +365,29 @@ function createKreuzaktMcpServer() {
     {
       description:
         "Fetch only the extracted text for one or more documents. Prefer `ids` for bulk reads when metadata is not needed.",
-      inputSchema: {
-        ids: z
-          .array(z.number().int().positive())
-          .min(1)
-          .optional()
-          .describe("Document IDs to fetch content for."),
-        id: z
-          .number()
-          .int()
-          .positive()
-          .optional()
-          .describe(
-            "Convenience form for reading a single document's content.",
-          ),
-      },
+      inputSchema: mcpSchema(
+        z.object({
+          ids: z
+            .array(z.number().int().positive())
+            .min(1)
+            .optional()
+            .describe("Document IDs to fetch content for."),
+          id: z
+            .number()
+            .int()
+            .positive()
+            .optional()
+            .describe(
+              "Convenience form for reading a single document's content.",
+            ),
+        }),
+      ),
       outputSchema: documentContentOutputSchema,
       annotations: {
         readOnlyHint: true,
       },
     },
-    async ({ id, ids }) => {
+    async ({ id, ids }: DocumentIdArgs) => {
       const normalizedIds = normalizeDocumentIds({ id, ids });
       const documents = await getDocumentContentsByIds(normalizedIds);
       return createArrayToolResult("contents", documents);
@@ -361,29 +407,31 @@ function createKreuzaktMcpServer() {
         "- Pass both to get up to `limit` documents added after `since` (newest first).",
         `\`limit\` is clamped to a maximum of ${MAX_LIMIT}. \`since\` must be a valid ISO 8601 timestamp.`,
       ].join("\n"),
-      inputSchema: {
-        limit: z
-          .number()
-          .int()
-          .positive()
-          .max(MAX_LIMIT)
-          .optional()
-          .describe(
-            `Optional. Maximum number of recent documents to return. Defaults to ${DEFAULT_LIMIT} when omitted, capped at ${MAX_LIMIT}.`,
-          ),
-        since: z
-          .string()
-          .optional()
-          .describe(
-            "Optional ISO 8601 timestamp. When provided, only documents added strictly after this timestamp are returned.",
-          ),
-      },
+      inputSchema: mcpSchema(
+        z.object({
+          limit: z
+            .number()
+            .int()
+            .positive()
+            .max(MAX_LIMIT)
+            .optional()
+            .describe(
+              `Optional. Maximum number of recent documents to return. Defaults to ${DEFAULT_LIMIT} when omitted, capped at ${MAX_LIMIT}.`,
+            ),
+          since: z
+            .string()
+            .optional()
+            .describe(
+              "Optional ISO 8601 timestamp. When provided, only documents added strictly after this timestamp are returned.",
+            ),
+        }),
+      ),
       outputSchema: recentDocumentsOutputSchema,
       annotations: {
         readOnlyHint: true,
       },
     },
-    async ({ limit, since }) => {
+    async ({ limit, since }: RecentDocumentsArgs) => {
       if (since && Number.isNaN(Date.parse(since))) {
         throw new Error("`since` must be a valid ISO 8601 timestamp");
       }
@@ -410,25 +458,27 @@ function createKreuzaktMcpServer() {
     {
       description:
         "Get absolute download URLs for one or more original document files so a client can present or fetch the originals directly.",
-      inputSchema: {
-        ids: z
-          .array(z.number().int().positive())
-          .min(1)
-          .optional()
-          .describe("Document IDs to generate download URLs for."),
-        id: z
-          .number()
-          .int()
-          .positive()
-          .optional()
-          .describe("Convenience form for a single document download URL."),
-      },
+      inputSchema: mcpSchema(
+        z.object({
+          ids: z
+            .array(z.number().int().positive())
+            .min(1)
+            .optional()
+            .describe("Document IDs to generate download URLs for."),
+          id: z
+            .number()
+            .int()
+            .positive()
+            .optional()
+            .describe("Convenience form for a single document download URL."),
+        }),
+      ),
       outputSchema: downloadOutputSchema,
       annotations: {
         readOnlyHint: true,
       },
     },
-    async ({ id, ids }, extra) => {
+    async ({ id, ids }: DocumentIdArgs, extra: McpToolExtra) => {
       const normalizedIds = normalizeDocumentIds({ id, ids });
       const baseUrl = getBaseUrl(extra.requestInfo);
       const downloads = await getDocumentsForDownload(normalizedIds, {
@@ -443,22 +493,24 @@ function createKreuzaktMcpServer() {
     {
       description:
         "Return a ready-to-run curl command that uploads a new document file to Kreuzakt via POST /api/upload. The file is queued for ingest automatically after upload.",
-      inputSchema: {
-        file_path: z
-          .string()
-          .trim()
-          .min(1)
-          .optional()
-          .describe(
-            "Optional absolute or relative path to the file on the machine where curl will run. Defaults to /path/to/file when omitted.",
-          ),
-      },
+      inputSchema: mcpSchema(
+        z.object({
+          file_path: z
+            .string()
+            .trim()
+            .min(1)
+            .optional()
+            .describe(
+              "Optional absolute or relative path to the file on the machine where curl will run. Defaults to /path/to/file when omitted.",
+            ),
+        }),
+      ),
       outputSchema: uploadCommandOutputSchema,
       annotations: {
         readOnlyHint: true,
       },
     },
-    async ({ file_path }, extra) => {
+    async ({ file_path }: UploadCommandArgs, extra: McpToolExtra) => {
       const baseUrl = getBaseUrl(extra.requestInfo);
       const curl_command = buildUploadCurlCommand(baseUrl, file_path);
 
@@ -479,25 +531,27 @@ function createKreuzaktMcpServer() {
     {
       description:
         "Get shareable links to the in-app document viewer (not the raw file download). Same metadata shape as `download_document`, with `link_for_user` for URLs you can send to a person.",
-      inputSchema: {
-        ids: z
-          .array(z.number().int().positive())
-          .min(1)
-          .optional()
-          .describe("Document IDs to build viewer links for."),
-        id: z
-          .number()
-          .int()
-          .positive()
-          .optional()
-          .describe("Convenience form for a single document link."),
-      },
+      inputSchema: mcpSchema(
+        z.object({
+          ids: z
+            .array(z.number().int().positive())
+            .min(1)
+            .optional()
+            .describe("Document IDs to build viewer links for."),
+          id: z
+            .number()
+            .int()
+            .positive()
+            .optional()
+            .describe("Convenience form for a single document link."),
+        }),
+      ),
       outputSchema: userLinkOutputSchema,
       annotations: {
         readOnlyHint: true,
       },
     },
-    async ({ id, ids }, extra) => {
+    async ({ id, ids }: DocumentIdArgs, extra: McpToolExtra) => {
       const normalizedIds = normalizeDocumentIds({ id, ids });
       const baseUrl = getBaseUrl(extra.requestInfo);
       const links = await getDocumentsForUserLink(normalizedIds, { baseUrl });
@@ -520,6 +574,10 @@ function createArrayToolResult<T>(key: string, items: T[]) {
       },
     ],
   };
+}
+
+function mcpSchema(schema: unknown): AnySchema {
+  return schema as AnySchema;
 }
 
 function createJsonRpcErrorResponse(
