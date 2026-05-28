@@ -43,7 +43,7 @@ export const appConfig = {
   ),
   openaiApiKey: fromEnvVar(
     process.env.OPENAI_DEV_API_KEY,
-    process.env.OPENROUTER_KEY,
+    process.env.OPENROUTER_KEY ?? process.env.OPENAI_API_KEY,
     process.env.OPENAI_DEV_KEY ?? "",
   ),
   port: Number(process.env.PORT ?? "3000"),

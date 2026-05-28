@@ -10,7 +10,7 @@ import {
   getDocumentThumbnailDir,
   getOriginalFilePath,
 } from "@/lib/files";
-import { getKreuzberg } from "@/lib/ingest/kreuzberg";
+import { renderPdfPageWithNativeBinding } from "@/lib/ingest/kreuzberg";
 
 export const runtime = "nodejs";
 
@@ -82,10 +82,13 @@ export async function GET(
         );
       }
 
-      const { renderPdfPage } = getKreuzberg();
-      const pageBuffer = await renderPdfPage(originalPath, page - 1, {
-        dpi: 200,
-      });
+      const pageBuffer = await renderPdfPageWithNativeBinding(
+        originalPath,
+        page - 1,
+        {
+          dpi: 200,
+        },
+      );
 
       await ensureDirectory(getDocumentThumbnailDir(id));
       await writeFile(cachedPath, pageBuffer);

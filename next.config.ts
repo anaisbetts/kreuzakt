@@ -6,6 +6,7 @@ const devConfig: Partial<NextConfig> = {
 };
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["enceladus"],
   serverExternalPackages: [
     "@kreuzberg/node",
     "@modelcontextprotocol/sdk",
