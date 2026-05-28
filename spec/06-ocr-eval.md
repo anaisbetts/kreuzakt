@@ -71,8 +71,6 @@ The fixtures should be representative of the actual archive. Label each fixture 
 For each fixture file, run Kreuzberg extraction with every configured backend:
 
 ```typescript
-import { extractFile } from '@kreuzberg/node';
-
 const backends = [
     { name: 'tesseract', config: { ocr: { backend: 'tesseract' } } },
     { name: 'paddleocr', config: { ocr: { backend: 'paddle-ocr' } } },
@@ -81,6 +79,8 @@ const backends = [
     { name: 'vlm:gpt4o', config: { forceOcr: true, ocr: { backend: 'vlm', vlmConfig: { model: 'openai/gpt-4o' } } } },
 ];
 ```
+
+The eval harness sends these backend configs through Kreuzakt's Rust CLI wrapper, not through the Kreuzberg Node binding.
 
 VLM backends use `forceOcr: true` to ensure they process the document as images even if a text layer exists. This tests their OCR capability specifically.
 

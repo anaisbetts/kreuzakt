@@ -1,9 +1,8 @@
-import type { ExtractionResult } from "@kreuzberg/node";
-
 import { appConfig } from "@/lib/config";
 
 import {
   detectMimeTypeFromPathWithNativeBinding,
+  type ExtractionResult,
   extractFileWithNativeConfig,
 } from "./kreuzberg";
 

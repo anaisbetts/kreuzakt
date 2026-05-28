@@ -2,7 +2,7 @@ import { appConfig } from "../src/lib/config";
 
 import type { BackendConfig } from "./types";
 
-/** Matches Kreuzberg `LlmConfig` / Node `vlmConfig` (see LLM integration docs). */
+/** Matches Kreuzberg Rust `LlmConfig` while preserving old camelCase input aliases. */
 type VlmLlmConfig = {
   model: string;
   baseUrl: string;
@@ -24,10 +24,6 @@ const QWEN_OPENROUTER_MODEL =
   process.env.OCR_VLM_MODEL ??
   "qwen/qwen3.5-122b-a10b";
 
-/**
- * Kreuzberg docs use `ocr.vlmConfig` in JS. The native validator also expects `vlm_config`.
- * We set both to the same object.
- */
 function buildLlmConfig(options: {
   baseUrl: string;
   model: string;

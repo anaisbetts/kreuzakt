@@ -120,7 +120,7 @@ The existing paperless-ngx instance is fully migrated, searchable, and accessibl
 | `kysely` | Type-safe SQL query builder | 0 |
 | `kysely-bun-sqlite` | Kysely dialect for Bun's native `bun:sqlite` driver | 0 |
 | `tailwindcss` | CSS framework | 0 |
-| `@kreuzberg/node` | Document text extraction + VLM OCR | 1 |
+| `kreuzberg` Rust crate via `kreuzakt-kreuzberg` CLI | Document text extraction + VLM OCR | 1 |
 | `chokidar` | File system watching | 1 |
 | `openai` | LLM calls for metadata generation via an OpenAI-compatible endpoint | 1 |
 | `@modelcontextprotocol/sdk` | MCP server SDK | 2 |

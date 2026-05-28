@@ -48,3 +48,5 @@ storybook-static/
 /data/
 /eval/results/
 !/eval/results/.gitkeep
+
+target/

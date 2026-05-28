@@ -101,10 +101,8 @@ The `processing_queue` table tracks every file that enters the pipeline:
 Kreuzberg handles format detection and routing automatically. The key configuration is the OCR backend for scanned content:
 
 ```typescript
-import { extractFile } from '@kreuzberg/node';
-
-const result = await extractFile(filePath, null, {
-    forceOcr: false,  // let Kreuzberg decide based on text layer presence
+const result = await extractFileWithNativeConfig(filePath, null, {
+    forceOcr: true,
     ocr: {
         backend: 'vlm',
         vlmConfig: {
@@ -114,7 +112,7 @@ const result = await extractFile(filePath, null, {
 });
 ```
 
-With `forceOcr: false`, Kreuzberg extracts embedded text from digital PDFs (free, instant) and only invokes the VLM for pages that lack a text layer. The VLM model is configurable via `OCR_VLM_MODEL` environment variable.
+The TypeScript app talks to a first-party Rust CLI, which links the Kreuzberg Rust crate directly and enables the VLM OCR features needed by Kreuzakt. The VLM model is configurable via `OCR_VLM_MODEL` environment variable.
 
 ### Metadata Generation
 

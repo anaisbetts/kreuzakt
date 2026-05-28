@@ -16,6 +16,18 @@ COPY . .
 
 RUN bun run build
 
+FROM rust:1-trixie AS rust-builder
+WORKDIR /app
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends cmake \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY Cargo.toml Cargo.lock ./
+COPY rust ./rust
+
+RUN cargo build --release -p kreuzakt-kreuzberg
+
 FROM oven/bun:1 AS runner
 WORKDIR /app
 
@@ -23,19 +35,18 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+ENV KREUZAKT_KREUZBERG_CLI=/app/bin/kreuzakt-kreuzberg
 # Single mount point: ingest, originals, thumbnails, and DB default under /data/
 ENV DATA_DIR=/data
 
 COPY --from=builder --chown=bun:bun /app/public ./public
+COPY --from=rust-builder --chown=bun:bun /app/target/release/kreuzakt-kreuzberg ./bin/kreuzakt-kreuzberg
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=bun:bun /app/.next/standalone ./
 COPY --from=builder --chown=bun:bun /app/.next/static ./.next/static
 
-# NAPI-RS native packages use conditional require() calls that @vercel/nft
-# can't trace, so the standalone node_modules is missing native bindings.
-COPY --from=deps --chown=bun:bun /app/node_modules/@kreuzberg ./node_modules/@kreuzberg
 COPY --from=deps --chown=bun:bun /app/node_modules/sharp ./node_modules/sharp
 COPY --from=deps --chown=bun:bun /app/node_modules/@img ./node_modules/@img
 

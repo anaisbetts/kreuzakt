@@ -7,16 +7,7 @@ const devConfig: Partial<NextConfig> = {
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["enceladus"],
-  serverExternalPackages: [
-    "@kreuzberg/node",
-    "@modelcontextprotocol/sdk",
-    "@kreuzberg/node-darwin-arm64",
-    "@kreuzberg/node-linux-arm64-gnu",
-    "@kreuzberg/node-linux-x64-gnu",
-    "@kreuzberg/node-win32-x64-msvc",
-    "chokidar",
-    "sharp",
-  ],
+  serverExternalPackages: ["@modelcontextprotocol/sdk", "chokidar", "sharp"],
   ...(isDevMode ? devConfig : {}),
   output: "standalone",
 };
