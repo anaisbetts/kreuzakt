@@ -54,6 +54,12 @@ export const appConfig = {
   ),
   /** Optional periodic VACUUM (compaction); 0 disables. */
   sqliteVacuumIntervalMs: intFromEnv(process.env.SQLITE_VACUUM_INTERVAL_MS, 0),
+  /** Poll the ingest dir instead of relying on inotify. Required on NFS/SMB/FUSE mounts. */
+  ingestWatchPoll: boolFromEnv(process.env.INGEST_WATCH_POLL, false),
+  ingestWatchPollIntervalMs: intFromEnv(
+    process.env.INGEST_WATCH_POLL_INTERVAL_MS,
+    2000,
+  ),
 } as const;
 
 export type AppConfig = typeof appConfig;
@@ -90,4 +96,18 @@ function intFromEnv(value: string | undefined, fallback: number): number {
   }
   const n = Number.parseInt(value, 10);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function boolFromEnv(value: string | undefined, fallback: boolean): boolean {
+  const v = value?.trim().toLowerCase();
+  if (!v) {
+    return fallback;
+  }
+  if (v === "1" || v === "true" || v === "yes" || v === "on") {
+    return true;
+  }
+  if (v === "0" || v === "false" || v === "no" || v === "off") {
+    return false;
+  }
+  return fallback;
 }
