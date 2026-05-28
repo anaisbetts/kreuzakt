@@ -2,19 +2,12 @@ import Link from "next/link";
 
 import type { QueueRow } from "@/lib/db/schema";
 import type { QueueCounts } from "@/lib/ingest/queue";
+import type { ReindexAllStatus } from "@/lib/ingest/reindex";
 
 import { McpSetupSection } from "./McpSetupSection";
 import { PaperlessImport } from "./PaperlessImport";
 import { ProcessingQueue } from "./ProcessingQueue";
-
-function StatusRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-neutral-200 bg-white px-4 py-3">
-      <span className="text-sm font-medium text-neutral-600">{label}</span>
-      <span className="text-sm text-neutral-900">{value}</span>
-    </div>
-  );
-}
+import { ReindexAllPanel } from "./ReindexAllPanel";
 
 export type SystemStatusPageProps = {
   documentCount: number;
@@ -28,6 +21,9 @@ export type SystemStatusPageProps = {
     initialCounts: QueueCounts;
     enablePolling?: boolean;
   };
+  reindex: {
+    initialStatus: ReindexAllStatus;
+  };
 };
 
 export function SystemStatusPage({
@@ -38,6 +34,7 @@ export function SystemStatusPage({
   metadataModel,
   llmEndpoint,
   queue,
+  reindex,
 }: SystemStatusPageProps) {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-6 py-10">
@@ -54,7 +51,7 @@ export function SystemStatusPage({
         </h1>
         <p className="text-sm text-neutral-500">
           Health, storage paths, model configuration, and the live processing
-          queue for new ingests.
+          queue for ingests and reindex jobs.
         </p>
       </div>
 
@@ -71,11 +68,25 @@ export function SystemStatusPage({
 
       <PaperlessImport />
 
+      <ReindexAllPanel
+        documentCount={documentCount}
+        initialStatus={reindex.initialStatus}
+      />
+
       <ProcessingQueue
         enablePolling={queue.enablePolling}
         initialEntries={queue.initialEntries}
         initialCounts={queue.initialCounts}
       />
     </main>
+  );
+}
+
+function StatusRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-lg border border-neutral-200 bg-white px-4 py-3">
+      <span className="text-sm font-medium text-neutral-600">{label}</span>
+      <span className="text-sm text-neutral-900">{value}</span>
+    </div>
   );
 }

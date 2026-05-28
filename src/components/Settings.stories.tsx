@@ -75,6 +75,19 @@ export const Default: Story = {
         },
       ],
     },
+    reindex: {
+      initialStatus: {
+        batchId: "storybook",
+        total: 1284,
+        pending: 1200,
+        processing: 1,
+        completed: 80,
+        failed: 3,
+        processed: 83,
+        active: true,
+        percentComplete: 6,
+      },
+    },
   },
 };
 

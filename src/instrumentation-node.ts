@@ -1,5 +1,6 @@
 import { registerSqliteMaintenance } from "@/lib/db/maintenance";
 import { ensureAppDirectories } from "@/lib/files";
+import { resumePendingReindexQueue } from "@/lib/ingest/reindex";
 import { startWatcher } from "@/lib/ingest/watcher";
 
 declare global {
@@ -12,6 +13,7 @@ if (!globalThis.__docsAiInstrumentationStarted) {
   void (async () => {
     await ensureAppDirectories();
     await startWatcher();
+    await resumePendingReindexQueue();
     registerSqliteMaintenance();
   })();
 }

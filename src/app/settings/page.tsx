@@ -3,18 +3,26 @@ import { appConfig } from "@/lib/config";
 import { getDocumentCount } from "@/lib/documents";
 import { ensureAppDirectories, fileExists } from "@/lib/files";
 import { getQueueCounts, getQueueEntries } from "@/lib/ingest/queue";
+import { getLatestReindexAllStatus } from "@/lib/ingest/reindex";
 
 async function loadStatus() {
   await ensureAppDirectories();
 
-  const [documents, originalsDir, ingestDir, queueEntries, queueCounts] =
-    await Promise.all([
-      getDocumentCount(),
-      fileExists(appConfig.originalsDir),
-      fileExists(appConfig.ingestDir),
-      getQueueEntries({ limit: 5 }),
-      getQueueCounts(),
-    ]);
+  const [
+    documents,
+    originalsDir,
+    ingestDir,
+    queueEntries,
+    queueCounts,
+    reindexStatus,
+  ] = await Promise.all([
+    getDocumentCount(),
+    fileExists(appConfig.originalsDir),
+    fileExists(appConfig.ingestDir),
+    getQueueEntries({ limit: 5 }),
+    getQueueCounts(),
+    getLatestReindexAllStatus(),
+  ]);
 
   return {
     documents,
@@ -22,6 +30,7 @@ async function loadStatus() {
     ingestDir,
     queueEntries,
     queueCounts,
+    reindexStatus,
   };
 }
 
@@ -42,6 +51,7 @@ export default async function SettingsPage() {
         initialEntries: status.queueEntries,
         initialCounts: status.queueCounts,
       }}
+      reindex={{ initialStatus: status.reindexStatus }}
     />
   );
 }

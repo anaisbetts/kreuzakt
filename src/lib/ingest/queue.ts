@@ -32,6 +32,25 @@ export async function createQueueEntry(filename: string) {
   return getLatestQueueEntryForFilename(filename);
 }
 
+export async function createDocumentQueueEntry(
+  filename: string,
+  documentId: number,
+) {
+  const db = await getDb();
+
+  return db
+    .insertInto("processing_queue")
+    .values({
+      filename,
+      status: "pending",
+      error: null,
+      document_id: documentId,
+      completed_at: null,
+    })
+    .returningAll()
+    .executeTakeFirstOrThrow();
+}
+
 export async function getQueueEntryById(id: number) {
   const db = await getDb();
 
@@ -173,7 +192,7 @@ export async function retryQueueEntry(id: number) {
 
   const updated = await updateQueueStatus(id, "pending", {
     error: null,
-    documentId: null,
+    documentId: existing.document_id,
     completedAt: null,
   });
 
