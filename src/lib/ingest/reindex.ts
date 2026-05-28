@@ -172,6 +172,14 @@ async function getReindexAllStatusForBatch(
     .where("filename", "like", buildReindexBatchLike(batchId))
     .groupBy("status")
     .execute();
+
+  return summarizeReindexAllStatus(batchId, rows);
+}
+
+export function summarizeReindexAllStatus(
+  batchId: string | null,
+  rows: Array<{ status: ProcessingStatus; count: number | string }>,
+): ReindexAllStatus {
   const counts = countStatuses(rows);
   const total =
     counts.pending + counts.processing + counts.completed + counts.failed;
@@ -218,7 +226,7 @@ function buildReindexBatchLike(batchId: string) {
 }
 
 function countStatuses(
-  rows: Array<{ status: ProcessingStatus; count: number }>,
+  rows: Array<{ status: ProcessingStatus; count: number | string }>,
 ) {
   const counts = {
     pending: 0,
