@@ -1,0 +1,3 @@
+[workspace]
+members = ["rust/kreuzakt-kreuzberg"]
+resolver = "2"
