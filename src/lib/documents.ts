@@ -1,7 +1,7 @@
-import { sql } from "kysely";
+import { type Kysely, sql } from "kysely";
 
 import { getDb } from "@/lib/db/connection";
-import type { DocumentRow } from "@/lib/db/schema";
+import type { DB, DocumentRow } from "@/lib/db/schema";
 import { fileExists, getOriginalFilePath } from "@/lib/files";
 import { deleteFtsEntry, updateFtsEntry } from "@/lib/fts";
 import { extractDocument } from "@/lib/ingest/extract";
@@ -51,6 +51,13 @@ export interface DocumentDetail extends DocumentSummary {
 
 export interface DocumentContent {
   id: number;
+  content: string;
+}
+
+export interface DocumentTextExportRow {
+  id: number;
+  title: string;
+  original_filename: string;
   content: string;
 }
 
@@ -431,6 +438,18 @@ export async function getDocumentsByIds(
     documents.map((document) => mapDocumentDetail(document, { baseUrl })),
     ids,
   );
+}
+
+export async function getDocumentsForTextExport(
+  db?: Kysely<DB>,
+): Promise<DocumentTextExportRow[]> {
+  const database = db ?? (await getDb());
+
+  return database
+    .selectFrom("documents")
+    .select(["id", "title", "original_filename", "content"])
+    .orderBy("id", "asc")
+    .execute();
 }
 
 export async function getDocumentContentsByIds(ids: number[]) {
