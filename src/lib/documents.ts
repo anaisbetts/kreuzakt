@@ -1,7 +1,7 @@
-import { sql } from "kysely";
+import { type Kysely, sql } from "kysely";
 
 import { getDb } from "@/lib/db/connection";
-import type { DocumentRow } from "@/lib/db/schema";
+import type { DB, DocumentRow } from "@/lib/db/schema";
 import { fileExists, getOriginalFilePath } from "@/lib/files";
 import { deleteFtsEntry, updateFtsEntry } from "@/lib/fts";
 import { extractDocument } from "@/lib/ingest/extract";
@@ -54,6 +54,13 @@ export interface DocumentContent {
   content: string;
 }
 
+export interface DocumentTextExportRow {
+  id: number;
+  title: string;
+  original_filename: string;
+  content: string;
+}
+
 export interface DocumentDownload {
   id: number;
   original_filename: string;
@@ -88,7 +95,7 @@ function buildThumbnailUrl(id: number) {
   return `/api/documents/${id}/thumbnail`;
 }
 
-function buildDownloadUrl(id: number, baseUrl?: string) {
+export function buildDocumentDownloadUrl(id: number, baseUrl?: string) {
   const path = `/api/documents/${id}/original`;
 
   if (!baseUrl) {
@@ -98,7 +105,7 @@ function buildDownloadUrl(id: number, baseUrl?: string) {
   return new URL(path, ensureTrailingSlash(baseUrl)).toString();
 }
 
-function buildUserDocumentPageUrl(id: number, baseUrl?: string) {
+export function buildDocumentPageUrl(id: number, baseUrl?: string) {
   const path = `/documents/${id}`;
 
   if (!baseUrl) {
@@ -223,8 +230,8 @@ function mapDocumentDetail(
     content: document.content,
     created_at: document.created_at,
     updated_at: document.updated_at,
-    download_url: buildDownloadUrl(document.id, baseUrl),
-    link_for_user: buildUserDocumentPageUrl(document.id, baseUrl),
+    download_url: buildDocumentDownloadUrl(document.id, baseUrl),
+    link_for_user: buildDocumentPageUrl(document.id, baseUrl),
   };
 }
 
@@ -433,6 +440,18 @@ export async function getDocumentsByIds(
   );
 }
 
+export async function getDocumentsForTextExport(
+  db?: Kysely<DB>,
+): Promise<DocumentTextExportRow[]> {
+  const database = db ?? (await getDb());
+
+  return database
+    .selectFrom("documents")
+    .select(["id", "title", "original_filename", "content"])
+    .orderBy("id", "asc")
+    .execute();
+}
+
 export async function getDocumentContentsByIds(ids: number[]) {
   if (ids.length === 0) {
     return [];
@@ -466,7 +485,7 @@ export async function getDocumentsForDownload(
   return reorderByRequestedIds(
     documents.map((document) => ({
       ...document,
-      download_url: buildDownloadUrl(document.id, baseUrl),
+      download_url: buildDocumentDownloadUrl(document.id, baseUrl),
     })),
     ids,
   );
@@ -490,7 +509,7 @@ export async function getDocumentsForUserLink(
   return reorderByRequestedIds(
     documents.map((document) => ({
       ...document,
-      link_for_user: buildUserDocumentPageUrl(document.id, baseUrl),
+      link_for_user: buildDocumentPageUrl(document.id, baseUrl),
     })),
     ids,
   );

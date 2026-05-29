@@ -136,6 +136,14 @@ Other useful commands:
 - `bun run test:integration` — integration tests (loads `.env.local` via `--env-file`; requires Paperless-related vars when those tests run)
 - `bun storybook` — UI development on port 6006
 
+### Text export
+
+`POST /api/documents/export-text` exports every document whose SQLite `content` column is non-empty as a ZIP of `.txt` files. Each file is named `{id}-{sanitized-title}.txt` and begins with YAML frontmatter (`original_filename`, `document_url`, `original_url`) followed by the extracted document body. The response is an `application/zip` download named `kreuzakt-text-export-YYYYMMDD-HHmmss.zip`. Returns `400` if there is no exportable content.
+
+```bash
+curl -X POST http://localhost:3000/api/documents/export-text -o export.zip
+```
+
 ### So.... why's it called "Kreuzakt"?
 
 It uses the library Kreuzberg, and it is a tool to help you with your "Akte" (files/documents). Just like "Berghain" is a portmanteau of "Kreuzberg" and "Friedrichshain", the two districts in Berlin that it sits between. (today you learn!)

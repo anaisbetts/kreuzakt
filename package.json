@@ -18,6 +18,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "chokidar": "^5.0.0",
+    "fflate": "^0.8.2",
     "kysely": "^0.28.17",
     "kysely-bun-sqlite": "^0.4.0",
     "luxon": "^3.7.2",
