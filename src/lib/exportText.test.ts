@@ -12,6 +12,7 @@ import type { DB } from "@/lib/db/schema";
 import {
   buildDocumentTextExport,
   ExportEmptyError,
+  formatExportTextContent,
   formatExportZipFilename,
   sanitizeExportBasename,
 } from "@/lib/exportText";
@@ -69,6 +70,73 @@ async function insertDocument(
 function decodeZipEntry(data: Uint8Array) {
   return new TextDecoder().decode(data);
 }
+
+function splitExportText(text: string) {
+  const match = text.match(/^---\n([\s\S]*?)\n---\n\n([\s\S]*)$/);
+
+  if (!match) {
+    throw new Error("expected YAML frontmatter block");
+  }
+
+  const [, frontmatter, body] = match;
+  if (!frontmatter || body === undefined) {
+    throw new Error("expected YAML frontmatter block");
+  }
+
+  return { frontmatter, body };
+}
+
+describe("formatExportTextContent", () => {
+  it("includes frontmatter fields and content after the closing delimiter", () => {
+    const formatted = formatExportTextContent({
+      id: 42,
+      title: "Annual Report",
+      original_filename: "scan_20260315.pdf",
+      content: "Actual document content here...",
+    });
+
+    const { frontmatter, body } = splitExportText(formatted);
+
+    expect(frontmatter).toContain("original_filename: scan_20260315.pdf");
+    expect(frontmatter).toContain("document_url: /documents/42");
+    expect(frontmatter).toContain("original_url: /api/documents/42/original");
+    expect(body).toBe("Actual document content here...");
+  });
+
+  it("uses absolute URLs when baseUrl is provided", () => {
+    const formatted = formatExportTextContent(
+      {
+        id: 7,
+        title: "Memo",
+        original_filename: "memo.pdf",
+        content: "body",
+      },
+      "https://docs.example.ts.net",
+    );
+
+    const { frontmatter } = splitExportText(formatted);
+
+    expect(frontmatter).toContain(
+      'document_url: "https://docs.example.ts.net/documents/7"',
+    );
+    expect(frontmatter).toContain(
+      'original_url: "https://docs.example.ts.net/api/documents/7/original"',
+    );
+  });
+
+  it("quotes original filenames with YAML-special characters", () => {
+    const formatted = formatExportTextContent({
+      id: 3,
+      title: "Scan",
+      original_filename: "scan:2026#1.pdf",
+      content: "text",
+    });
+
+    const { frontmatter } = splitExportText(formatted);
+
+    expect(frontmatter).toContain('original_filename: "scan:2026#1.pdf"');
+  });
+});
 
 describe("sanitizeExportBasename", () => {
   it("builds id-prefixed filenames from titles", () => {
@@ -162,8 +230,22 @@ describe("buildDocumentTextExport", () => {
         throw new Error("expected two zip entries");
       }
 
-      expect(decodeZipEntry(entries[firstName])).toBe("first body");
-      expect(decodeZipEntry(entries[secondName])).toBe("second body");
+      const firstEntry = splitExportText(decodeZipEntry(entries[firstName]));
+      const secondEntry = splitExportText(decodeZipEntry(entries[secondName]));
+
+      expect(firstEntry.frontmatter).toContain("original_filename: first.txt");
+      expect(firstEntry.frontmatter).toContain(
+        `document_url: /documents/${first.id}`,
+      );
+      expect(firstEntry.frontmatter).toContain(
+        `original_url: /api/documents/${first.id}/original`,
+      );
+      expect(firstEntry.body).toBe("first body");
+
+      expect(secondEntry.frontmatter).toContain(
+        "original_filename: second.txt",
+      );
+      expect(secondEntry.body).toBe("second body");
     } finally {
       await cleanup();
     }

@@ -95,7 +95,7 @@ function buildThumbnailUrl(id: number) {
   return `/api/documents/${id}/thumbnail`;
 }
 
-function buildDownloadUrl(id: number, baseUrl?: string) {
+export function buildDocumentDownloadUrl(id: number, baseUrl?: string) {
   const path = `/api/documents/${id}/original`;
 
   if (!baseUrl) {
@@ -105,7 +105,7 @@ function buildDownloadUrl(id: number, baseUrl?: string) {
   return new URL(path, ensureTrailingSlash(baseUrl)).toString();
 }
 
-function buildUserDocumentPageUrl(id: number, baseUrl?: string) {
+export function buildDocumentPageUrl(id: number, baseUrl?: string) {
   const path = `/documents/${id}`;
 
   if (!baseUrl) {
@@ -230,8 +230,8 @@ function mapDocumentDetail(
     content: document.content,
     created_at: document.created_at,
     updated_at: document.updated_at,
-    download_url: buildDownloadUrl(document.id, baseUrl),
-    link_for_user: buildUserDocumentPageUrl(document.id, baseUrl),
+    download_url: buildDocumentDownloadUrl(document.id, baseUrl),
+    link_for_user: buildDocumentPageUrl(document.id, baseUrl),
   };
 }
 
@@ -485,7 +485,7 @@ export async function getDocumentsForDownload(
   return reorderByRequestedIds(
     documents.map((document) => ({
       ...document,
-      download_url: buildDownloadUrl(document.id, baseUrl),
+      download_url: buildDocumentDownloadUrl(document.id, baseUrl),
     })),
     ids,
   );
@@ -509,7 +509,7 @@ export async function getDocumentsForUserLink(
   return reorderByRequestedIds(
     documents.map((document) => ({
       ...document,
-      link_for_user: buildUserDocumentPageUrl(document.id, baseUrl),
+      link_for_user: buildDocumentPageUrl(document.id, baseUrl),
     })),
     ids,
   );

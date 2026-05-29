@@ -6,7 +6,12 @@ import { zipSync } from "fflate";
 import type { Kysely } from "kysely";
 
 import type { DB } from "@/lib/db/schema";
-import { getDocumentsForTextExport } from "@/lib/documents";
+import {
+  buildDocumentDownloadUrl,
+  buildDocumentPageUrl,
+  type DocumentTextExportRow,
+  getDocumentsForTextExport,
+} from "@/lib/documents";
 
 const EXPORT_BASENAME_MAX_LENGTH = 100;
 const TEMP_DIR_PREFIX = "kreuzakt-text-export-";
@@ -25,8 +30,13 @@ export interface TextExportResult {
   documentCount: number;
 }
 
+export interface TextExportOptions {
+  baseUrl?: string;
+}
+
 export async function buildDocumentTextExport(
   db?: Kysely<DB>,
+  options: TextExportOptions = {},
 ): Promise<TextExportResult> {
   const documents = await getDocumentsForTextExport(db);
   const exportable = documents.filter((document) => document.content.trim());
@@ -47,7 +57,8 @@ export async function buildDocumentTextExport(
         document.original_filename,
       );
       const filePath = path.join(tmpDir, basename);
-      await writeFile(filePath, document.content, "utf8");
+      const fileContent = formatExportTextContent(document, options.baseUrl);
+      await writeFile(filePath, fileContent, "utf8");
       const fileBuffer = await readFile(filePath);
       zipEntries[basename] = new Uint8Array(
         fileBuffer.buffer,
@@ -64,6 +75,21 @@ export async function buildDocumentTextExport(
   } finally {
     await rm(tmpDir, { recursive: true, force: true });
   }
+}
+
+export function formatExportTextContent(
+  document: DocumentTextExportRow,
+  baseUrl?: string,
+): string {
+  const frontmatter = [
+    "---",
+    `original_filename: ${yamlScalar(document.original_filename)}`,
+    `document_url: ${yamlScalar(buildDocumentPageUrl(document.id, baseUrl))}`,
+    `original_url: ${yamlScalar(buildDocumentDownloadUrl(document.id, baseUrl))}`,
+    "---",
+  ].join("\n");
+
+  return `${frontmatter}\n\n${document.content}`;
 }
 
 export function sanitizeExportBasename(
@@ -132,4 +158,22 @@ function stripControlChars(value: string): string {
   }
 
   return result;
+}
+
+function yamlScalar(value: string): string {
+  const needsQuotes =
+    !value ||
+    /[:#\n\r"'[\]{}>|*&!%@`,\\]/.test(value) ||
+    /^\s|\s$/.test(value) ||
+    /^[-?:]/.test(value);
+
+  if (!needsQuotes) {
+    return value;
+  }
+
+  return `"${value
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, "\\n")
+    .replace(/\r/g, "\\r")}"`;
 }
