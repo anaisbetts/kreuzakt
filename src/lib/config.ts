@@ -13,6 +13,34 @@ const dataDir = resolvePath(process.env.DATA_DIR, DEFAULT_DATA_DIR);
 /** Default OpenAI-compatible base when `OPENAI_BASE_URL` is unset or blank. */
 export const OPENROUTER_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
 
+const OPENAI_V1_PATH = /\/v1(?:\/|$)/;
+
+/** Ensure OpenAI-compatible clients hit `{origin}/v1/...`, not `{origin}/chat/completions`. */
+export function normalizeOpenAiCompatibleBaseUrl(baseUrl: string): string {
+  const trimmed = baseUrl.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  const withoutTrailingSlash = trimmed.replace(/\/+$/, "");
+
+  try {
+    const parsed = new URL(withoutTrailingSlash);
+    if (OPENAI_V1_PATH.test(parsed.pathname)) {
+      return withoutTrailingSlash;
+    }
+
+    const pathPrefix =
+      parsed.pathname === "/" ? "" : parsed.pathname.replace(/\/+$/, "");
+    parsed.pathname = `${pathPrefix}/v1`;
+    return parsed.toString().replace(/\/+$/, "");
+  } catch {
+    return OPENAI_V1_PATH.test(withoutTrailingSlash)
+      ? withoutTrailingSlash
+      : `${withoutTrailingSlash}/v1`;
+  }
+}
+
 export const appConfig = {
   dataDir,
   ingestDir: resolvePath(process.env.INGEST_DIR, path.join(dataDir, "ingest")),
@@ -36,10 +64,12 @@ export const appConfig = {
     process.env.METADATA_LLM_MODEL,
     "openai/gpt-5.4",
   ),
-  openaiBaseUrl: fromEnvVar(
-    process.env.OPENAI_DEV_URL,
-    process.env.OPENAI_BASE_URL,
-    OPENROUTER_DEFAULT_BASE_URL,
+  openaiBaseUrl: normalizeOpenAiCompatibleBaseUrl(
+    fromEnvVar(
+      process.env.OPENAI_DEV_URL,
+      process.env.OPENAI_BASE_URL,
+      OPENROUTER_DEFAULT_BASE_URL,
+    ),
   ),
   openaiApiKey: fromEnvVar(
     process.env.OPENAI_DEV_API_KEY,
