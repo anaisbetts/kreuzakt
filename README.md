@@ -31,7 +31,7 @@ services:
       OPENROUTER_KEY: ${OPENROUTER_KEY}
       TZ: Europe/Berlin  # Set your local timezone
     volumes:
-      - ./docs:data
+      - ./docs:/data
     restart: unless-stopped
 ```
 
