@@ -57,7 +57,7 @@ export const appConfig = {
   ocrModel: fromEnvVar(
     process.env.OCR_VLM_DEV_MODEL,
     process.env.OCR_VLM_MODEL,
-    "openai/gpt-5.4-mini",
+    "qwen/qwen3.7-flash",
   ),
   metadataModel: fromEnvVar(
     process.env.METADATA_LLM_DEV_MODEL,

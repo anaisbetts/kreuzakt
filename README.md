@@ -203,7 +203,7 @@ All path variables resolve relative to the working directory unless absolute. `D
 | `OPENROUTER_KEY` | — | API key for [OpenRouter](https://openrouter.ai) (recommended). |
 | `OPENAI_API_KEY` | — | Alternative: a direct OpenAI key. |
 | `OPENAI_BASE_URL` | `https://openrouter.ai/api/v1` | Any OpenAI-compatible base URL (e.g. Ollama at `http://host.docker.internal:11434/v1`). |
-| `OCR_VLM_MODEL` | `openai/gpt-5.4-mini` | Model used for OCR / extraction. |
+| `OCR_VLM_MODEL` | `qwen/qwen3.7-flash` | Model used for OCR / extraction. |
 | `METADATA_LLM_MODEL` | `openai/gpt-5.4` | Model used for title/description/date extraction. |
 | `PORT` | `3000` | Port inside the container. |
 | `TZ` | `UTC` | Timezone for date display (any [tz database name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)). Datetimes are stored UTC and rendered local via luxon, so this controls what you see, not what's stored. |

@@ -16,7 +16,7 @@ export const Default: Story = {
     documentCount: 1284,
     originalsDisplay: "/home/kreuzakt/data/originals",
     ingestDisplay: "/home/kreuzakt/data/ingest",
-    ocrModel: "openai/gpt-5.4-mini",
+    ocrModel: "qwen/qwen3.7-flash",
     metadataModel: "openai/gpt-5.4",
     llmEndpoint: "https://openrouter.ai/api/v1",
     preferredLanguage: null,

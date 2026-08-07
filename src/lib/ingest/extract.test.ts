@@ -3,7 +3,7 @@ import { describe, expect, it } from "bun:test";
 import { buildExtractOptions } from "./extract";
 
 const BASE_CONFIG = {
-  ocrModel: "openai/gpt-5.4-mini",
+  ocrModel: "qwen/qwen3.7-flash",
   openaiApiKey: "",
   openaiBaseUrl: "https://openrouter.ai/api/v1",
 };
@@ -33,7 +33,7 @@ describe("buildExtractOptions", () => {
           api_key: "test-key",
           baseUrl: "https://openrouter.ai/api/v1",
           base_url: "https://openrouter.ai/api/v1",
-          model: "openai/gpt-5.4-mini",
+          model: "qwen/qwen3.7-flash",
         },
       },
     });
