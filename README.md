@@ -48,7 +48,7 @@ The `./docs` folder is initialized on first run with `./docs/ingest`, `./docs/or
 
 ### How much will this cost me?
 
-The author is too lazy to do per-page math, but for reference: importing 440 documents from Paperless (a few up to 80 pages long) cost about **$5** in model calls.
+I'm too lazy to do per-page math, but for reference: importing 440 documents from Paperless (a few up to 80 pages long) cost about **$5** in model calls. Individual documents are typically on the order of cents.
 
 ---
 
