@@ -54,7 +54,16 @@ COPY --from=builder --chown=bun:bun /app/.next/static ./.next/static
 COPY --from=deps --chown=bun:bun /app/node_modules/sharp ./node_modules/sharp
 COPY --from=deps --chown=bun:bun /app/node_modules/@img ./node_modules/@img
 
-USER bun
+# Seed /data for named volumes (Docker copies image ownership on first use).
+# Bind mounts still need the entrypoint chown — VOLUME alone cannot fix those.
+RUN mkdir -p /data && chown bun:bun /data
+VOLUME /data
+
+COPY docker-entrypoint.sh /usr/local/bin/kreuzakt-entrypoint.sh
+RUN chmod +x /usr/local/bin/kreuzakt-entrypoint.sh
+
+# Start as root so the entrypoint can fix bind-mount ownership, then drop to bun.
+ENTRYPOINT ["/usr/local/bin/kreuzakt-entrypoint.sh"]
 
 # Bun as PID 1 receives SIGTERM from `docker stop`; allow time via `docker stop --time` / compose stop_grace_period.
 STOPSIGNAL SIGTERM
