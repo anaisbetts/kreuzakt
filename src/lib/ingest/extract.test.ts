@@ -7,7 +7,6 @@ const BASE_CONFIG = {
   ocrTimeoutSecs: 300,
   openaiApiKey: "",
   openaiBaseUrl: "https://openrouter.ai/api/v1",
-  port: 3000,
 };
 
 describe("buildExtractOptions", () => {
@@ -15,7 +14,7 @@ describe("buildExtractOptions", () => {
     expect(buildExtractOptions(BASE_CONFIG)).toBeNull();
   });
 
-  it("builds VLM OCR options through the local OpenRouter reasoning shim", () => {
+  it("builds VLM OCR options when an API key is configured", () => {
     const options = buildExtractOptions({
       ...BASE_CONFIG,
       openaiApiKey: "test-key",
@@ -33,8 +32,8 @@ describe("buildExtractOptions", () => {
         vlmConfig: {
           apiKey: "test-key",
           api_key: "test-key",
-          baseUrl: "http://127.0.0.1:3000/api/vlm-proxy/v1",
-          base_url: "http://127.0.0.1:3000/api/vlm-proxy/v1",
+          baseUrl: "https://openrouter.ai/api/v1",
+          base_url: "https://openrouter.ai/api/v1",
           model: "qwen/qwen3.7-flash",
           timeoutSecs: 300,
           timeout_secs: 300,
@@ -43,7 +42,7 @@ describe("buildExtractOptions", () => {
     });
   });
 
-  it("keeps non-OpenRouter bases pointed at the upstream endpoint", () => {
+  it("forwards a custom VLM timeout to Kreuzberg", () => {
     const options = buildExtractOptions({
       ...BASE_CONFIG,
       openaiApiKey: "test-key",

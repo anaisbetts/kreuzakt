@@ -1,9 +1,4 @@
-import {
-  type AppConfig,
-  appConfig,
-  isOpenRouterBaseUrl,
-  localVlmProxyBaseUrl,
-} from "@/lib/config";
+import { type AppConfig, appConfig } from "@/lib/config";
 
 import {
   detectMimeTypeFromPathWithNativeBinding,
@@ -13,7 +8,7 @@ import {
 
 /** Substring from Kreuzberg when VLM/OCR backends fail transiently (network, rate limits). */
 const TRANSIENT_OCR_PIPELINE_FAILURE = "All OCR pipeline backends failed";
-/** liter-llm/reqwest surfaces aborted/truncated OpenRouter bodies this way (often a client timeout). */
+/** liter-llm/reqwest surfaces aborted/truncated response bodies this way (often a client timeout). */
 const TRANSIENT_VLM_BODY_DECODE_FAILURE = "error decoding response body";
 const TRANSIENT_VLM_REQUEST_FAILURE = "VLM OCR request failed";
 const VLM_MAX_IMAGE_DIMENSION = 1200;
@@ -35,7 +30,7 @@ type KreuzbergImageExtractionConfig = {
 
 type KreuzbergExtractConfig = Pick<
   AppConfig,
-  "ocrModel" | "ocrTimeoutSecs" | "openaiApiKey" | "openaiBaseUrl" | "port"
+  "ocrModel" | "ocrTimeoutSecs" | "openaiApiKey" | "openaiBaseUrl"
 >;
 
 type KreuzbergVlmExtractOptions = {
@@ -111,27 +106,15 @@ function buildImageExtractionConfig(): KreuzbergImageExtractionConfig {
 }
 
 function buildVlmConfig(config: KreuzbergExtractConfig): KreuzbergVlmConfig {
-  const baseUrl = resolveVlmBaseUrl(config);
-
   return {
     model: config.ocrModel,
-    baseUrl,
-    base_url: baseUrl,
+    baseUrl: config.openaiBaseUrl,
+    base_url: config.openaiBaseUrl,
     apiKey: config.openaiApiKey,
     api_key: config.openaiApiKey,
     timeoutSecs: config.ocrTimeoutSecs,
     timeout_secs: config.ocrTimeoutSecs,
   };
-}
-
-function resolveVlmBaseUrl(config: KreuzbergExtractConfig): string {
-  // OpenRouter reasoning models need a local shim; Kreuzberg cannot send
-  // `reasoning: { effort: "none" }` through liter-llm 1.3 / Kreuzberg 4.9.8.
-  if (isOpenRouterBaseUrl(config.openaiBaseUrl)) {
-    return localVlmProxyBaseUrl(config.port);
-  }
-
-  return config.openaiBaseUrl;
 }
 
 function isTransientOcrFailure(error: unknown): boolean {

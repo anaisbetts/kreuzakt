@@ -1,8 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
 import {
-  isOpenRouterBaseUrl,
-  localVlmProxyBaseUrl,
   normalizeOpenAiCompatibleBaseUrl,
   OPENROUTER_DEFAULT_BASE_URL,
 } from "@/lib/config";
@@ -32,26 +30,6 @@ describe("normalizeOpenAiCompatibleBaseUrl", () => {
     ).toBe("https://openrouter.ai/api/v1");
     expect(normalizeOpenAiCompatibleBaseUrl("http://localhost:11434/v1")).toBe(
       "http://localhost:11434/v1",
-    );
-  });
-});
-
-describe("isOpenRouterBaseUrl", () => {
-  it("detects OpenRouter hosts", () => {
-    expect(isOpenRouterBaseUrl("https://openrouter.ai/api/v1")).toBe(true);
-    expect(isOpenRouterBaseUrl("https://eu.openrouter.ai/api/v1")).toBe(true);
-  });
-
-  it("rejects other OpenAI-compatible hosts", () => {
-    expect(isOpenRouterBaseUrl("http://localhost:11434/v1")).toBe(false);
-    expect(isOpenRouterBaseUrl("https://api.openai.com/v1")).toBe(false);
-  });
-});
-
-describe("localVlmProxyBaseUrl", () => {
-  it("points Kreuzberg at the loopback reasoning shim", () => {
-    expect(localVlmProxyBaseUrl(3333)).toBe(
-      "http://127.0.0.1:3333/api/vlm-proxy/v1",
     );
   });
 });

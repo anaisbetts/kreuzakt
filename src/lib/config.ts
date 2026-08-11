@@ -17,7 +17,6 @@ export const OPENROUTER_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
 export const DEFAULT_OCR_VLM_TIMEOUT_SECS = 300;
 
 const OPENAI_V1_PATH = /\/v1(?:\/|$)/;
-const OPENROUTER_HOST = /(^|\.)openrouter\.ai$/i;
 
 /** Ensure OpenAI-compatible clients hit `{origin}/v1/...`, not `{origin}/chat/completions`. */
 export function normalizeOpenAiCompatibleBaseUrl(baseUrl: string): string {
@@ -65,8 +64,8 @@ export const appConfig = {
   ),
   /**
    * Per-request timeout for Kreuzberg → liter-llm VLM OCR calls.
-   * liter-llm defaults to 60s, which is too short for reasoning VLMs
-   * (e.g. qwen/qwen3.7-flash) and surfaces as "error decoding response body".
+   * liter-llm defaults to 60s, which is too short for slower vision models and
+   * surfaces as "error decoding response body".
    */
   ocrTimeoutSecs: positiveIntFromEnv(
     process.env.OCR_VLM_TIMEOUT_SECS,
@@ -106,23 +105,6 @@ export const appConfig = {
 } as const;
 
 export type AppConfig = typeof appConfig;
-
-/** True when the configured OpenAI-compatible base is OpenRouter. */
-export function isOpenRouterBaseUrl(baseUrl: string): boolean {
-  try {
-    return OPENROUTER_HOST.test(new URL(baseUrl).hostname);
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Loopback OpenAI-compatible root used by Kreuzberg VLM OCR so we can inject
- * OpenRouter `reasoning` params that liter-llm cannot send.
- */
-export function localVlmProxyBaseUrl(port: number = appConfig.port): string {
-  return `http://127.0.0.1:${port}/api/vlm-proxy/v1`;
-}
 
 function fromEnvVar(
   devEnvVar: string | undefined,
