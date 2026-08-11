@@ -4,8 +4,10 @@ import { buildExtractOptions } from "./extract";
 
 const BASE_CONFIG = {
   ocrModel: "qwen/qwen3.7-flash",
+  ocrTimeoutSecs: 300,
   openaiApiKey: "",
   openaiBaseUrl: "https://openrouter.ai/api/v1",
+  port: 3000,
 };
 
 describe("buildExtractOptions", () => {
@@ -13,7 +15,7 @@ describe("buildExtractOptions", () => {
     expect(buildExtractOptions(BASE_CONFIG)).toBeNull();
   });
 
-  it("builds VLM OCR options when an API key is configured", () => {
+  it("builds VLM OCR options through the local OpenRouter reasoning shim", () => {
     const options = buildExtractOptions({
       ...BASE_CONFIG,
       openaiApiKey: "test-key",
@@ -31,11 +33,29 @@ describe("buildExtractOptions", () => {
         vlmConfig: {
           apiKey: "test-key",
           api_key: "test-key",
-          baseUrl: "https://openrouter.ai/api/v1",
-          base_url: "https://openrouter.ai/api/v1",
+          baseUrl: "http://127.0.0.1:3000/api/vlm-proxy/v1",
+          base_url: "http://127.0.0.1:3000/api/vlm-proxy/v1",
           model: "qwen/qwen3.7-flash",
+          timeoutSecs: 300,
+          timeout_secs: 300,
         },
       },
+    });
+  });
+
+  it("keeps non-OpenRouter bases pointed at the upstream endpoint", () => {
+    const options = buildExtractOptions({
+      ...BASE_CONFIG,
+      openaiApiKey: "test-key",
+      openaiBaseUrl: "http://127.0.0.1:11434/v1",
+      ocrTimeoutSecs: 120,
+    });
+
+    expect(options?.ocr.vlmConfig).toMatchObject({
+      baseUrl: "http://127.0.0.1:11434/v1",
+      base_url: "http://127.0.0.1:11434/v1",
+      timeoutSecs: 120,
+      timeout_secs: 120,
     });
   });
 });

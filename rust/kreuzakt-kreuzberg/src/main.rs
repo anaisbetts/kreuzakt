@@ -264,7 +264,8 @@ mod tests {
                 "vlmConfig": {
                     "model": "openai/gpt-5.4-mini",
                     "baseUrl": "https://example.test/v1",
-                    "apiKey": "test-key"
+                    "apiKey": "test-key",
+                    "timeoutSecs": 300
                 }
             }
         });
@@ -279,6 +280,7 @@ mod tests {
         assert_eq!(llm.model, "openai/gpt-5.4-mini");
         assert_eq!(llm.base_url.as_deref(), Some("https://example.test/v1"));
         assert_eq!(llm.api_key.as_deref(), Some("test-key"));
+        assert_eq!(llm.timeout_secs, Some(300));
     }
 
     #[test]

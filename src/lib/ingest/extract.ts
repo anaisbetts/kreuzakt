@@ -1,4 +1,9 @@
-import { type AppConfig, appConfig } from "@/lib/config";
+import {
+  type AppConfig,
+  appConfig,
+  isOpenRouterBaseUrl,
+  localVlmProxyBaseUrl,
+} from "@/lib/config";
 
 import {
   detectMimeTypeFromPathWithNativeBinding,
@@ -8,6 +13,9 @@ import {
 
 /** Substring from Kreuzberg when VLM/OCR backends fail transiently (network, rate limits). */
 const TRANSIENT_OCR_PIPELINE_FAILURE = "All OCR pipeline backends failed";
+/** liter-llm/reqwest surfaces aborted/truncated OpenRouter bodies this way (often a client timeout). */
+const TRANSIENT_VLM_BODY_DECODE_FAILURE = "error decoding response body";
+const TRANSIENT_VLM_REQUEST_FAILURE = "VLM OCR request failed";
 const VLM_MAX_IMAGE_DIMENSION = 1200;
 
 type KreuzbergVlmConfig = {
@@ -16,6 +24,8 @@ type KreuzbergVlmConfig = {
   base_url: string;
   apiKey?: string;
   api_key?: string;
+  timeoutSecs: number;
+  timeout_secs: number;
 };
 
 type KreuzbergImageExtractionConfig = {
@@ -25,7 +35,7 @@ type KreuzbergImageExtractionConfig = {
 
 type KreuzbergExtractConfig = Pick<
   AppConfig,
-  "ocrModel" | "openaiApiKey" | "openaiBaseUrl"
+  "ocrModel" | "ocrTimeoutSecs" | "openaiApiKey" | "openaiBaseUrl" | "port"
 >;
 
 type KreuzbergVlmExtractOptions = {
@@ -57,7 +67,7 @@ export async function extractDocument(
   try {
     result = await extractFileWithNativeConfig(filePath, null, extractOptions);
   } catch (error) {
-    if (!isTransientOcrPipelineFailure(error)) {
+    if (!isTransientOcrFailure(error)) {
       throw error;
     }
     result = await extractFileWithNativeConfig(filePath, null, extractOptions);
@@ -101,20 +111,38 @@ function buildImageExtractionConfig(): KreuzbergImageExtractionConfig {
 }
 
 function buildVlmConfig(config: KreuzbergExtractConfig): KreuzbergVlmConfig {
-  const vlmConfig: KreuzbergVlmConfig = {
+  const baseUrl = resolveVlmBaseUrl(config);
+
+  return {
     model: config.ocrModel,
-    baseUrl: config.openaiBaseUrl,
-    base_url: config.openaiBaseUrl,
+    baseUrl,
+    base_url: baseUrl,
     apiKey: config.openaiApiKey,
     api_key: config.openaiApiKey,
+    timeoutSecs: config.ocrTimeoutSecs,
+    timeout_secs: config.ocrTimeoutSecs,
   };
-
-  return vlmConfig;
 }
 
-function isTransientOcrPipelineFailure(error: unknown): boolean {
+function resolveVlmBaseUrl(config: KreuzbergExtractConfig): string {
+  // OpenRouter reasoning models need a local shim; Kreuzberg cannot send
+  // `reasoning: { effort: "none" }` through liter-llm 1.3 / Kreuzberg 4.9.8.
+  if (isOpenRouterBaseUrl(config.openaiBaseUrl)) {
+    return localVlmProxyBaseUrl(config.port);
+  }
+
+  return config.openaiBaseUrl;
+}
+
+function isTransientOcrFailure(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message;
   return (
-    error instanceof Error &&
-    error.message.includes(TRANSIENT_OCR_PIPELINE_FAILURE)
+    message.includes(TRANSIENT_OCR_PIPELINE_FAILURE) ||
+    message.includes(TRANSIENT_VLM_BODY_DECODE_FAILURE) ||
+    message.includes(TRANSIENT_VLM_REQUEST_FAILURE)
   );
 }

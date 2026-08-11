@@ -57,7 +57,7 @@ I'm too lazy to do per-page math, but for reference: importing 440 documents fro
 When a file lands in `ingest`, the pipeline (`src/lib/ingest/pipeline.ts`) does this, in order:
 
 1. **Hash & dedupe** — SHA the file; if an archived original already has that hash, skip it (no double-ingest).
-2. **VLM extract** — Kreuzberg reads the file with `force_ocr` and a vision model, returning plain text, mime type, and page count. If every OCR backend fails transiently (rate limits, network), it retries once.
+2. **VLM extract** — Kreuzberg reads the file with `force_ocr` and a vision model, returning plain text, mime type, and page count. OpenRouter OCR calls go through a local loopback shim that disables reasoning tokens (Kreuzberg cannot send OpenRouter's `reasoning` field). The VLM client timeout defaults to 300s. If OCR fails transiently (rate limits, network, truncated response bodies), it retries once.
 3. **LLM metadata** — the extracted text goes to a second LLM call (JSON mode) that returns a title, description, document date, and ISO 639-1 language code. The system prompt honors your preferred UI language, so titles/descriptions come out in the language you read.
 4. **Insert + index** — a row goes into SQLite, and a stemmed copy goes into the FTS5 table so search matches word variants, not just exact strings.
 5. **Archive & clean up** — the original is copied into `originals/` (named by hash, so collisions are impossible), the ingest copy is deleted, and a `sharp` thumbnail is generated.
@@ -204,6 +204,7 @@ All path variables resolve relative to the working directory unless absolute. `D
 | `OPENAI_API_KEY` | — | Alternative: a direct OpenAI key. |
 | `OPENAI_BASE_URL` | `https://openrouter.ai/api/v1` | Any OpenAI-compatible base URL (e.g. Ollama at `http://host.docker.internal:11434/v1`). |
 | `OCR_VLM_MODEL` | `qwen/qwen3.7-flash` | Model used for OCR / extraction. |
+| `OCR_VLM_TIMEOUT_SECS` | `300` | Per-page VLM OCR HTTP timeout. liter-llm defaults to 60s, which is too short for reasoning VLMs and fails with `error decoding response body`. |
 | `METADATA_LLM_MODEL` | `openai/gpt-5.4` | Model used for title/description/date extraction. |
 | `PORT` | `3000` | Port inside the container. |
 | `TZ` | `UTC` | Timezone for date display (any [tz database name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)). Datetimes are stored UTC and rendered local via luxon, so this controls what you see, not what's stored. |

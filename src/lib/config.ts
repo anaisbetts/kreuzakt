@@ -13,7 +13,11 @@ const dataDir = resolvePath(process.env.DATA_DIR, DEFAULT_DATA_DIR);
 /** Default OpenAI-compatible base when `OPENAI_BASE_URL` is unset or blank. */
 export const OPENROUTER_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
 
+/** Default per-request VLM OCR timeout (liter-llm's built-in default is only 60s). */
+export const DEFAULT_OCR_VLM_TIMEOUT_SECS = 300;
+
 const OPENAI_V1_PATH = /\/v1(?:\/|$)/;
+const OPENROUTER_HOST = /(^|\.)openrouter\.ai$/i;
 
 /** Ensure OpenAI-compatible clients hit `{origin}/v1/...`, not `{origin}/chat/completions`. */
 export function normalizeOpenAiCompatibleBaseUrl(baseUrl: string): string {
@@ -59,6 +63,15 @@ export const appConfig = {
     process.env.OCR_VLM_MODEL,
     "qwen/qwen3.7-flash",
   ),
+  /**
+   * Per-request timeout for Kreuzberg → liter-llm VLM OCR calls.
+   * liter-llm defaults to 60s, which is too short for reasoning VLMs
+   * (e.g. qwen/qwen3.7-flash) and surfaces as "error decoding response body".
+   */
+  ocrTimeoutSecs: positiveIntFromEnv(
+    process.env.OCR_VLM_TIMEOUT_SECS,
+    DEFAULT_OCR_VLM_TIMEOUT_SECS,
+  ),
   metadataModel: fromEnvVar(
     process.env.METADATA_LLM_DEV_MODEL,
     process.env.METADATA_LLM_MODEL,
@@ -94,6 +107,23 @@ export const appConfig = {
 
 export type AppConfig = typeof appConfig;
 
+/** True when the configured OpenAI-compatible base is OpenRouter. */
+export function isOpenRouterBaseUrl(baseUrl: string): boolean {
+  try {
+    return OPENROUTER_HOST.test(new URL(baseUrl).hostname);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Loopback OpenAI-compatible root used by Kreuzberg VLM OCR so we can inject
+ * OpenRouter `reasoning` params that liter-llm cannot send.
+ */
+export function localVlmProxyBaseUrl(port: number = appConfig.port): string {
+  return `http://127.0.0.1:${port}/api/vlm-proxy/v1`;
+}
+
 function fromEnvVar(
   devEnvVar: string | undefined,
   envVar: string | undefined,
@@ -126,6 +156,14 @@ function intFromEnv(value: string | undefined, fallback: number): number {
   }
   const n = Number.parseInt(value, 10);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function positiveIntFromEnv(
+  value: string | undefined,
+  fallback: number,
+): number {
+  const n = intFromEnv(value, fallback);
+  return n > 0 ? n : fallback;
 }
 
 function boolFromEnv(value: string | undefined, fallback: boolean): boolean {
