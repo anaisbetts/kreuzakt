@@ -202,8 +202,10 @@ All path variables resolve relative to the working directory unless absolute. `D
 |---|---|---|
 | `OPENROUTER_KEY` | — | API key for [OpenRouter](https://openrouter.ai) (recommended). |
 | `OPENAI_API_KEY` | — | Alternative: a direct OpenAI key. |
-| `OPENAI_BASE_URL` | `https://openrouter.ai/api/v1` | Any OpenAI-compatible base URL (e.g. Ollama at `http://host.docker.internal:11434/v1`). |
+| `OPENAI_BASE_URL` | `https://openrouter.ai/api/v1` | Any OpenAI-compatible base URL (e.g. Ollama at `http://host.docker.internal:11434/v1`). Used for metadata and query expansion; also the OCR default when `OCR_VLM_BASE_URL` is unset. |
 | `OCR_VLM_MODEL` | `qwen/qwen3.7-flash` | Model used for OCR / extraction. |
+| `OCR_VLM_BASE_URL` | *(same as `OPENAI_BASE_URL`)* | Optional OpenAI-compatible base URL used only for VLM OCR (e.g. Mistral). When unset, OCR uses `OPENAI_BASE_URL`. |
+| `OCR_VLM_API_KEY` | *(same as `OPENROUTER_KEY` / `OPENAI_API_KEY`)* | Optional API key used only for VLM OCR. When unset, OCR uses the shared key. |
 | `OCR_VLM_TIMEOUT_SECS` | `300` | Per-page VLM OCR HTTP timeout. liter-llm's built-in default is 60s, which is too short for slower vision models and fails with `error decoding response body`. |
 | `METADATA_LLM_MODEL` | `openai/gpt-5.4` | Model used for title/description/date extraction. |
 | `PORT` | `3000` | Port inside the container. |
@@ -220,7 +222,7 @@ All path variables resolve relative to the working directory unless absolute. `D
 Prerequisites: [Bun](https://bun.sh).
 
 1. **Install deps:** `bun install`
-2. **Configure env:** copy `.env.local.example` to `.env.local` and set at least one way to reach an OpenAI-compatible API — usually `OPENROUTER_KEY`. For a local LLM (so dev doesn't cost money), set the dev-only overrides `OPENAI_DEV_URL`, `OPENAI_DEV_API_KEY`/`OPENAI_DEV_KEY`, and optionally `OCR_VLM_DEV_MODEL` / `METADATA_LLM_DEV_MODEL`; these win over the production vars when running under `bun dev`.
+2. **Configure env:** copy `.env.local.example` to `.env.local` and set at least one way to reach an OpenAI-compatible API — usually `OPENROUTER_KEY`. For a local LLM (so dev doesn't cost money), set the dev-only overrides `OPENAI_DEV_URL`, `OPENAI_DEV_API_KEY`/`OPENAI_DEV_KEY`, and optionally `OCR_VLM_DEV_MODEL` / `METADATA_LLM_DEV_MODEL`; these win over the production vars when running under `bun dev`. To run OCR against a different provider than metadata (e.g. Mistral for OCR, OpenAI for titles), set `OCR_VLM_BASE_URL` / `OCR_VLM_API_KEY` (or `OCR_VLM_DEV_URL` / `OCR_VLM_DEV_API_KEY` in dev).
 3. **Run it:** `bun dev` — app on port 3000, runtime data under `./data`.
 
 Other useful commands:

@@ -5,8 +5,8 @@ import { buildExtractOptions } from "./extract";
 const BASE_CONFIG = {
   ocrModel: "qwen/qwen3.7-flash",
   ocrTimeoutSecs: 300,
-  openaiApiKey: "",
-  openaiBaseUrl: "https://openrouter.ai/api/v1",
+  ocrApiKey: "",
+  ocrBaseUrl: "https://openrouter.ai/api/v1",
 };
 
 describe("buildExtractOptions", () => {
@@ -17,7 +17,7 @@ describe("buildExtractOptions", () => {
   it("builds VLM OCR options when an API key is configured", () => {
     const options = buildExtractOptions({
       ...BASE_CONFIG,
-      openaiApiKey: "test-key",
+      ocrApiKey: "test-key",
     });
 
     expect(options).toMatchObject({
@@ -40,14 +40,27 @@ describe("buildExtractOptions", () => {
   it("forwards a custom VLM timeout to Xberg", () => {
     const options = buildExtractOptions({
       ...BASE_CONFIG,
-      openaiApiKey: "test-key",
-      openaiBaseUrl: "http://127.0.0.1:11434/v1",
+      ocrApiKey: "test-key",
+      ocrBaseUrl: "http://127.0.0.1:11434/v1",
       ocrTimeoutSecs: 120,
     });
 
     expect(options?.ocr?.vlmConfig).toMatchObject({
       baseUrl: "http://127.0.0.1:11434/v1",
       timeoutSecs: 120,
+    });
+  });
+
+  it("uses an OCR-specific endpoint distinct from the shared LLM base", () => {
+    const options = buildExtractOptions({
+      ...BASE_CONFIG,
+      ocrApiKey: "mistral-key",
+      ocrBaseUrl: "https://api.mistral.ai/v1",
+    });
+
+    expect(options?.ocr?.vlmConfig).toMatchObject({
+      apiKey: "mistral-key",
+      baseUrl: "https://api.mistral.ai/v1",
     });
   });
 });

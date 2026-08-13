@@ -44,6 +44,39 @@ export function normalizeOpenAiCompatibleBaseUrl(baseUrl: string): string {
   }
 }
 
+const openaiBaseUrl = normalizeOpenAiCompatibleBaseUrl(
+  fromEnvVar(
+    process.env.OPENAI_DEV_URL,
+    process.env.OPENAI_BASE_URL,
+    OPENROUTER_DEFAULT_BASE_URL,
+  ),
+);
+
+const openaiApiKey = fromEnvVar(
+  process.env.OPENAI_DEV_API_KEY,
+  process.env.OPENROUTER_KEY ?? process.env.OPENAI_API_KEY,
+  process.env.OPENAI_DEV_KEY ?? "",
+);
+
+/**
+ * Optional OCR-only OpenAI-compatible endpoint. When unset, OCR uses the same
+ * base URL / key as metadata (and query expansion). Set these to point VLM OCR
+ * at a different provider (e.g. Mistral) while keeping OpenAI for metadata.
+ */
+const ocrBaseUrl = normalizeOpenAiCompatibleBaseUrl(
+  fromEnvVar(
+    process.env.OCR_VLM_DEV_URL,
+    process.env.OCR_VLM_BASE_URL,
+    openaiBaseUrl,
+  ),
+);
+
+const ocrApiKey = fromEnvVar(
+  process.env.OCR_VLM_DEV_API_KEY,
+  process.env.OCR_VLM_API_KEY,
+  openaiApiKey,
+);
+
 export const appConfig = {
   dataDir,
   ingestDir: resolvePath(process.env.INGEST_DIR, path.join(dataDir, "ingest")),
@@ -72,23 +105,17 @@ export const appConfig = {
     process.env.OCR_VLM_TIMEOUT_SECS,
     DEFAULT_OCR_VLM_TIMEOUT_SECS,
   ),
+  /** VLM OCR endpoint; falls back to `openaiBaseUrl` when OCR_* overrides are unset. */
+  ocrBaseUrl,
+  /** VLM OCR API key; falls back to `openaiApiKey` when OCR_* overrides are unset. */
+  ocrApiKey,
   metadataModel: fromEnvVar(
     process.env.METADATA_LLM_DEV_MODEL,
     process.env.METADATA_LLM_MODEL,
     "openai/gpt-5.4",
   ),
-  openaiBaseUrl: normalizeOpenAiCompatibleBaseUrl(
-    fromEnvVar(
-      process.env.OPENAI_DEV_URL,
-      process.env.OPENAI_BASE_URL,
-      OPENROUTER_DEFAULT_BASE_URL,
-    ),
-  ),
-  openaiApiKey: fromEnvVar(
-    process.env.OPENAI_DEV_API_KEY,
-    process.env.OPENROUTER_KEY ?? process.env.OPENAI_API_KEY,
-    process.env.OPENAI_DEV_KEY ?? "",
-  ),
+  openaiBaseUrl,
+  openaiApiKey,
   port: Number(process.env.PORT ?? "3000"),
   /** Periodic WAL checkpoint; 0 disables the timer. */
   sqliteMaintenanceIntervalMs: intFromEnv(

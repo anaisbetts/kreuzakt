@@ -18,6 +18,7 @@ export const Default: Story = {
     ingestDisplay: "/home/kreuzakt/data/ingest",
     ocrModel: "qwen/qwen3.7-flash",
     metadataModel: "openai/gpt-5.4",
+    ocrEndpoint: "https://api.mistral.ai/v1",
     llmEndpoint: "https://openrouter.ai/api/v1",
     preferredLanguage: null,
     queue: {

@@ -143,7 +143,7 @@ Return JSON: { "title": "...", "description": "...", "document_date": "YYYY-MM-D
 });
 ```
 
-This step operates on **plain text**, not images, so it can use a fast/cheap text model even when the OCR step used an expensive vision model. The model is independently configurable via `METADATA_LLM_MODEL`, and the OpenAI-compatible endpoint is configurable via `OPENAI_BASE_URL` so the same code can target OpenRouter or a local LLM gateway.
+This step operates on **plain text**, not images, so it can use a fast/cheap text model even when the OCR step used an expensive vision model. The model is independently configurable via `METADATA_LLM_MODEL`, and the OpenAI-compatible endpoint is configurable via `OPENAI_BASE_URL` so the same code can target OpenRouter or a local LLM gateway. VLM OCR can optionally use a different endpoint via `OCR_VLM_BASE_URL` / `OCR_VLM_API_KEY` (falling back to the shared `OPENAI_*` values).
 
 ---
 
@@ -292,7 +292,9 @@ The full hash is stored in the database for dedup; the prefix in the filename is
 | `THUMBNAILS_DIR` | `$DATA_DIR/thumbnails` | Directory for generated thumbnails |
 | `DB_PATH` | `$DATA_DIR/docs-ai.db` | Path to the SQLite database file |
 | `OCR_VLM_MODEL` | `qwen/qwen3.5-122b-a10b` | Kreuzberg VLM model for OCR on scanned docs |
+| `OCR_VLM_BASE_URL` | *(same as `OPENAI_BASE_URL`)* | Optional OpenAI-compatible endpoint used only for VLM OCR |
+| `OCR_VLM_API_KEY` | *(same as `OPENAI_API_KEY`)* | Optional API key used only for VLM OCR |
 | `METADATA_LLM_MODEL` | `qwen/qwen3.5-122b-a10b` | LLM model for metadata derivation |
-| `OPENAI_BASE_URL` | `https://openrouter.ai/api/v1` | OpenAI-compatible endpoint for metadata LLM calls; can point at a local gateway |
+| `OPENAI_BASE_URL` | `https://openrouter.ai/api/v1` | OpenAI-compatible endpoint for metadata LLM calls (and OCR when `OCR_VLM_BASE_URL` is unset); can point at a local gateway |
 | `OPENAI_API_KEY` | — | API key for the OpenAI-compatible endpoint; use a placeholder value if your local endpoint ignores auth |
 | `PORT` | `3000` | HTTP server port |

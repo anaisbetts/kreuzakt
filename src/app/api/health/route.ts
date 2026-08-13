@@ -25,6 +25,7 @@ export async function GET() {
       ocr_model: appConfig.ocrModel,
       metadata_model: appConfig.metadataModel,
       openai_base_url: appConfig.openaiBaseUrl,
+      ocr_base_url: appConfig.ocrBaseUrl,
     });
   } catch (error) {
     console.error("health check failed", error);
