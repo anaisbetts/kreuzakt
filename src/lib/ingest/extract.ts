@@ -13,7 +13,7 @@ const VLM_MAX_IMAGE_DIMENSION = 1200;
 
 type XbergExtractConfig = Pick<
   AppConfig,
-  "ocrModel" | "ocrTimeoutSecs" | "openaiApiKey" | "openaiBaseUrl"
+  "ocrModel" | "ocrTimeoutSecs" | "ocrApiKey" | "ocrBaseUrl"
 >;
 
 export interface ExtractedDocument {
@@ -47,7 +47,7 @@ export async function extractDocument(
 export function buildExtractOptions(
   config: XbergExtractConfig = appConfig,
 ): ExtractionConfig | null {
-  if (!config.openaiApiKey) {
+  if (!config.ocrApiKey) {
     return null;
   }
 
@@ -60,8 +60,8 @@ export function buildExtractOptions(
       backend: "vlm",
       vlmConfig: {
         model: config.ocrModel,
-        baseUrl: config.openaiBaseUrl,
-        apiKey: config.openaiApiKey,
+        baseUrl: config.ocrBaseUrl,
+        apiKey: config.ocrApiKey,
         timeoutSecs: config.ocrTimeoutSecs,
       },
     },

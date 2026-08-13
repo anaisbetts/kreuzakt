@@ -20,6 +20,7 @@ export default async function SettingsPage() {
       ingestDisplay={status.ingestDir ? appConfig.ingestDir : "Missing"}
       ocrModel={appConfig.ocrModel}
       metadataModel={appConfig.metadataModel}
+      ocrEndpoint={appConfig.ocrBaseUrl}
       llmEndpoint={appConfig.openaiBaseUrl}
       preferredLanguage={status.preferredLanguage}
       queue={{

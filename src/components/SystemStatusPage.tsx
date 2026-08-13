@@ -15,6 +15,7 @@ export type SystemStatusPageProps = {
   ingestDisplay: string;
   ocrModel: string;
   metadataModel: string;
+  ocrEndpoint: string;
   llmEndpoint: string;
   preferredLanguage: string | null;
   queue: {
@@ -33,6 +34,7 @@ export function SystemStatusPage({
   ingestDisplay,
   ocrModel,
   metadataModel,
+  ocrEndpoint,
   llmEndpoint,
   preferredLanguage,
   queue,
@@ -80,6 +82,7 @@ export function SystemStatusPage({
         <StatusRow label="Ingest" value={ingestDisplay} />
         <StatusRow label="OCR Model" value={ocrModel} />
         <StatusRow label="Metadata Model" value={metadataModel} />
+        <StatusRow label="OCR Endpoint" value={ocrEndpoint} />
         <StatusRow label="LLM Endpoint" value={llmEndpoint} />
       </div>
     </main>
