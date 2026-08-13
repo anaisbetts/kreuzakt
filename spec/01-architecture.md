@@ -14,7 +14,7 @@
 │  AI Assistant│  MCP    │       ▼              ▼                   │
 │  (Red, Claude│◄────────►│  ┌──────────────────────┐              │
 │   etc.)      │         │  │   Application Layer   │              │
-└──────────────┘         │  │  (Kysely + Kreuzberg) │              │
+└──────────────┘         │  │  (Kysely + Xberg)    │              │
                          │  └───────┬───────┬───────┘              │
 ┌──────────────┐         │          │       │                       │
 │ Ingest Folder│         │          ▼       ▼                       │
@@ -63,10 +63,10 @@ The pipeline processes one document at a time, strictly sequentially per file:
                  If duplicate → log, delete from ingest/, stop
        │
        ▼
-3. EXTRACT       Kreuzberg reads the file
+3. EXTRACT       Xberg reads the file
                  Digital PDFs → direct text layer extraction (free, instant)
                  Scanned PDFs / images → VLM OCR backend (paid, ~2-3s/page)
-                 Other formats (DOCX, etc.) → native Kreuzberg extractors
+                 Other formats (DOCX, etc.) → native Xberg extractors
        │
        ▼
 4. METADATA      Send extracted plain text to a text LLM
@@ -98,7 +98,7 @@ The `processing_queue` table tracks every file that enters the pipeline:
 
 ### OCR Strategy
 
-Kreuzberg handles format detection and routing automatically. The key configuration is the OCR backend for scanned content:
+Xberg handles format detection and routing automatically. The key configuration is the OCR backend for scanned content:
 
 ```typescript
 const result = await extractFileWithNativeConfig(filePath, null, {
@@ -112,7 +112,7 @@ const result = await extractFileWithNativeConfig(filePath, null, {
 });
 ```
 
-The TypeScript app talks to a first-party Rust CLI, which links the Kreuzberg Rust crate directly and enables the VLM OCR features needed by Kreuzakt. The VLM model is configurable via `OCR_VLM_MODEL` environment variable.
+The TypeScript app calls `@xberg-io/xberg` in-process (NAPI-RS bindings) for extraction and VLM OCR. PDF page rasters for thumbnails use `pdf-to-img`. The VLM model is configurable via `OCR_VLM_MODEL` environment variable.
 
 ### Metadata Generation
 

@@ -80,7 +80,7 @@ const backends = [
 ];
 ```
 
-The eval harness sends these backend configs through Kreuzakt's Rust CLI wrapper, not through the Kreuzberg Node binding.
+The eval harness sends these backend configs through Kreuzakt's Xberg Node binding (`@xberg-io/xberg`).
 
 VLM backends use `forceOcr: true` to ensure they process the document as images even if a text layer exists. This tests their OCR capability specifically.
 

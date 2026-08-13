@@ -62,18 +62,18 @@ The ingest folder is continuously monitored for new files.
 
 - Chokidar v5 watches the `ingest/` directory for new files
 - File stabilization delay (2 seconds of no writes) before processing begins, to handle large file copies
-- Supports PDF, JPEG, PNG, TIFF, DOCX, and any other format Kreuzberg can handle (91+ formats)
+- Supports PDF, JPEG, PNG, TIFF, DOCX, and any other format Xberg can handle (100+ formats)
 - Recursive watching — subdirectories within `ingest/` are also monitored
 - On application startup, any files already present in `ingest/` are queued for processing (crash recovery)
 
 ### F-07: Document Extraction
 
-Text extraction via Kreuzberg with intelligent backend routing.
+Text extraction via Xberg with intelligent backend routing.
 
 - **Digital PDFs** with embedded text: direct extraction from the PDF structure, no OCR needed
 - **Scanned PDFs and images**: VLM OCR backend renders each page as an image and sends it to a vision LLM
-- **Office documents** (DOCX, XLSX, etc.): native Kreuzberg extractors
-- **Hybrid PDFs** (mix of text and scanned pages): Kreuzberg OCRs only the pages that lack a text layer
+- **Office documents** (DOCX, XLSX, etc.): native Xberg extractors
+- **Hybrid PDFs** (mix of text and scanned pages): Xberg OCRs only the pages that lack a text layer
 - Page count is extracted where applicable
 - The VLM model is configurable via `OCR_VLM_MODEL` environment variable (default: `qwen/qwen3.5-122b-a10b`)
 

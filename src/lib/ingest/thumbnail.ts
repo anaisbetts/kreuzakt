@@ -7,7 +7,7 @@ import {
   getPageThumbnailPath,
 } from "@/lib/files";
 
-import { renderPdfPageWithNativeBinding } from "./kreuzberg";
+import { renderPdfPageWithNativeBinding } from "./xberg";
 
 const THUMBNAIL_WIDTH = 300;
 

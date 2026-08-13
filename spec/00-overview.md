@@ -8,7 +8,7 @@ Paperless-ngx was a reasonable starting point for digitizing a personal document
 
 Kreuzakt fixes all of that. It's a single Next.js application backed by SQLite that:
 
-- Uses Kreuzberg with a VLM backend to actually extract text correctly, including from scanned documents, handwritten notes, and complex layouts
+- Uses Xberg with a VLM backend to actually extract text correctly, including from scanned documents, handwritten notes, and complex layouts
 - Provides a Google-style search interface — just a search bar, type a query, see your documents
 - Exposes the entire archive to AI assistants via a remote MCP server, so an assistant can search, read, and retrieve documents programmatically
 - Watches an ingest folder for new files and processes them automatically
@@ -61,7 +61,7 @@ The application is built on:
 - **Next.js** for the web UI and API routes
 - **Kysely** as a type-safe SQL query builder over SQLite (via `bun:sqlite` and a Bun SQLite dialect)
 - **SQLite FTS5** for full-text search with BM25 ranking
-- **Kreuzberg** via Kreuzakt's Rust CLI for document text extraction, with a VLM backend for scanned documents
+- **Xberg** (`@xberg-io/xberg`) for document text extraction, with a VLM backend for scanned documents
 - **Chokidar** for watching the ingest folder
 - **MCP SDK** for the remote MCP server (Streamable HTTP transport)
 - **Tailwind CSS** for the search UI

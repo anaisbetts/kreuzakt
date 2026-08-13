@@ -10,7 +10,7 @@ import {
   getDocumentThumbnailDir,
   getOriginalFilePath,
 } from "@/lib/files";
-import { renderPdfPageWithNativeBinding } from "@/lib/ingest/kreuzberg";
+import { renderPdfPageWithNativeBinding } from "@/lib/ingest/xberg";
 
 export const runtime = "nodejs";
 

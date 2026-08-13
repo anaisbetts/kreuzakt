@@ -3,7 +3,7 @@ import path from "node:path";
 import { performance } from "node:perf_hooks";
 
 import { computeFileHash } from "../src/lib/files";
-import { extractFileWithNativeConfig } from "../src/lib/ingest/kreuzberg";
+import { extractFileWithNativeConfig } from "../src/lib/ingest/xberg";
 
 import type { BackendConfig, CachedExtraction, FixtureInfo } from "./types";
 
@@ -44,7 +44,7 @@ export async function extractFixture(
   const result = await extractFileWithNativeConfig(
     fixture.filePath,
     null,
-    backend.kreuzbergConfig,
+    backend.xbergConfig,
   );
   const extractionTimeMs = performance.now() - startedAt;
   const metadata = result.metadata as { pageCount?: number } | undefined;

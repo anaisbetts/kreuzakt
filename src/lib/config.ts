@@ -63,9 +63,10 @@ export const appConfig = {
     "qwen/qwen3.7-flash",
   ),
   /**
-   * Per-request timeout for Kreuzberg → liter-llm VLM OCR calls.
+   * Per-request timeout for Xberg → liter-llm VLM OCR calls.
    * liter-llm defaults to 60s, which is too short for slower vision models and
-   * surfaces as "error decoding response body".
+   * surfaces as "error decoding response body". Xberg's VLM OCR path defaults
+   * to 300s when unset; we still set this explicitly for clarity.
    */
   ocrTimeoutSecs: positiveIntFromEnv(
     process.env.OCR_VLM_TIMEOUT_SECS,
