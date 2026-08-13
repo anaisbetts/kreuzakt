@@ -41,9 +41,13 @@ COPY --from=deps --chown=bun:bun /app/node_modules/sharp ./node_modules/sharp
 COPY --from=deps --chown=bun:bun /app/node_modules/@img ./node_modules/@img
 # Xberg NAPI binary + bundled libonnxruntime/libheif live under @xberg-io/*
 COPY --from=deps --chown=bun:bun /app/node_modules/@xberg-io ./node_modules/@xberg-io
-# pdf-to-img pulls pdfjs-dist for on-demand PDF page renders (thumbnails / page images)
+# pdf-to-img pulls pdfjs-dist for on-demand PDF page renders (thumbnails / page images).
+# pdfjs-dist's optional @napi-rs/canvas provides DOMMatrix / Node canvas; without it the
+# instrumentation import chain crashes with ReferenceError: DOMMatrix is not defined.
 COPY --from=deps --chown=bun:bun /app/node_modules/pdf-to-img ./node_modules/pdf-to-img
 COPY --from=deps --chown=bun:bun /app/node_modules/pdfjs-dist ./node_modules/pdfjs-dist
+COPY --from=deps --chown=bun:bun /app/node_modules/@napi-rs ./node_modules/@napi-rs
+COPY --from=deps --chown=bun:bun /app/node_modules/node-readable-to-web-readable-stream ./node_modules/node-readable-to-web-readable-stream
 
 # Seed /data for named volumes (Docker copies image ownership on first use).
 # Bind mounts still need the entrypoint chown — VOLUME alone cannot fix those.
