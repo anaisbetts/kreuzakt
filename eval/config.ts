@@ -2,13 +2,11 @@ import { appConfig } from "../src/lib/config";
 
 import type { BackendConfig } from "./types";
 
-/** Matches Kreuzberg Rust `LlmConfig` while preserving old camelCase input aliases. */
+/** Matches Xberg `LlmConfig` for VLM OCR backends. */
 type VlmLlmConfig = {
   model: string;
   baseUrl: string;
-  base_url: string;
   apiKey?: string;
-  api_key?: string;
 };
 
 const OPENROUTER_BASE = appConfig.openaiBaseUrl;
@@ -34,11 +32,9 @@ function buildLlmConfig(options: {
   const llm: VlmLlmConfig = {
     model,
     baseUrl,
-    base_url: baseUrl,
   };
   if (apiKey !== undefined) {
     llm.apiKey = apiKey;
-    llm.api_key = apiKey;
   }
   return llm;
 }
@@ -46,11 +42,9 @@ function buildLlmConfig(options: {
 function vlmExtractionConfig(llm: VlmLlmConfig): Record<string, unknown> {
   return {
     forceOcr: true,
-    force_ocr: true,
     ocr: {
       backend: "vlm",
       vlmConfig: llm,
-      vlm_config: llm,
     },
   };
 }
@@ -60,7 +54,7 @@ export const BACKENDS: BackendConfig[] = [
     name: "tesseract",
     label: "Tesseract",
     costPerPageEstimate: 0,
-    kreuzbergConfig: {
+    xbergConfig: {
       ocr: {
         backend: "tesseract",
       },
@@ -70,7 +64,7 @@ export const BACKENDS: BackendConfig[] = [
     name: "paddleocr",
     label: "PaddleOCR",
     costPerPageEstimate: 0,
-    kreuzbergConfig: {
+    xbergConfig: {
       ocr: {
         backend: "paddle-ocr",
       },
@@ -80,7 +74,7 @@ export const BACKENDS: BackendConfig[] = [
     name: "vlm:qwen",
     label: "VLM Qwen 3.5 (OpenRouter)",
     costPerPageEstimate: 0.0002,
-    kreuzbergConfig: vlmExtractionConfig(
+    xbergConfig: vlmExtractionConfig(
       buildLlmConfig({
         baseUrl: OPENROUTER_BASE,
         model: QWEN_OPENROUTER_MODEL,
@@ -92,7 +86,7 @@ export const BACKENDS: BackendConfig[] = [
     name: "vlm:claude",
     label: "VLM Claude Sonnet (OpenRouter)",
     costPerPageEstimate: 0.006,
-    kreuzbergConfig: vlmExtractionConfig(
+    xbergConfig: vlmExtractionConfig(
       buildLlmConfig({
         baseUrl: OPENROUTER_BASE,
         model: "anthropic/claude-sonnet-4.6",
@@ -104,7 +98,7 @@ export const BACKENDS: BackendConfig[] = [
     name: "vlm:gpt54mini",
     label: "VLM GPT-5.4 Mini (OpenRouter)",
     costPerPageEstimate: 0.001,
-    kreuzbergConfig: vlmExtractionConfig(
+    xbergConfig: vlmExtractionConfig(
       buildLlmConfig({
         baseUrl: OPENROUTER_BASE,
         model: "openai/gpt-5.4-mini",

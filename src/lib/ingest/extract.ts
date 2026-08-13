@@ -1,50 +1,20 @@
+import type { ExtractionConfig } from "@xberg-io/xberg";
+
 import { type AppConfig, appConfig } from "@/lib/config";
 
-import {
-  detectMimeTypeFromPathWithNativeBinding,
-  type ExtractionResult,
-  extractFileWithNativeConfig,
-} from "./kreuzberg";
+import { type ExtractionResult, extractFileWithNativeConfig } from "./xberg";
 
-/** Substring from Kreuzberg when VLM/OCR backends fail transiently (network, rate limits). */
+/** Substring from Xberg when VLM/OCR backends fail transiently (network, rate limits). */
 const TRANSIENT_OCR_PIPELINE_FAILURE = "All OCR pipeline backends failed";
 /** liter-llm/reqwest surfaces aborted/truncated response bodies this way (often a client timeout). */
 const TRANSIENT_VLM_BODY_DECODE_FAILURE = "error decoding response body";
 const TRANSIENT_VLM_REQUEST_FAILURE = "VLM OCR request failed";
 const VLM_MAX_IMAGE_DIMENSION = 1200;
 
-type KreuzbergVlmConfig = {
-  model: string;
-  baseUrl: string;
-  base_url: string;
-  apiKey?: string;
-  api_key?: string;
-  timeoutSecs: number;
-  timeout_secs: number;
-};
-
-type KreuzbergImageExtractionConfig = {
-  maxImageDimension: number;
-  max_image_dimension: number;
-};
-
-type KreuzbergExtractConfig = Pick<
+type XbergExtractConfig = Pick<
   AppConfig,
   "ocrModel" | "ocrTimeoutSecs" | "openaiApiKey" | "openaiBaseUrl"
 >;
-
-type KreuzbergVlmExtractOptions = {
-  forceOcr: true;
-  force_ocr: true;
-  images: KreuzbergImageExtractionConfig;
-  ocr: {
-    backend: "vlm";
-    vlmConfig: KreuzbergVlmConfig;
-    vlm_config: KreuzbergVlmConfig;
-  };
-};
-
-type KreuzbergExtractOptions = KreuzbergVlmExtractOptions | null;
 
 export interface ExtractedDocument {
   content: string;
@@ -55,7 +25,6 @@ export interface ExtractedDocument {
 export async function extractDocument(
   filePath: string,
 ): Promise<ExtractedDocument> {
-  const mimeType = await detectMimeTypeFromPathWithNativeBinding(filePath);
   const extractOptions = buildExtractOptions();
 
   let result: ExtractionResult;
@@ -68,52 +37,34 @@ export async function extractDocument(
     result = await extractFileWithNativeConfig(filePath, null, extractOptions);
   }
 
-  const metadata = result.metadata as { pageCount?: number } | undefined;
-
   return {
     content: result.content.trim(),
-    mimeType: result.mimeType || mimeType,
-    pageCount: metadata?.pageCount ?? null,
+    mimeType: result.mimeType,
+    pageCount: result.metadata?.pageCount ?? null,
   };
 }
 
 export function buildExtractOptions(
-  config: KreuzbergExtractConfig = appConfig,
-): KreuzbergExtractOptions {
+  config: XbergExtractConfig = appConfig,
+): ExtractionConfig | null {
   if (!config.openaiApiKey) {
     return null;
   }
 
-  const vlmConfig = buildVlmConfig(config);
-
   return {
     forceOcr: true,
-    force_ocr: true,
-    images: buildImageExtractionConfig(),
+    images: {
+      maxImageDimension: VLM_MAX_IMAGE_DIMENSION,
+    },
     ocr: {
       backend: "vlm",
-      vlmConfig,
-      vlm_config: vlmConfig,
+      vlmConfig: {
+        model: config.ocrModel,
+        baseUrl: config.openaiBaseUrl,
+        apiKey: config.openaiApiKey,
+        timeoutSecs: config.ocrTimeoutSecs,
+      },
     },
-  };
-}
-
-function buildImageExtractionConfig(): KreuzbergImageExtractionConfig {
-  return {
-    maxImageDimension: VLM_MAX_IMAGE_DIMENSION,
-    max_image_dimension: VLM_MAX_IMAGE_DIMENSION,
-  };
-}
-
-function buildVlmConfig(config: KreuzbergExtractConfig): KreuzbergVlmConfig {
-  return {
-    model: config.ocrModel,
-    baseUrl: config.openaiBaseUrl,
-    base_url: config.openaiBaseUrl,
-    apiKey: config.openaiApiKey,
-    api_key: config.openaiApiKey,
-    timeoutSecs: config.ocrTimeoutSecs,
-    timeout_secs: config.ocrTimeoutSecs,
   };
 }
 

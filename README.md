@@ -7,7 +7,7 @@ Kreuzakt takes the good ideas from [Paperless](https://docs.paperless-ngx.com), 
 ### What's different
 
 - **One container, one SQLite file.** No Redis, no Postgres, no broker, no workers to babysit. The Docker image is a single `oven/bun` process serving Next.js, with everything (DB, originals, thumbnails, ingest) under one `/data` volume.
-- **VLM OCR instead of Tesseract.** Extraction runs through [Kreuzberg](https://kreuzberg.dev) (a Rust CLI built from `kreuzberg` 4.9.8 with bundled PDFium, office, Excel, email, HTML, archives, and OCR support), which calls an OpenAI-compatible vision model to read pages. This is *drastically* more accurate than classical OCR — especially on scans, handwriting, and non-Latin scripts — and that accuracy flows straight into search.
+- **VLM OCR instead of Tesseract.** Extraction runs through [Xberg](https://docs.xberg.io) (`@xberg-io/xberg` native Node bindings — the successor to Kreuzberg), which calls an OpenAI-compatible vision model to read pages. This is *drastically* more accurate than classical OCR — especially on scans, handwriting, and non-Latin scripts — and that accuracy flows straight into search.
 - **A real remote MCP server.** Point Claude Desktop, Cursor, or any MCP client at `/mcp` and your archive becomes a tool the model can search, read, and link to. Seven tools, session-managed Streamable HTTP — details below.
 - **Zero-curation metadata.** Every document gets an LLM-generated title, one-to-two-sentence description, document date, and detected language the moment it's ingested. No tagging, no manual sorting.
 - **Metadata is always regenerable.** Titles, descriptions, dates, and even the extracted text can be rebuilt from the originals at any time — per-document rescan or bulk reindex-all. The originals themselves are never modified, so migrating is "copy the `originals` folder."
@@ -57,7 +57,7 @@ I'm too lazy to do per-page math, but for reference: importing 440 documents fro
 When a file lands in `ingest`, the pipeline (`src/lib/ingest/pipeline.ts`) does this, in order:
 
 1. **Hash & dedupe** — SHA the file; if an archived original already has that hash, skip it (no double-ingest).
-2. **VLM extract** — Kreuzberg reads the file with `force_ocr` and a vision model, returning plain text, mime type, and page count. The VLM client timeout defaults to 300s (override with `OCR_VLM_TIMEOUT_SECS`). If OCR fails transiently (rate limits, network, truncated response bodies), it retries once.
+2. **VLM extract** — Xberg reads the file with `forceOcr` and a vision model, returning plain text, mime type, and page count. The VLM client timeout defaults to 300s (override with `OCR_VLM_TIMEOUT_SECS`). If OCR fails transiently (rate limits, network, truncated response bodies), it retries once.
 3. **LLM metadata** — the extracted text goes to a second LLM call (JSON mode) that returns a title, description, document date, and ISO 639-1 language code. The system prompt honors your preferred UI language, so titles/descriptions come out in the language you read.
 4. **Insert + index** — a row goes into SQLite, and a stemmed copy goes into the FTS5 table so search matches word variants, not just exact strings.
 5. **Archive & clean up** — the original is copied into `originals/` (named by hash, so collisions are impossible), the ingest copy is deleted, and a `sharp` thumbnail is generated.
@@ -73,7 +73,7 @@ Kreuzakt's search is SQLite FTS5 with a few deliberate upgrades:
 
 - **Stemmed indexing and querying.** Text is Snowball-stemmed at index time in the document's detected language (24+ languages supported: English, German, French, Spanish, Italian, Portuguese, Dutch, Swedish, Czech, Russian, Arabic, and more). Queries are stemmed multilingually across common European languages, so `Rechnungen` finds `Rechnung` and `insurance` finds `insured`.
 - **BM25 blended with recency.** Results are ranked by `BM25` combined with an exponential recency decay (30-day half-life), so a freshly added "tax" document outranks a 3-year-old one with the same relevance score.
-- **LLM query expansion (optional).** Flip on `?expand=1` (or the toggle in the UI) and Kreuzberg asks the LLM to expand your query with synonyms, abbreviations, and translations into every language present in your corpus — then ORs those terms into the FTS match. Great for multilingual archives where "invoice" might be stored as *Rechnung*, *facture*, or *fattura*.
+- **LLM query expansion (optional).** Flip on `?expand=1` (or the toggle in the UI) and an LLM expands your query with synonyms, abbreviations, and translations into every language present in your corpus — then ORs those terms into the FTS match. Great for multilingual archives where "invoice" might be stored as *Rechnung*, *facture*, or *fattura*.
 - **Snippets.** Each hit comes back with a highlighted excerpt around the matching terms, not just a title.
 
 ---
@@ -217,17 +217,15 @@ All path variables resolve relative to the working directory unless absolute. `D
 
 ## Local development
 
-Prerequisites: [Bun](https://bun.sh) and a Rust toolchain (for the Kreuzberg extraction CLI).
+Prerequisites: [Bun](https://bun.sh).
 
 1. **Install deps:** `bun install`
-2. **Build the extraction CLI:** `cargo build -p kreuzakt-kreuzberg`
-3. **Configure env:** copy `.env.local.example` to `.env.local` and set at least one way to reach an OpenAI-compatible API — usually `OPENROUTER_KEY`. For a local LLM (so dev doesn't cost money), set the dev-only overrides `OPENAI_DEV_URL`, `OPENAI_DEV_API_KEY`/`OPENAI_DEV_KEY`, and optionally `OCR_VLM_DEV_MODEL` / `METADATA_LLM_DEV_MODEL`; these win over the production vars when running under `bun dev`.
-4. **Run it:** `bun dev` — app on port 3000, runtime data under `./data`.
+2. **Configure env:** copy `.env.local.example` to `.env.local` and set at least one way to reach an OpenAI-compatible API — usually `OPENROUTER_KEY`. For a local LLM (so dev doesn't cost money), set the dev-only overrides `OPENAI_DEV_URL`, `OPENAI_DEV_API_KEY`/`OPENAI_DEV_KEY`, and optionally `OCR_VLM_DEV_MODEL` / `METADATA_LLM_DEV_MODEL`; these win over the production vars when running under `bun dev`.
+3. **Run it:** `bun dev` — app on port 3000, runtime data under `./data`.
 
 Other useful commands:
 
 - `bun test` — unit tests (no API keys needed).
-- `cargo test` — Rust extraction CLI tests.
 - `bun run test:integration` — integration tests (loads `.env.local` via `--env-file`; needs valid keys).
 - `bun run check` — Biome lint + `tsgo --noEmit` type check.
 - `bun storybook` — UI component development on port 6006.
@@ -237,7 +235,7 @@ Other useful commands:
 
 ## So… why's it called "Kreuzakt"?
 
-It uses the library **Kreuzberg**, and it's a tool to help you with your **Akte** (German for files/documents). Just like *Berghain* is a portmanteau of *Kreuzberg* and *Friedrichshain*, the two Berlin districts it sits between. (Today you learn!)
+It started on the library **Kreuzberg** (now continued as [Xberg](https://github.com/xberg-io/xberg)), and it's a tool to help you with your **Akte** (German for files/documents). Just like *Berghain* is a portmanteau of *Kreuzberg* and *Friedrichshain*, the two Berlin districts it sits between. (Today you learn!)
 
 ---
 

@@ -2,8 +2,8 @@ export interface BackendConfig {
   name: string;
   label: string;
   costPerPageEstimate: number;
-  /** Pass-through to the Kreuzakt Kreuzberg CLI extraction config. */
-  kreuzbergConfig: Record<string, unknown>;
+  /** Pass-through to the Xberg Node extraction config. */
+  xbergConfig: Record<string, unknown>;
 }
 
 export interface CachedExtraction {

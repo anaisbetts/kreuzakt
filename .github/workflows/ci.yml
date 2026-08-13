@@ -85,8 +85,8 @@ jobs:
             type=ref,event=tag
             type=raw,value=latest,enable=${{ github.event_name == 'release' && !github.event.release.prerelease }}
 
-      # amd64 only: sharp native packages and the Rust extraction CLI are built for
-      # the current Docker platform. Revisit with native arm64 runners or a proven
+      # amd64 only: sharp / @xberg-io/xberg native packages are built for the
+      # current Docker platform. Revisit with native arm64 runners or a proven
       # bake matrix if we need linux/arm64 images.
       - name: Build and push
         id: push

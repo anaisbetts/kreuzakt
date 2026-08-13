@@ -7,7 +7,13 @@ const devConfig: Partial<NextConfig> = {
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["enceladus"],
-  serverExternalPackages: ["@modelcontextprotocol/sdk", "chokidar", "sharp"],
+  serverExternalPackages: [
+    "@modelcontextprotocol/sdk",
+    "@xberg-io/xberg",
+    "chokidar",
+    "pdf-to-img",
+    "sharp",
+  ],
   ...(isDevMode ? devConfig : {}),
   output: "standalone",
 };

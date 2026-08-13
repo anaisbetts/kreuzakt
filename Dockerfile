@@ -16,18 +16,6 @@ COPY . .
 
 RUN bun run build
 
-FROM rust:1-trixie AS rust-builder
-WORKDIR /app
-
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends cmake \
-  && rm -rf /var/lib/apt/lists/*
-
-COPY Cargo.toml Cargo.lock ./
-COPY rust ./rust
-
-RUN cargo build --release -p kreuzakt-kreuzberg
-
 FROM oven/bun:1 AS runner
 WORKDIR /app
 
@@ -39,20 +27,23 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
-ENV KREUZAKT_KREUZBERG_CLI=/app/bin/kreuzakt-kreuzberg
 # Single mount point: ingest, originals, thumbnails, and DB default under /data/
 ENV DATA_DIR=/data
 
 COPY --from=builder --chown=bun:bun /app/public ./public
-COPY --from=rust-builder --chown=bun:bun /app/target/release/kreuzakt-kreuzberg ./bin/kreuzakt-kreuzberg
 
 # Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
+# https://next.js.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=bun:bun /app/.next/standalone ./
 COPY --from=builder --chown=bun:bun /app/.next/static ./.next/static
 
 COPY --from=deps --chown=bun:bun /app/node_modules/sharp ./node_modules/sharp
 COPY --from=deps --chown=bun:bun /app/node_modules/@img ./node_modules/@img
+# Xberg NAPI binary + bundled libonnxruntime/libheif live under @xberg-io/*
+COPY --from=deps --chown=bun:bun /app/node_modules/@xberg-io ./node_modules/@xberg-io
+# pdf-to-img pulls pdfjs-dist for on-demand PDF page renders (thumbnails / page images)
+COPY --from=deps --chown=bun:bun /app/node_modules/pdf-to-img ./node_modules/pdf-to-img
+COPY --from=deps --chown=bun:bun /app/node_modules/pdfjs-dist ./node_modules/pdfjs-dist
 
 # Seed /data for named volumes (Docker copies image ownership on first use).
 # Bind mounts still need the entrypoint chown — VOLUME alone cannot fix those.
