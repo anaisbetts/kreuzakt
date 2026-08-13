@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@napi-rs/canvas": "^0.1.100",
     "@xberg-io/xberg": "^1.0.14",
     "chokidar": "^5.0.0",
     "fflate": "^0.8.2",
