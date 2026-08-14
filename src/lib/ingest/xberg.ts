@@ -30,9 +30,17 @@ type RenderPdfPageOptions = {
   dpi?: number | null;
 };
 
+type XbergExtractInput = {
+  kind: "uri" | "bytes";
+  uri?: string;
+  bytes?: Uint8Array;
+  mimeType?: string | null;
+  filename?: string | null;
+};
+
 type XbergNativeModule = {
   extract: (
-    input: { kind: "uri"; uri: string; mimeType?: string | null },
+    input: XbergExtractInput,
     config?: ExtractionConfig | null,
   ) => Promise<XbergExtractionResult>;
 };
@@ -44,24 +52,33 @@ export async function extractFileWithNativeConfig(
   mimeType: string | null,
   config: ExtractionConfig | Record<string, unknown> | null,
 ): Promise<ExtractionResult> {
-  const xberg = getNativeXberg();
-  const envelope = await xberg.extract(
+  return extractWithNativeConfig(
     {
       kind: "uri",
       uri: filePath,
       mimeType: mimeType ?? undefined,
     },
-    config as ExtractionConfig | null,
+    mimeType,
+    config,
   );
+}
 
-  const document = firstExtractedDocument(envelope);
-  return {
-    content: document.content ?? "",
-    mimeType: document.mimeType ?? mimeType ?? "application/octet-stream",
-    metadata: {
-      pageCount: extractPageCount(document) ?? undefined,
+export async function extractBytesWithNativeConfig(
+  bytes: Uint8Array,
+  mimeType: string,
+  filename: string,
+  config: ExtractionConfig | Record<string, unknown> | null,
+): Promise<ExtractionResult> {
+  return extractWithNativeConfig(
+    {
+      kind: "bytes",
+      bytes,
+      mimeType,
+      filename,
     },
-  };
+    mimeType,
+    config,
+  );
 }
 
 export async function renderPdfPageWithNativeBinding(
@@ -82,6 +99,52 @@ export async function renderPdfPageWithNativeBinding(
 
   const pageBuffer = await document.getPage(pageNumber);
   return Buffer.from(pageBuffer);
+}
+
+/** Render every PDF page to a PNG buffer via pdf.js (pdf-to-img). */
+export async function listPdfPageBuffers(
+  filePath: string,
+  options?: RenderPdfPageOptions,
+): Promise<Buffer[]> {
+  const dpi = options?.dpi ?? DEFAULT_RENDER_DPI;
+  const scale = dpi / PDF_POINTS_PER_INCH;
+  const document = await pdf(filePath, { scale });
+  const pages: Buffer[] = [];
+
+  if (document.length > 0) {
+    for (let pageNumber = 1; pageNumber <= document.length; pageNumber++) {
+      const pageBuffer = await document.getPage(pageNumber);
+      pages.push(Buffer.from(pageBuffer));
+    }
+    return pages;
+  }
+
+  for await (const page of document) {
+    pages.push(Buffer.from(page));
+  }
+
+  return pages;
+}
+
+async function extractWithNativeConfig(
+  input: XbergExtractInput,
+  fallbackMimeType: string | null,
+  config: ExtractionConfig | Record<string, unknown> | null,
+): Promise<ExtractionResult> {
+  const xberg = getNativeXberg();
+  const envelope = await xberg.extract(
+    input,
+    config as ExtractionConfig | null,
+  );
+  const document = firstExtractedDocument(envelope);
+  return {
+    content: document.content ?? "",
+    mimeType:
+      document.mimeType ?? fallbackMimeType ?? "application/octet-stream",
+    metadata: {
+      pageCount: extractPageCount(document) ?? undefined,
+    },
+  };
 }
 
 function getNativeXberg(): XbergNativeModule {
