@@ -68,12 +68,10 @@ export function PreferredLanguageSetting({
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+    <section className="panel flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <h2 className="text-xl font-semibold tracking-tight text-neutral-900">
-          Preferred Language
-        </h2>
-        <p className="text-sm text-neutral-500">
+        <h2 className="section-title">Preferred Language</h2>
+        <p className="text-sm text-ink-mute">
           When creating descriptions, create descriptions in the specified
           language regardless of the document&apos;s language. If unset,
           descriptions will be in the language of the document.
@@ -82,7 +80,7 @@ export function PreferredLanguageSetting({
 
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-neutral-700">
+          <span className="text-sm font-medium text-ink-soft">
             Preferred Language
           </span>
           <input
@@ -91,7 +89,7 @@ export function PreferredLanguageSetting({
             value={preferredLanguage}
             onChange={(event) => setPreferredLanguageValue(event.target.value)}
             placeholder="e.g. German, English, fr"
-            className="rounded-xl border border-neutral-300 px-4 py-3 text-sm text-neutral-900 outline-none transition-colors focus:border-blue-500"
+            className="field"
           />
         </label>
 
@@ -99,7 +97,7 @@ export function PreferredLanguageSetting({
           <button
             type="submit"
             disabled={isSaving || !hasChanges}
-            className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+            className="btn btn-primary px-4 py-3"
           >
             {isSaving ? "Saving..." : "Save"}
           </button>
@@ -107,12 +105,12 @@ export function PreferredLanguageSetting({
       </form>
 
       {message ? (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <div className="rounded-card border border-success-line bg-success-tint px-4 py-3 text-sm text-success">
           {message}
         </div>
       ) : null}
       {error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-card border border-danger-line bg-danger-tint px-4 py-3 text-sm text-danger">
           {error}
         </div>
       ) : null}

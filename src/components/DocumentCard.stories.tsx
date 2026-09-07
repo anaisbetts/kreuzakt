@@ -52,3 +52,41 @@ export const Other: Story = {
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   },
 };
+
+/* --- Theme-review states --- */
+
+/** Arrow-key selection: the accent border plus ring must read as selection. */
+export const KeyboardFocused: Story = {
+  args: { ...PDF.args, isKeyboardFocused: true },
+};
+
+/** Thumbnail requested but unavailable — the recessed mount and icon show. */
+export const ThumbnailUnavailable: Story = {
+  args: { ...PDF.args, thumbnailUrl: "/api/documents/42/thumbnail" },
+};
+
+/** Search-hit wash inside a card. */
+export const HighlightedSnippet: Story = {
+  args: {
+    ...PDF.args,
+    snippet:
+      "Monthly mobile service [[[invoice]]] from Deutsche [[[Telekom]]] covering the March 2026 billing period, including roaming and data usage charges for two lines.",
+  },
+};
+
+/** Row variant used by list layouts — wider decorator than the grid card. */
+export const ListVariant: Story = {
+  args: {
+    ...PDF.args,
+    variant: "list",
+    snippet:
+      "Monthly mobile service [[[invoice]]] from Deutsche [[[Telekom]]] for the billing period March 2026.",
+  },
+  decorators: [
+    (Story) => (
+      <div style={{ width: 560 }}>
+        <Story />
+      </div>
+    ),
+  ],
+};

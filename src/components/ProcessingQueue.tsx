@@ -27,16 +27,16 @@ function totalCount(counts: QueueCounts) {
 function StatusDot({ status }: { status: ProcessingStatus }) {
   if (status === "processing") {
     return (
-      <span className="inline-flex h-3 w-3 rounded-full border-2 border-blue-200 border-t-blue-600 animate-spin" />
+      <span className="inline-flex h-3 w-3 animate-spin rounded-full border-2 border-info/30 border-t-info" />
     );
   }
 
   const className =
     status === "completed"
-      ? "bg-emerald-500"
+      ? "bg-success"
       : status === "failed"
-        ? "bg-red-500"
-        : "bg-amber-500";
+        ? "bg-danger"
+        : "bg-warning";
 
   return <span className={`inline-flex h-3 w-3 rounded-full ${className}`} />;
 }
@@ -47,12 +47,12 @@ function StatusBadge({ status }: { status: ProcessingStatus }) {
 
   const className =
     status === "completed"
-      ? "bg-emerald-50 text-emerald-700"
+      ? "bg-success-tint text-success"
       : status === "failed"
-        ? "bg-red-50 text-red-700"
+        ? "bg-danger-tint text-danger"
         : status === "processing"
-          ? "bg-blue-50 text-blue-700"
-          : "bg-amber-50 text-amber-700";
+          ? "bg-info-tint text-info"
+          : "bg-warning-tint text-warning";
 
   return (
     <span
@@ -159,25 +159,23 @@ export function ProcessingQueue({
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+    <section className="panel flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-neutral-900">
-            Processing Queue
-          </h2>
-          <p className="text-sm text-neutral-500">
+          <h2 className="section-title">Processing Queue</h2>
+          <p className="text-sm text-ink-mute">
             Recent ingest activity across pending, processing, completed, and
             failed files.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-neutral-500">
+        <div className="flex items-center gap-2 text-xs text-ink-mute">
           {isLoading ? <span>Refreshing...</span> : null}
           {totalEntries > DEFAULT_LIMIT ? (
             <button
               type="button"
               onClick={() => setShowAll((current) => !current)}
-              className="rounded-lg border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+              className="btn btn-secondary px-3 py-2"
             >
               {showAll ? "Show recent" : "Show all"}
             </button>
@@ -186,67 +184,67 @@ export function ProcessingQueue({
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <div className="rounded-xl bg-amber-50 px-4 py-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-amber-700">
+        <div className="rounded-card border border-warning-line bg-warning-tint px-4 py-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-warning">
             Pending
           </p>
-          <p className="mt-1 text-2xl font-semibold text-amber-900">
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-ink">
             {counts.pending}
           </p>
         </div>
-        <div className="rounded-xl bg-blue-50 px-4 py-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-blue-700">
+        <div className="rounded-card border border-info-line bg-info-tint px-4 py-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-info">
             Processing
           </p>
-          <p className="mt-1 text-2xl font-semibold text-blue-900">
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-ink">
             {counts.processing}
           </p>
         </div>
-        <div className="rounded-xl bg-emerald-50 px-4 py-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+        <div className="rounded-card border border-success-line bg-success-tint px-4 py-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-success">
             Completed
           </p>
-          <p className="mt-1 text-2xl font-semibold text-emerald-900">
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-ink">
             {counts.completed}
           </p>
         </div>
-        <div className="rounded-xl bg-red-50 px-4 py-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-red-700">
+        <div className="rounded-card border border-danger-line bg-danger-tint px-4 py-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-danger">
             Failed
           </p>
-          <p className="mt-1 text-2xl font-semibold text-red-900">
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-ink">
             {counts.failed}
           </p>
         </div>
       </div>
 
       {error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-card border border-danger-line bg-danger-tint px-4 py-3 text-sm text-danger">
           {error}
         </div>
       ) : null}
 
       {entries.length > 0 ? (
-        <div className="flex flex-col overflow-hidden rounded-xl border border-neutral-200">
+        <div className="flex flex-col overflow-hidden rounded-card border border-line">
           {entries.map((entry) => {
             const isRetrying = retryingIds.includes(entry.id);
 
             return (
               <div
                 key={entry.id}
-                className="border-b border-neutral-200 px-4 py-4 last:border-b-0"
+                className="border-b border-line px-4 py-4 last:border-b-0"
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-3">
                       <StatusDot status={entry.status} />
-                      <p className="truncate text-sm font-medium text-neutral-900">
+                      <p className="truncate text-sm font-medium text-ink">
                         {entry.filename}
                       </p>
                       <StatusBadge status={entry.status} />
                     </div>
 
-                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs tabular-nums text-ink-mute">
                       <span>{formatQueueTiming(entry)}</span>
                       <span>
                         {entry.completed_at
@@ -259,7 +257,7 @@ export function ProcessingQueue({
                     </div>
 
                     {entry.error ? (
-                      <p className="mt-2 text-sm text-red-700">{entry.error}</p>
+                      <p className="mt-2 text-sm text-danger">{entry.error}</p>
                     ) : null}
                   </div>
 
@@ -268,7 +266,7 @@ export function ProcessingQueue({
                       type="button"
                       onClick={() => handleRetry(entry.id)}
                       disabled={isRetrying}
-                      className="rounded-lg border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="btn btn-secondary px-3 py-2"
                     >
                       {isRetrying ? "Retrying..." : "Retry"}
                     </button>
@@ -279,7 +277,7 @@ export function ProcessingQueue({
           })}
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-neutral-300 px-4 py-10 text-center text-sm text-neutral-500">
+        <div className="rounded-card border border-dashed border-line-strong px-4 py-10 text-center text-sm text-ink-mute">
           No queue entries yet.
         </div>
       )}

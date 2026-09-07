@@ -157,12 +157,10 @@ export function PaperlessImport() {
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+    <section className="panel flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <h2 className="text-xl font-semibold tracking-tight text-neutral-900">
-          Paperless-ngx Import
-        </h2>
-        <p className="text-sm text-neutral-500">
+        <h2 className="section-title">Paperless-ngx Import</h2>
+        <p className="text-sm text-ink-mute">
           Import documents directly from Paperless-ngx. Only the Paperless added
           date is preserved; everything else is reprocessed through the normal
           ingest pipeline.
@@ -171,7 +169,7 @@ export function PaperlessImport() {
 
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-neutral-700">
+          <span className="text-sm font-medium text-ink-soft">
             Paperless URL
           </span>
           <input
@@ -179,43 +177,43 @@ export function PaperlessImport() {
             name="url"
             placeholder="https://paperless.example.com"
             required
-            className="rounded-xl border border-neutral-300 px-4 py-3 text-sm text-neutral-900 outline-none transition-colors focus:border-blue-500"
+            className="field"
           />
         </label>
 
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-neutral-700">API Key</span>
+          <span className="text-sm font-medium text-ink-soft">API Key</span>
           <div className="flex gap-2">
             <input
               type={showApiKey ? "text" : "password"}
               name="apiKey"
               required
               autoComplete="off"
-              className="min-w-0 flex-1 rounded-xl border border-neutral-300 px-4 py-3 text-sm text-neutral-900 outline-none transition-colors focus:border-blue-500"
+              className="field min-w-0 flex-1"
             />
             <button
               type="button"
               onClick={() => setShowApiKey((current) => !current)}
-              className="rounded-xl border border-neutral-200 px-3 py-3 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+              className="btn btn-secondary px-3 py-3"
             >
               {showApiKey ? "Hide" : "Show"}
             </button>
           </div>
-          <span className="text-xs text-neutral-500">
+          <span className="text-xs text-ink-mute">
             Create a token in your Paperless-ngx instance under Settings &gt;
             Administration &gt; Auth Tokens.
           </span>
         </label>
 
         <div className="flex items-center justify-between gap-3">
-          <div className="text-xs text-neutral-500">
+          <div className="text-xs text-ink-mute">
             Files are downloaded into <code>ingest/</code> and then processed
             like any other upload.
           </div>
           <button
             type="submit"
             disabled={isImporting}
-            className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+            className="btn btn-primary px-4 py-3"
           >
             {isImporting ? "Importing..." : "Import"}
           </button>
@@ -223,47 +221,45 @@ export function PaperlessImport() {
       </form>
 
       {progress.total > 0 ? (
-        <div className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-4">
+        <div className="flex flex-col gap-3 rounded-card border border-line bg-surface-sunken px-4 py-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-medium text-neutral-900">
+              <p className="text-sm font-medium text-ink">
                 Importing {progress.current} / {progress.total}
               </p>
-              <p className="text-xs text-neutral-500">
+              <p className="text-xs text-ink-mute">
                 Imported {progress.imported}, duplicates {progress.duplicates},
                 failed {progress.failed}
               </p>
             </div>
-            <span className="text-sm font-medium text-neutral-700">
+            <span className="text-sm font-medium tabular-nums text-ink-soft">
               {progressPercent}%
             </span>
           </div>
 
-          <div className="h-2 overflow-hidden rounded-full bg-neutral-200">
+          <div className="h-2 overflow-hidden rounded-full bg-canvas-deep">
             <div
-              className="h-full rounded-full bg-blue-600 transition-[width]"
+              className="h-full rounded-full bg-accent transition-[width]"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
 
           {progress.lastFilename ? (
-            <div className="text-sm text-neutral-600">
-              <span className="font-medium text-neutral-900">
-                Latest document:
-              </span>{" "}
+            <div className="text-sm text-ink-soft">
+              <span className="font-medium text-ink">Latest document:</span>{" "}
               {progress.lastFilename}
               {progress.lastStatus ? ` (${progress.lastStatus})` : ""}
             </div>
           ) : null}
 
           {progress.lastMessage ? (
-            <div className="text-sm text-red-700">{progress.lastMessage}</div>
+            <div className="text-sm text-danger">{progress.lastMessage}</div>
           ) : null}
         </div>
       ) : null}
 
       {error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-card border border-danger-line bg-danger-tint px-4 py-3 text-sm text-danger">
           {error}
         </div>
       ) : null}

@@ -19,7 +19,7 @@ export function AppHeaderActions({
       <button
         type="button"
         onClick={onStatusClick}
-        className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600"
+        className="flex h-9 w-9 items-center justify-center rounded-field text-ink-mute transition-colors hover:bg-canvas-deep hover:text-ink"
         aria-label="System status"
       >
         <svg

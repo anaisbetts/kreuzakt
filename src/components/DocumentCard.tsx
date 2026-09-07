@@ -45,7 +45,7 @@ function renderHighlightedSnippet(snippet: string) {
       isHighlighted ? (
         <mark
           key={`${part}-${nodes.length}`}
-          className="rounded bg-yellow-100 px-0.5 text-inherit"
+          className="rounded-[2px] bg-highlight px-0.5 text-ink"
         >
           {part}
         </mark>
@@ -63,7 +63,7 @@ function ThumbnailMissing({ compact }: { compact?: boolean }) {
 
   return (
     <div
-      className={`flex ${box} items-center justify-center overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100 text-neutral-400`}
+      className={`flex ${box} items-center justify-center overflow-hidden rounded-field border border-line bg-canvas-deep text-ink-mute`}
       aria-hidden
     >
       <svg
@@ -135,8 +135,8 @@ function Thumbnail({
   }, [thumbnailUrl, loadFailed]);
 
   const className = compact
-    ? "aspect-[3/4] h-28 shrink-0 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50"
-    : "aspect-[3/4] w-full overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50";
+    ? "aspect-[3/4] h-28 shrink-0 overflow-hidden rounded-field border border-line bg-canvas-deep"
+    : "aspect-[3/4] w-full overflow-hidden rounded-field border border-line bg-canvas-deep";
 
   if (!thumbnailUrl || loadFailed) {
     return (
@@ -162,7 +162,7 @@ function Thumbnail({
             setLoadFailed(true);
           }
         }}
-        className="h-full w-full rounded-lg object-contain object-top"
+        className="h-full w-full rounded-field object-contain object-top"
       />
     </div>
   );
@@ -185,17 +185,17 @@ export function DocumentCard({
       <button
         type="button"
         onClick={() => onClick?.(id)}
-        className="flex w-full flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-4 text-left shadow-sm transition-shadow hover:shadow-md sm:flex-row"
+        className="flex w-full flex-col gap-4 rounded-card border border-line bg-surface p-4 text-left shadow-card transition-[border-color,box-shadow] hover:border-line-strong hover:shadow-raise sm:flex-row"
       >
         <Thumbnail documentId={id} thumbnailUrl={thumbnailUrl} compact />
         <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <h3 className="text-lg font-medium text-neutral-900">{title}</h3>
-          <time className="text-sm text-neutral-500">
+          <h3 className="text-lg font-medium text-ink">{title}</h3>
+          <time className="text-sm tabular-nums text-ink-mute">
             {formatDate(documentDate)}
           </time>
-          <p className="line-clamp-2 text-sm text-neutral-600">{description}</p>
+          <p className="line-clamp-2 text-sm text-ink-soft">{description}</p>
           {snippet && (
-            <p className="text-sm leading-6 text-neutral-600">
+            <p className="text-sm leading-6 text-ink-soft">
               {renderHighlightedSnippet(snippet)}
             </p>
           )}
@@ -209,23 +209,21 @@ export function DocumentCard({
       type="button"
       onClick={() => onClick?.(id)}
       className={[
-        "flex w-full flex-col gap-4 rounded-xl border bg-white p-4 text-left shadow-sm transition-shadow hover:shadow-md",
+        "flex w-full flex-col gap-4 rounded-card border bg-surface p-4 text-left shadow-card transition-[border-color,box-shadow] hover:border-accent-line hover:shadow-raise",
         isKeyboardFocused
-          ? "border-blue-500 ring-2 ring-blue-500/30"
-          : "border-neutral-200",
+          ? "border-accent ring-2 ring-accent/25"
+          : "border-line",
       ].join(" ")}
     >
       <Thumbnail documentId={id} thumbnailUrl={thumbnailUrl} />
       <div className="flex w-full flex-col gap-2">
-        <h3 className="line-clamp-2 text-base font-medium text-neutral-900">
-          {title}
-        </h3>
-        <time className="text-sm text-neutral-500">
+        <h3 className="line-clamp-2 text-base font-medium text-ink">{title}</h3>
+        <time className="text-sm tabular-nums text-ink-mute">
           {formatDate(documentDate)}
         </time>
-        <p className="line-clamp-2 text-sm text-neutral-600">{description}</p>
+        <p className="line-clamp-2 text-sm text-ink-soft">{description}</p>
         {snippet && (
-          <p className="line-clamp-4 text-sm leading-6 text-neutral-600">
+          <p className="line-clamp-4 text-sm leading-6 text-ink-soft">
             {renderHighlightedSnippet(snippet)}
           </p>
         )}

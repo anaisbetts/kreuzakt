@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
+import { AppHeaderActions } from "./AppHeaderActions";
 import { SearchPage } from "./SearchPage";
 
 const mockRecentDocuments = [
@@ -225,5 +226,124 @@ export const ListLoadError: Story = {
   args: {
     recentDocuments: [],
     listError: "Database is unavailable",
+  },
+};
+
+/* --- Theme-review states: each one exposes a treatment the stories above
+   never render, so the theme can be checked without clicking through the app. --- */
+
+/** Pagination chrome: active oxblood page, hairline neighbours, Prev/Next. */
+export const PagedResults: Story = {
+  args: {
+    query: "invoice telekom",
+    hasActiveSearch: true,
+    searchResults: mockSearchResults,
+    totalResults: 72,
+    page: 3,
+    totalPages: 7,
+    onPageChange: fn(),
+  },
+};
+
+/** First page — Prev is disabled, so the disabled treatment is visible. */
+export const FirstPageResults: Story = {
+  args: {
+    query: "invoice telekom",
+    hasActiveSearch: true,
+    searchResults: mockSearchResults,
+    totalResults: 72,
+    page: 1,
+    totalPages: 7,
+    onPageChange: fn(),
+  },
+};
+
+/** Upload confirmation (success semantics must not be confused with the accent). */
+export const UploadSucceeded: Story = {
+  args: {
+    recentDocuments: mockRecentDocuments,
+    uploadNotice: {
+      kind: "success",
+      message: "3 files copied into ingest/ and queued for processing.",
+    },
+  },
+};
+
+/** Upload failure — danger semantics sit next to the oxblood Upload button. */
+export const UploadFailed: Story = {
+  args: {
+    recentDocuments: mockRecentDocuments,
+    uploadNotice: {
+      kind: "error",
+      message: "Upload failed: scanned_scan_2026.pdf exceeds the size limit.",
+    },
+  },
+};
+
+/** Route-transition dim applied while a navigation is in flight. */
+export const Navigating: Story = {
+  args: {
+    query: "invoice telekom",
+    hasActiveSearch: true,
+    searchResults: mockSearchResults,
+    totalResults: 12,
+    isNavigating: true,
+  },
+};
+
+/** The header the app actually renders (SearchPageClient passes this). */
+export const WithHeaderActions: Story = {
+  args: {
+    recentDocuments: mockRecentDocuments,
+    headerActions: (
+      <AppHeaderActions
+        isUploading={false}
+        onStatusClick={fn()}
+        onUploadFiles={fn()}
+      />
+    ),
+  },
+};
+
+/** Upload-in-progress label plus disabled control. */
+export const Uploading: Story = {
+  args: {
+    recentDocuments: mockRecentDocuments,
+    isUploading: true,
+    headerActions: (
+      <AppHeaderActions isUploading onStatusClick={fn()} onUploadFiles={fn()} />
+    ),
+  },
+};
+
+/** Truncation, missing-thumbnail fallback and related-keyword control together. */
+export const LongContent: Story = {
+  args: {
+    query: "miete",
+    hasActiveSearch: true,
+    expandRelatedKeywords: true,
+    totalResults: 2,
+    searchResults: [
+      {
+        id: 91,
+        title:
+          "Very long title: Mietvertrag über die Wohnung in der Berliner Straße 42 nebst Zubehör, gültig ab dem 01.12.2024 bis auf Weiteres",
+        description:
+          "Complete rental agreement including the house rules, service-charge statement, deposit terms and the landlord's written consent to sublet, signed and dated by both parties.",
+        documentDate: "2024-12-01",
+        mimeType: "application/pdf",
+        snippet:
+          "The tenant agrees to pay monthly rent of EUR 1,240.00 for the apartment in Berliner Straße 42, payable by the third business day of each month to the account listed below, with the service charges treated as [[[rent]]] in advance and reconciled once per year against the annual statement.",
+      },
+      {
+        id: 90,
+        title: "Service charge statement 2025",
+        description: "Annual reconciliation of operating costs for the unit.",
+        documentDate: "2026-01-20",
+        mimeType: "application/pdf",
+        snippet:
+          "Overpaid advance rent of EUR 312.44 is refunded against the [[[rent]]] account.",
+      },
+    ],
   },
 };

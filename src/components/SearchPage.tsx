@@ -46,7 +46,7 @@ function StatusIcon({ onClick }: { onClick?: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600"
+      className="flex h-9 w-9 items-center justify-center rounded-field text-ink-mute transition-colors hover:bg-canvas-deep hover:text-ink"
       aria-label="System status"
     >
       <svg
@@ -126,7 +126,7 @@ function Pagination({
         type="button"
         onClick={() => onPageChange(page - 1)}
         disabled={page <= 1}
-        className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-600 disabled:cursor-not-allowed disabled:opacity-40"
+        className="btn btn-secondary px-3 py-2"
       >
         Prev
       </button>
@@ -136,10 +136,10 @@ function Pagination({
           type="button"
           onClick={() => onPageChange(pageNumber)}
           className={[
-            "min-w-10 rounded-lg px-3 py-2 text-sm",
+            "btn min-w-10 px-3 py-2 tabular-nums",
             pageNumber === page
-              ? "bg-blue-600 text-white"
-              : "border border-neutral-200 bg-white text-neutral-700",
+              ? "border border-accent bg-accent text-on-accent"
+              : "btn-secondary",
           ].join(" ")}
         >
           {pageNumber}
@@ -149,7 +149,7 @@ function Pagination({
         type="button"
         onClick={() => onPageChange(page + 1)}
         disabled={page >= totalPages}
-        className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-600 disabled:cursor-not-allowed disabled:opacity-40"
+        className="btn btn-secondary px-3 py-2"
       >
         Next
       </button>
@@ -289,7 +289,7 @@ export function SearchPage({
 
   return (
     <FileDropSurface onFilesDrop={onUploadFiles}>
-      <div className="flex min-h-screen flex-col bg-zinc-50">
+      <div className="flex min-h-screen flex-col bg-canvas">
         <header className="flex justify-end px-6 py-4">
           {headerActions ?? <StatusIcon onClick={onStatusClick} />}
         </header>
@@ -312,7 +312,7 @@ export function SearchPage({
               <button
                 type="button"
                 onClick={onHomeClick ?? onClear}
-                className="mb-8 text-4xl font-bold tracking-tight text-neutral-900"
+                className="mb-8 font-display text-4xl font-medium tracking-tight text-ink transition-colors hover:text-accent"
               >
                 Kreuzakt Document Search
               </button>
@@ -326,14 +326,14 @@ export function SearchPage({
                 showClearButton={Boolean(query)}
                 className="w-full max-w-xl"
               />
-              <label className="mt-3 flex w-full max-w-xl px-4 items-center gap-3 text-sm text-neutral-600">
+              <label className="mt-3 flex w-full max-w-xl px-4 items-center gap-3 text-sm text-ink-soft">
                 <input
                   type="checkbox"
                   checked={expandRelatedKeywords}
                   onChange={(event) =>
                     onExpandRelatedKeywordsChange?.(event.currentTarget.checked)
                   }
-                  className="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-2 focus:ring-blue-500/20"
+                  className="h-4 w-4 rounded-field border-line-strong accent-accent"
                 />
                 <span>Search related keywords</span>
               </label>
@@ -343,10 +343,10 @@ export function SearchPage({
               {uploadNotice ? (
                 <div
                   className={[
-                    "mb-6 rounded-xl px-4 py-3 text-center text-sm",
+                    "mb-6 rounded-card border px-4 py-3 text-center text-sm",
                     uploadNotice.kind === "success"
-                      ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
-                      : "border border-red-200 bg-red-50 text-red-800",
+                      ? "border-success-line bg-success-tint text-success"
+                      : "border-danger-line bg-danger-tint text-danger",
                   ].join(" ")}
                 >
                   {uploadNotice.message}
@@ -354,10 +354,10 @@ export function SearchPage({
               ) : null}
 
               {loadError ? (
-                <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm text-red-800">
+                <div className="mb-6 rounded-card border border-danger-line bg-danger-tint px-4 py-3 text-center text-sm text-danger">
                   <p className="font-medium">Something went wrong</p>
-                  <p className="mt-1 text-red-700">{loadError}</p>
-                  <p className="mt-2 text-xs text-red-600">
+                  <p className="mt-1 text-ink-soft">{loadError}</p>
+                  <p className="mt-2 text-xs text-ink-mute">
                     Try refreshing the page. If the problem continues, check the
                     server logs.
                   </p>
@@ -365,16 +365,20 @@ export function SearchPage({
               ) : null}
 
               {hasQuery && totalResults != null && !loadError && (
-                <p className="mb-6 text-center text-sm text-neutral-500">
+                <p className="mb-6 text-center text-sm tabular-nums text-ink-mute">
                   {totalResults} {totalResults === 1 ? "result" : "results"}
                 </p>
               )}
 
               {hasDocuments ? (
                 <>
-                  <p className="mb-6 text-center text-xs font-semibold uppercase tracking-widest text-neutral-400">
-                    {title}
-                  </p>
+                  <div className="mb-6 flex flex-col items-center gap-3">
+                    {/* Registration rule: the one oxblood mark per view */}
+                    <span aria-hidden className="h-px w-10 bg-accent" />
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-mute">
+                      {title}
+                    </p>
+                  </div>
                   <DocumentGrid
                     documents={documents ?? []}
                     focusedIndex={keyboardFocusIndex}
@@ -391,19 +395,19 @@ export function SearchPage({
                 </>
               ) : hasQuery && !loadError ? (
                 <div className="flex flex-col items-center gap-2 py-12 text-center">
-                  <p className="text-lg font-medium text-neutral-700">
+                  <p className="font-display text-lg font-medium text-ink">
                     No results found
                   </p>
-                  <p className="text-sm text-neutral-500">
+                  <p className="text-sm text-ink-mute">
                     Try a different search term or check the spelling.
                   </p>
                 </div>
               ) : !hasQuery && !loadError ? (
                 <div className="flex flex-col items-center gap-2 py-12 text-center">
-                  <p className="text-lg font-medium text-neutral-700">
+                  <p className="font-display text-lg font-medium text-ink">
                     No documents yet
                   </p>
-                  <p className="max-w-md text-sm text-neutral-500">
+                  <p className="max-w-md text-sm text-ink-mute">
                     Use Upload or drag files onto the page to copy them into
                     your configured ingest folder. They will appear here after
                     processing.

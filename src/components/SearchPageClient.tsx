@@ -180,11 +180,11 @@ export function SearchPageClient({
           />
         ) : null}
         {recentLoadingMore ? (
-          <p className="text-sm text-neutral-500">Loading more…</p>
+          <p className="text-sm text-ink-mute">Loading more…</p>
         ) : null}
         {recentLoadMoreError ? (
           <>
-            <p className="text-center text-sm text-red-600">
+            <p className="text-center text-sm text-danger">
               {recentLoadMoreError}
             </p>
             <button
@@ -192,7 +192,7 @@ export function SearchPageClient({
               onClick={() => {
                 void loadMoreRecent();
               }}
-              className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-50"
+              className="btn btn-secondary px-3 py-1.5"
             >
               Try again
             </button>

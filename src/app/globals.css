@@ -1,21 +1,177 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+  Kreuzakt — "Archiv" theme tokens.
+
+  A reading-room archive: warm paper canvas, ink text, oxblood accent, editorial
+  display type. Tokens are semantic (surface/ink/line/accent/status), so component
+  classes never name a raw hue. Light-first — see the dark-mode note at the bottom.
+
+  Contrast is measured against the two surfaces text actually sits on:
+    ink       13.7:1 on canvas, 15.3:1 on surface
+    ink-soft   7.5:1 on canvas
+    ink-mute   5.0:1 on canvas, 4.6:1 on canvas-deep
+    accent     8.5:1 on surface (and #fffefa text 8.5:1 on accent fill)
+    status     6.0:1+ on their own tints
+*/
+@theme {
+  /* Surfaces — page plane, recessed well, paper */
+  --color-canvas: #f4f1ea;
+  --color-canvas-deep: #ebe6db;
+  --color-surface: #fffefa;
+  --color-surface-sunken: #f8f5ee;
+
+  /* Ink — type, not "black on white" */
+  --color-ink: #242522;
+  --color-ink-deep: #171815;
+  --color-ink-soft: #4f4d46;
+  --color-ink-mute: #6a675d;
+  --color-on-accent: #fffefa;
+
+  /* Rules — this theme draws structure with hairlines before shadows */
+  --color-line: #ddd6c8;
+  --color-line-soft: #e8e2d6;
+  --color-line-strong: #c6beab;
+
+  /* Accent — oxblood. Primary action, selection, focus, active marker */
+  --color-accent: #852d3d;
+  --color-accent-deep: #6d2231;
+  --color-accent-tint: #f5e7e9;
+  --color-accent-line: #e0c3c9;
+
+  /* Status — hue-distinct from oxblood, always paired with a label or icon */
+  --color-success: #2c6a4a;
+  --color-success-tint: #e3eee7;
+  --color-success-line: #bcd6c7;
+  --color-warning: #7a5310;
+  --color-warning-tint: #f7ecd9;
+  --color-warning-line: #e3cf9f;
+  --color-danger: #a4331f;
+  --color-danger-tint: #f7e5e0;
+  --color-danger-line: #e8c3b8;
+  --color-info: #2f5d6b;
+  --color-info-tint: #e2ecef;
+  --color-info-line: #bcd0d6;
+
+  /* Search-hit wash */
+  --color-highlight: #f6e3b4;
+
+  /*
+    Type — Newsreader (display) + IBM Plex Sans (UI/body) + Plex Mono (code).
+    The var() indirection points at next/font's generated family, loaded in
+    `src/app/layout.tsx`; the named fallback keeps Storybook honest when the
+    app shell is not in the render path.
+  */
+  --font-sans:
+    var(--font-plex-sans), "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display:
+    var(--font-newsreader), "Newsreader", "Iowan Old Style", Georgia, serif;
+  --font-mono:
+    var(--font-plex-mono), "IBM Plex Mono", ui-monospace, "SFMono-Regular",
+    monospace;
+
+  /* Shape — small, deliberate corners. No pill-everything, no 12px cards. */
+  --radius-field: 5px;
+  --radius-card: 6px;
+
+  /* Elevation — warm and low. Depth is the exception, not the default. */
+  --shadow-card:
+    0 1px 1px rgb(36 37 34 / 0.04), 0 2px 6px -2px rgb(36 37 34 / 0.08);
+  --shadow-raise:
+    0 2px 4px rgb(36 37 34 / 0.06), 0 12px 28px -10px rgb(36 37 34 / 0.18);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  /* Newsreader is an optical-size variable face; let it optically adjust. */
+  .font-display {
+    font-optical-sizing: auto;
+    letter-spacing: -0.005em;
+  }
+
+  ::selection {
+    background: var(--color-accent-tint);
+    color: var(--color-ink);
+  }
+  /* One focus treatment everywhere, including controls without a ring utility. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
-/* TODO: dark mode support — for now, force light theme */
+/* TODO: dark mode — the dark reading-room variant (graphite + ivory) is a
+   deliberate follow-up; forcing light keeps this pass reviewable. */
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/*
+  Button roles. Colour carries meaning, so the recipes are shared instead of
+  being re-typed per component:
+
+    .btn-primary      ink fill — an action, never an alarm
+    .btn-secondary    surface + hairline — a reversible choice
+    .btn-destructive  oxblood-rust outline — costs something
+
+  Oxblood is deliberately absent from primary fills: a red button implies
+  danger, and Upload is not dangerous. Oxblood stays on state — selection,
+  focus, the active page, the registration rule.
+
+  These set colour, border, radius and type only. Size and padding stay with
+  the caller, so buttons keep their existing footprint in each layout.
+*/
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-field text-sm font-medium transition-colors;
+  }
+
+  .btn-primary {
+    @apply border border-ink bg-ink text-canvas hover:border-ink-deep hover:bg-ink-deep;
+  }
+
+  .btn-secondary {
+    @apply border border-line bg-surface text-ink-soft hover:border-line-strong hover:bg-surface-sunken;
+  }
+
+  .btn-destructive {
+    @apply border border-danger/40 bg-surface text-danger hover:border-danger hover:bg-danger-tint;
+  }
+
+  /* One disabled look for every role, still readable as text. */
+  .btn:disabled {
+    @apply cursor-not-allowed border-line bg-surface-sunken text-ink-mute;
+  }
+
+  /* Text entry — one hover treatment; the global :focus-visible ring does focus. */
+  .field {
+    @apply rounded-field border border-line bg-surface px-4 py-3 text-sm text-ink transition-colors placeholder:text-ink-mute hover:border-line-strong focus:border-accent;
+  }
+
+  /* Settings block. Tinted variants keep .panel and add their own border/bg. */
+  .panel {
+    @apply rounded-card border border-line bg-surface p-5 shadow-card;
+  }
+
+  /* Section headings take the display face; body and controls do not. */
+  .section-title {
+    @apply font-display text-xl font-semibold tracking-tight text-ink;
+  }
 }

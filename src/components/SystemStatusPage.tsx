@@ -44,7 +44,7 @@ export function SystemStatusPage({
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-6 py-10">
       <Link
         href="/"
-        className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
+        className="text-sm font-medium text-accent transition-colors hover:text-accent-deep"
       >
         ← Back to search
       </Link>
@@ -67,10 +67,10 @@ export function SystemStatusPage({
       <PaperlessImport />
 
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">
+        <h1 className="font-display text-3xl font-semibold tracking-tight text-ink">
           System Status
         </h1>
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-ink-mute">
           Health, storage paths, model configuration, and the live processing
           queue for ingests and reindex jobs.
         </p>
@@ -91,9 +91,9 @@ export function SystemStatusPage({
 
 function StatusRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-neutral-200 bg-white px-4 py-3">
-      <span className="text-sm font-medium text-neutral-600">{label}</span>
-      <span className="text-sm text-neutral-900">{value}</span>
+    <div className="flex items-center justify-between gap-4 rounded-card border border-line bg-surface px-4 py-3">
+      <span className="text-sm font-medium text-ink-soft">{label}</span>
+      <span className="text-sm text-ink">{value}</span>
     </div>
   );
 }
