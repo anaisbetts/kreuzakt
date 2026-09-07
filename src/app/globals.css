@@ -160,9 +160,9 @@
     @apply cursor-not-allowed border-line bg-surface-sunken text-ink-mute;
   }
 
-  /* Text entry — one focus/hover treatment shared by every form field. */
+  /* Text entry — one hover treatment; the global :focus-visible ring does focus. */
   .field {
-    @apply rounded-field border border-line bg-surface px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-ink-mute hover:border-line-strong focus:border-accent;
+    @apply rounded-field border border-line bg-surface px-4 py-3 text-sm text-ink transition-colors placeholder:text-ink-mute hover:border-line-strong focus:border-accent;
   }
 
   /* Settings block. Tinted variants keep .panel and add their own border/bg. */
