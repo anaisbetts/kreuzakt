@@ -126,7 +126,7 @@ function Pagination({
         type="button"
         onClick={() => onPageChange(page - 1)}
         disabled={page <= 1}
-        className="rounded-field border border-line bg-surface px-3 py-2 text-sm text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-surface"
+        className="btn btn-secondary px-3 py-2"
       >
         Prev
       </button>
@@ -136,10 +136,10 @@ function Pagination({
           type="button"
           onClick={() => onPageChange(pageNumber)}
           className={[
-            "min-w-10 rounded-field px-3 py-2 text-sm tabular-nums transition-colors",
+            "btn min-w-10 px-3 py-2 tabular-nums",
             pageNumber === page
-              ? "bg-accent font-medium text-on-accent"
-              : "border border-line bg-surface text-ink-soft hover:border-line-strong hover:bg-surface-sunken",
+              ? "border border-accent bg-accent text-on-accent"
+              : "btn-secondary",
           ].join(" ")}
         >
           {pageNumber}
@@ -149,7 +149,7 @@ function Pagination({
         type="button"
         onClick={() => onPageChange(page + 1)}
         disabled={page >= totalPages}
-        className="rounded-field border border-line bg-surface px-3 py-2 text-sm text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-surface"
+        className="btn btn-secondary px-3 py-2"
       >
         Next
       </button>

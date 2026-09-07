@@ -59,8 +59,8 @@ function PDFPreview({
   pageCount?: number;
 }) {
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-neutral-200 bg-neutral-800">
-      <div className="flex items-center gap-2 bg-neutral-700 px-4 py-2">
+    <div className="flex h-full flex-col overflow-hidden rounded-card border border-ink bg-ink">
+      <div className="flex items-center gap-2 border-b border-ink-soft bg-ink px-4 py-2">
         <svg
           aria-hidden="true"
           xmlns="http://www.w3.org/2000/svg"
@@ -68,7 +68,7 @@ function PDFPreview({
           viewBox="0 0 24 24"
           strokeWidth={1.5}
           stroke="currentColor"
-          className="h-4 w-4 text-neutral-400"
+          className="h-4 w-4 text-canvas/70"
         >
           <path
             strokeLinecap="round"
@@ -76,9 +76,9 @@ function PDFPreview({
             d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
           />
         </svg>
-        <span className="text-xs text-neutral-300">{filename}</span>
+        <span className="text-xs text-canvas/85">{filename}</span>
         {pageCount != null && (
-          <span className="ml-auto text-xs text-neutral-500">
+          <span className="ml-auto text-xs tabular-nums text-canvas/60">
             {currentPage} / {pageCount}
           </span>
         )}
@@ -89,7 +89,7 @@ function PDFPreview({
           <img
             src={`/api/documents/${id}/pages/${currentPage}/image`}
             alt={`${filename} page ${currentPage}`}
-            className="max-h-full max-w-full rounded bg-white object-contain shadow-2xl max-md:max-h-none max-md:w-full max-md:rounded-none"
+            className="max-h-full max-w-full rounded-field bg-white object-contain shadow-raise max-md:max-h-none max-md:w-full max-md:rounded-none"
           />
         </div>
       </div>
@@ -99,8 +99,8 @@ function PDFPreview({
 
 function ImagePreview({ id, filename }: { id: number; filename: string }) {
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-neutral-200 bg-neutral-900">
-      <div className="flex items-center gap-2 bg-neutral-800 px-4 py-2">
+    <div className="flex h-full flex-col overflow-hidden rounded-card border border-ink bg-ink">
+      <div className="flex items-center gap-2 border-b border-ink-soft bg-ink px-4 py-2">
         <svg
           aria-hidden="true"
           xmlns="http://www.w3.org/2000/svg"
@@ -108,7 +108,7 @@ function ImagePreview({ id, filename }: { id: number; filename: string }) {
           viewBox="0 0 24 24"
           strokeWidth={1.5}
           stroke="currentColor"
-          className="h-4 w-4 text-neutral-400"
+          className="h-4 w-4 text-canvas/70"
         >
           <path
             strokeLinecap="round"
@@ -116,7 +116,7 @@ function ImagePreview({ id, filename }: { id: number; filename: string }) {
             d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"
           />
         </svg>
-        <span className="text-xs text-neutral-300">{filename}</span>
+        <span className="text-xs text-canvas/85">{filename}</span>
       </div>
       <div className="relative min-h-0 flex-1">
         <div className="absolute inset-0 flex items-center justify-center overflow-hidden p-2 max-md:block max-md:overflow-x-hidden max-md:overflow-y-auto max-md:p-0">
@@ -124,7 +124,7 @@ function ImagePreview({ id, filename }: { id: number; filename: string }) {
           <img
             src={`/api/documents/${id}/pages/1/image`}
             alt={filename}
-            className="max-h-full max-w-full rounded object-contain shadow-2xl ring-1 ring-white/10 max-md:max-h-none max-md:w-full max-md:rounded-none"
+            className="max-h-full max-w-full rounded-field object-contain shadow-raise ring-1 ring-canvas/10 max-md:max-h-none max-md:w-full max-md:rounded-none"
           />
         </div>
       </div>
@@ -146,7 +146,7 @@ function PageThumbnailStrip({
   return (
     <div
       className={[
-        "flex shrink-0 gap-3 rounded-lg border border-neutral-200 bg-neutral-100 p-2",
+        "flex shrink-0 gap-3 rounded-card border border-line bg-canvas-deep p-2",
         "flex-row overflow-x-auto overflow-y-hidden [-webkit-overflow-scrolling:touch]",
         "md:w-20 md:flex-col md:overflow-x-hidden md:overflow-y-auto",
       ].join(" ")}
@@ -166,10 +166,10 @@ function PageThumbnailStrip({
           >
             <div
               className={[
-                "aspect-[3/4] w-14 overflow-hidden rounded border bg-white shadow-sm transition-all md:w-full",
+                "aspect-[3/4] w-14 overflow-hidden rounded-field border bg-white shadow-card transition-all md:w-full",
                 isActive
-                  ? "border-blue-300 ring-2 ring-blue-500"
-                  : "border-neutral-200 hover:border-neutral-300",
+                  ? "border-accent ring-2 ring-accent"
+                  : "border-line hover:border-line-strong",
               ].join(" ")}
             >
               {/* biome-ignore lint/performance/noImgElement: same-origin API thumbnails */}
@@ -182,8 +182,8 @@ function PageThumbnailStrip({
             </div>
             <span
               className={[
-                "text-[10px]",
-                isActive ? "font-medium text-blue-600" : "text-neutral-500",
+                "text-[10px] tabular-nums",
+                isActive ? "font-medium text-accent" : "text-ink-mute",
               ].join(" ")}
             >
               {page}
@@ -197,8 +197,8 @@ function PageThumbnailStrip({
 
 function TextPreview({ content }: { content: string }) {
   return (
-    <div className="h-full overflow-auto rounded-lg bg-neutral-50 p-6">
-      <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-neutral-700">
+    <div className="h-full overflow-auto rounded-card border border-line bg-surface-sunken p-6">
+      <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-ink-soft">
         {content}
       </pre>
     </div>
@@ -214,10 +214,10 @@ function MetadataField({
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <dt className="text-xs font-medium uppercase tracking-wide text-neutral-400">
+      <dt className="text-xs font-medium uppercase tracking-wide text-ink-mute">
         {label}
       </dt>
-      <dd className="text-sm text-neutral-700">{children}</dd>
+      <dd className="text-sm text-ink-soft">{children}</dd>
     </div>
   );
 }
@@ -258,12 +258,12 @@ export function DocumentViewerPage({
 
   return (
     <FileDropSurface onFilesDrop={onUploadFiles}>
-      <div className="flex h-screen flex-col overflow-hidden bg-zinc-50">
-        <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-3">
+      <div className="flex h-screen flex-col overflow-hidden bg-canvas">
+        <header className="flex items-center justify-between border-b border-line bg-surface px-6 py-3">
           <button
             type="button"
             onClick={onBack}
-            className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
+            className="flex items-center gap-1.5 text-sm font-medium text-accent transition-colors hover:text-accent-deep"
           >
             <svg
               aria-hidden="true"
@@ -305,10 +305,10 @@ export function DocumentViewerPage({
               {uploadNotice ? (
                 <div
                   className={[
-                    "mb-4 rounded-xl px-4 py-3 text-center text-sm",
+                    "mb-4 rounded-card border px-4 py-3 text-center text-sm",
                     uploadNotice.kind === "success"
-                      ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
-                      : "border border-red-200 bg-red-50 text-red-800",
+                      ? "border-success-line bg-success-tint text-success"
+                      : "border-danger-line bg-danger-tint text-danger",
                   ].join(" ")}
                 >
                   {uploadNotice.message}
@@ -332,9 +332,9 @@ export function DocumentViewerPage({
           </div>
 
           <aside className="w-full min-w-0 shrink-0 md:flex md:h-full md:min-h-0 md:w-80 md:flex-col">
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white md:min-h-0">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-card border border-line bg-surface md:min-h-0">
               <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-5 overflow-y-auto overflow-x-hidden overscroll-y-contain p-6 [-webkit-overflow-scrolling:touch]">
-                <h1 className="text-lg font-semibold text-neutral-900">
+                <h1 className="font-display text-lg font-semibold text-ink">
                   {title}
                 </h1>
 
@@ -363,7 +363,7 @@ export function DocumentViewerPage({
                   <button
                     type="button"
                     onClick={() => onDownload?.(id)}
-                    className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                    className="btn btn-primary px-4 py-2.5"
                   >
                     <svg
                       aria-hidden="true"
@@ -386,7 +386,7 @@ export function DocumentViewerPage({
                     type="button"
                     disabled={isRescanning || !onRescanDocument}
                     onClick={() => void onRescanDocument?.()}
-                    className="flex items-center justify-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="btn btn-secondary px-4 py-2.5"
                   >
                     <svg
                       aria-hidden="true"
@@ -406,14 +406,14 @@ export function DocumentViewerPage({
                     {isRescanning ? "Regenerating…" : "Regenerate Metadata"}
                   </button>
                   {rescanError ? (
-                    <p className="text-center text-xs text-red-600">
+                    <p className="text-center text-xs text-danger">
                       {rescanError}
                     </p>
                   ) : null}
                   <button
                     type="button"
                     onClick={onToggleText}
-                    className="flex items-center justify-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+                    className="btn btn-secondary px-4 py-2.5"
                   >
                     <svg
                       aria-hidden="true"
@@ -436,7 +436,7 @@ export function DocumentViewerPage({
                     type="button"
                     disabled={isDeleting || !onDeleteDocument}
                     onClick={() => void onDeleteDocument?.()}
-                    className="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="btn btn-destructive px-4 py-2.5"
                   >
                     <svg
                       aria-hidden="true"
@@ -456,7 +456,7 @@ export function DocumentViewerPage({
                     {isDeleting ? "Deleting…" : "Delete Document"}
                   </button>
                   {deleteError ? (
-                    <p className="text-center text-xs text-red-600">
+                    <p className="text-center text-xs text-danger">
                       {deleteError}
                     </p>
                   ) : null}

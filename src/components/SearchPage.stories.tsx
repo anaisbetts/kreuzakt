@@ -327,7 +327,7 @@ export const LongContent: Story = {
       {
         id: 91,
         title:
-          "Very long title: Mietvertrag über die Wohnung in der Berliner Straße 42, 3. Obergeschoss, nebst Kellerabteil und Stellplatz, gültig ab dem 01.12.2024 bis auf Weiteres",
+          "Very long title: Mietvertrag über die Wohnung in der Berliner Straße 42 nebst Zubehör, gültig ab dem 01.12.2024 bis auf Weiteres",
         description:
           "Complete rental agreement including the house rules, service-charge statement, deposit terms and the landlord's written consent to sublet, signed and dated by both parties.",
         documentDate: "2024-12-01",

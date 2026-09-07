@@ -37,7 +37,7 @@ export function UploadButton({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={disabled || isUploading}
-        className="flex h-9 items-center gap-2 rounded-field border border-accent bg-accent px-3 text-sm font-medium text-on-accent transition-colors hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-60"
+        className="btn btn-primary h-9 px-3"
       >
         <svg
           aria-hidden="true"

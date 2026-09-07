@@ -23,11 +23,12 @@
 
   /* Ink — type, not "black on white" */
   --color-ink: #242522;
+  --color-ink-deep: #171815;
   --color-ink-soft: #4f4d46;
   --color-ink-mute: #6a675d;
   --color-on-accent: #fffefa;
 
-  /* Rules — Archiv draws structure with hairlines before shadows */
+  /* Rules — this theme draws structure with hairlines before shadows */
   --color-line: #ddd6c8;
   --color-line-soft: #e8e2d6;
   --color-line-strong: #c6beab;
@@ -101,7 +102,6 @@
     background: var(--color-accent-tint);
     color: var(--color-ink);
   }
-
   /* One focus treatment everywhere, including controls without a ring utility. */
   :focus-visible {
     outline: 2px solid var(--color-accent);
@@ -120,5 +120,58 @@
   }
 }
 
-/* TODO: dark mode — the Archiv dark reading-room (graphite + ivory) is a
+/* TODO: dark mode — the dark reading-room variant (graphite + ivory) is a
    deliberate follow-up; forcing light keeps this pass reviewable. */
+
+/*
+  Button roles. Colour carries meaning, so the recipes are shared instead of
+  being re-typed per component:
+
+    .btn-primary      ink fill — an action, never an alarm
+    .btn-secondary    surface + hairline — a reversible choice
+    .btn-destructive  oxblood-rust outline — costs something
+
+  Oxblood is deliberately absent from primary fills: a red button implies
+  danger, and Upload is not dangerous. Oxblood stays on state — selection,
+  focus, the active page, the registration rule.
+
+  These set colour, border, radius and type only. Size and padding stay with
+  the caller, so buttons keep their existing footprint in each layout.
+*/
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-field text-sm font-medium transition-colors;
+  }
+
+  .btn-primary {
+    @apply border border-ink bg-ink text-canvas hover:border-ink-deep hover:bg-ink-deep;
+  }
+
+  .btn-secondary {
+    @apply border border-line bg-surface text-ink-soft hover:border-line-strong hover:bg-surface-sunken;
+  }
+
+  .btn-destructive {
+    @apply border border-danger/40 bg-surface text-danger hover:border-danger hover:bg-danger-tint;
+  }
+
+  /* One disabled look for every role, still readable as text. */
+  .btn:disabled {
+    @apply cursor-not-allowed border-line bg-surface-sunken text-ink-mute;
+  }
+
+  /* Text entry — one focus/hover treatment shared by every form field. */
+  .field {
+    @apply rounded-field border border-line bg-surface px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-ink-mute hover:border-line-strong focus:border-accent;
+  }
+
+  /* Settings block. Tinted variants keep .panel and add their own border/bg. */
+  .panel {
+    @apply rounded-card border border-line bg-surface p-5 shadow-card;
+  }
+
+  /* Section headings take the display face; body and controls do not. */
+  .section-title {
+    @apply font-display text-xl font-semibold tracking-tight text-ink;
+  }
+}

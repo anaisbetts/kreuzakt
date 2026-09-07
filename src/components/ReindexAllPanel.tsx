@@ -116,13 +116,11 @@ export function ReindexAllPanel({
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+    <section className="panel flex flex-col gap-4 border-warning-line bg-warning-tint">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-neutral-900">
-            Reindex all documents
-          </h2>
-          <p className="mt-1 text-sm text-neutral-700">
+          <h2 className="section-title">Reindex all documents</h2>
+          <p className="mt-1 text-sm text-ink-soft">
             Queue a full rebuild of thumbnails, extracted text, metadata, and
             search entries while preserving each document&apos;s uploaded-at
             date.
@@ -133,7 +131,7 @@ export function ReindexAllPanel({
           type="button"
           onClick={handleQueueReindex}
           disabled={!hasDocuments || isActive}
-          className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-neutral-300"
+          className="btn btn-primary px-4 py-2"
         >
           {isQueueing
             ? "Queueing..."
@@ -143,21 +141,21 @@ export function ReindexAllPanel({
         </button>
       </div>
 
-      <div className="rounded-xl border border-amber-200 bg-white px-4 py-3">
+      <div className="rounded-card border border-warning-line bg-surface px-4 py-3">
         <div className="flex items-center justify-between gap-4 text-sm">
-          <span className="font-medium text-neutral-700">Progress</span>
-          <span className="text-neutral-600">
+          <span className="font-medium text-ink-soft">Progress</span>
+          <span className="tabular-nums text-ink-mute">
             {isRefreshing ? "Refreshing..." : progressLabel}
           </span>
         </div>
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-neutral-100">
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-canvas-deep">
           <div
-            className="h-full rounded-full bg-amber-500 transition-all"
+            className="h-full rounded-full bg-accent transition-all"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
         {status.total > 0 ? (
-          <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-neutral-600 sm:grid-cols-4">
+          <div className="mt-3 grid grid-cols-2 gap-2 text-xs tabular-nums text-ink-mute sm:grid-cols-4">
             <span>{status.pending} pending</span>
             <span>{status.processing} processing</span>
             <span>{status.completed} completed</span>
@@ -167,12 +165,12 @@ export function ReindexAllPanel({
       </div>
 
       {!hasDocuments ? (
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-ink-soft">
           Add documents before running a full reindex.
         </p>
       ) : null}
-      {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
+      {message ? <p className="text-sm text-success">{message}</p> : null}
+      {error ? <p className="text-sm text-danger">{error}</p> : null}
     </section>
   );
 }
