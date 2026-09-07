@@ -31,7 +31,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
       <div className={`relative flex items-center ${className}`}>
         <svg
           aria-hidden="true"
-          className="pointer-events-none absolute left-3 h-5 w-5 text-neutral-400"
+          className="pointer-events-none absolute left-3 h-5 w-5 text-ink-mute"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -49,11 +49,11 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
           type="search"
           placeholder={placeholder}
           className={[
-            "w-full rounded-lg border border-neutral-300 bg-white pl-10 shadow-sm",
+            "w-full rounded-field border border-line bg-surface pl-10 text-ink shadow-card placeholder:text-ink-mute hover:border-line-strong",
             /* Hide native search clear so only our custom button shows */
             "[&::-webkit-search-cancel-button]:hidden [&::-ms-clear]:hidden",
             showClearButton ? "pr-10" : "",
-            "transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20",
+            "transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25",
             sizeStyles[size],
           ].join(" ")}
           onKeyDown={(e) => {
@@ -67,7 +67,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
           <button
             type="button"
             onClick={onClear}
-            className="absolute right-3 rounded text-neutral-400 transition-colors hover:text-neutral-600"
+            className="absolute right-3 rounded-field text-ink-mute transition-colors hover:text-accent"
             aria-label="Clear search"
           >
             <svg
