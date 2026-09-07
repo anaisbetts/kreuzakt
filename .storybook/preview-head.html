@@ -1,0 +1,16 @@
+<!--
+  Archiv fonts for the Storybook iframe.
+
+  The Next app self-hosts Newsreader / IBM Plex Sans / IBM Plex Mono through
+  `next/font/google` in src/app/layout.tsx, which defines --font-newsreader,
+  --font-plex-sans and --font-plex-mono on <html>. Stories render components
+  without that shell, so those variables are undefined and the token fallbacks
+  in globals.css resolve to the bare family names. Loading the same faces here
+  means stories show the real type treatment rather than a serif/sans guess.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap"
+/>
