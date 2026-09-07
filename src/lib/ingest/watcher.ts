@@ -5,7 +5,7 @@ import { type FSWatcher, watch } from "chokidar";
 import { appConfig } from "@/lib/config";
 import { ensureAppDirectories, fileExists } from "@/lib/files";
 
-import { enqueueSerialIngestWork } from "./job-runner";
+import { enqueueSerialIngestWork, isIngestWorkScheduled } from "./job-runner";
 import { type ProcessIngestOptions, processIngestFile } from "./pipeline";
 import { ensurePendingQueueEntry, updateQueueStatus } from "./queue";
 
@@ -92,6 +92,12 @@ export async function stopWatcher() {
 
 async function handleAddedFile(filePath: string) {
   const normalizedPath = path.resolve(filePath);
+
+  // The upload route schedules processing directly and the watcher sees the
+  // same file shortly after; leave the in-flight queue entry untouched.
+  if (isIngestWorkScheduled(normalizedPath)) {
+    return;
+  }
 
   if (!(await fileExists(normalizedPath))) {
     return;

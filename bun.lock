@@ -7,7 +7,7 @@
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.29.0",
         "@napi-rs/canvas": "^0.1.100",
-        "@xberg-io/xberg": "^1.0.14",
+        "@xberg-io/xberg": "^1.1.0",
         "chokidar": "^5.0.0",
         "fflate": "^0.8.2",
         "kysely": "^0.28.17",
@@ -514,19 +514,19 @@
 
     "@webcontainer/env": ["@webcontainer/env@1.1.1", "", {}, "sha512-6aN99yL695Hi9SuIk1oC88l9o0gmxL1nGWWQ/kNy81HigJ0FoaoTXpytCj6ItzgyCEwA9kF1wixsTuv5cjsgng=="],
 
-    "@xberg-io/xberg": ["@xberg-io/xberg@1.0.14", "", { "optionalDependencies": { "@xberg-io/xberg-darwin-arm64": "1.0.14", "@xberg-io/xberg-linux-arm64-gnu": "1.0.14", "@xberg-io/xberg-linux-arm64-musl": "1.0.14", "@xberg-io/xberg-linux-x64-gnu": "1.0.14", "@xberg-io/xberg-linux-x64-musl": "1.0.14", "@xberg-io/xberg-win32-x64-msvc": "1.0.14" } }, "sha512-Rb5tnUqTtUnwEn/Pb7x1G99Hn8zMqJdR8rtEAh7M+MokSxxe3E/y+KzpQED0Ygp9T4OOX9FoyJtaYizt6gnQHA=="],
+    "@xberg-io/xberg": ["@xberg-io/xberg@1.1.0", "", { "optionalDependencies": { "@xberg-io/xberg-darwin-arm64": "1.1.0", "@xberg-io/xberg-linux-arm64-gnu": "1.1.0", "@xberg-io/xberg-linux-arm64-musl": "1.1.0", "@xberg-io/xberg-linux-x64-gnu": "1.1.0", "@xberg-io/xberg-linux-x64-musl": "1.1.0", "@xberg-io/xberg-win32-x64-msvc": "1.1.0" } }, "sha512-w7s+zig+18pTUXY3DG6ajPHpsGg0OcyqWLURS7pZV3FWseGkodLuaZfv5NqjvTqsBzmXxKuAvnBJ0YMQWw7+0g=="],
 
-    "@xberg-io/xberg-darwin-arm64": ["@xberg-io/xberg-darwin-arm64@1.0.14", "", { "os": "darwin", "cpu": "arm64" }, "sha512-QgsQq/Q0pwdtYJeh4QhEty+93hlohsPdMF9yN9UY5YI5tXsUK0njqkG8v8wKoS3FHVtpYhI1KvJZNV+R86Pu2g=="],
+    "@xberg-io/xberg-darwin-arm64": ["@xberg-io/xberg-darwin-arm64@1.1.0", "", { "os": "darwin", "cpu": "arm64" }, "sha512-W5HBQf7mYTu1GWncGETTiYd5LoS70rBV36TjeHGGdtyXHV5xONdiyrDbx4ALbu5nf4RmmAZ/4wkMqdEed6uI4w=="],
 
-    "@xberg-io/xberg-linux-arm64-gnu": ["@xberg-io/xberg-linux-arm64-gnu@1.0.14", "", { "os": "linux", "cpu": "arm64" }, "sha512-l+RpJqIa35OsCVnzw5XRoewJ/eoqcW3ZOm4wFTaMopIpNQyk+CeqvcjOW+5asfpp8KTVXkNtOPMTVCxljPvBNw=="],
+    "@xberg-io/xberg-linux-arm64-gnu": ["@xberg-io/xberg-linux-arm64-gnu@1.1.0", "", { "os": "linux", "cpu": "arm64" }, "sha512-Q1+cfy/iSWQ5XCwweD3RmnNtEQIkPh1kD4YTYBcgm8mt8Wy2KplBxtgNJSmIJ5XtmA7+YcVUFUrIXGhR6KNSkA=="],
 
-    "@xberg-io/xberg-linux-arm64-musl": ["@xberg-io/xberg-linux-arm64-musl@1.0.14", "", { "os": "linux", "cpu": "arm64" }, "sha512-kh2zA+9CZqE1uzqr9eetppJxqlcuOzyg6XgG5JHecB6ItAa30k+l3uKntxAewxkBwxJqSiiYesc0zb+O05M/KQ=="],
+    "@xberg-io/xberg-linux-arm64-musl": ["@xberg-io/xberg-linux-arm64-musl@1.1.0", "", { "os": "linux", "cpu": "arm64" }, "sha512-Edwp7qsiI+zpvQkm9OFjXSVBkxV3kxxwI9uSIJUBxkVVmpoBhm5pYkBWOIE3t3LAgYCWof/5MkEvR86mmZJkqg=="],
 
-    "@xberg-io/xberg-linux-x64-gnu": ["@xberg-io/xberg-linux-x64-gnu@1.0.14", "", { "os": "linux", "cpu": "x64" }, "sha512-EsRBMiW0F0rAq5SzhdFzjWdskK61CNzV7YnAg/iHz+KDVL/56f5/wfSkLLmN/WXn4lMblmaC+qrb2iVoHV3BPg=="],
+    "@xberg-io/xberg-linux-x64-gnu": ["@xberg-io/xberg-linux-x64-gnu@1.1.0", "", { "os": "linux", "cpu": "x64" }, "sha512-3zF4heTHjcRS68nJ7fzFZvNjEYiise3BVaeaOLXaWQji+UcSakv0GUjfk3DkIwhMxD73BBsJYb12EQ4YZF5yUw=="],
 
-    "@xberg-io/xberg-linux-x64-musl": ["@xberg-io/xberg-linux-x64-musl@1.0.14", "", { "os": "linux", "cpu": "x64" }, "sha512-dYeRNfKBYGv0SeXPy/CwGivYbDLr5+KbUJcB4P4+Ldhuyz9py/EbixW0qnMugVgyZTexLB00khTGWDOgU3Zz9Q=="],
+    "@xberg-io/xberg-linux-x64-musl": ["@xberg-io/xberg-linux-x64-musl@1.1.0", "", { "os": "linux", "cpu": "x64" }, "sha512-W45CPmEbZB4WBHcqTiCdDAZIAewHWE3yLtV4g07ot5gq3ToHsrFOrEYgYPb1HeyQi+nSm32MQXegMSltcQxrtQ=="],
 
-    "@xberg-io/xberg-win32-x64-msvc": ["@xberg-io/xberg-win32-x64-msvc@1.0.14", "", { "os": "win32", "cpu": "x64" }, "sha512-Jy3WZyZuD3NKxWks5NhytKDXgfDtRQRYGIApwzRxREFjWMOJf1s9+YP5JyKPvzE/XQdpfw4KJ2J0KJAriazIEQ=="],
+    "@xberg-io/xberg-win32-x64-msvc": ["@xberg-io/xberg-win32-x64-msvc@1.1.0", "", { "os": "win32", "cpu": "x64" }, "sha512-mqZXsn0hUd7xgIAbpIoNiKnnyrVSQMiInkO2+lTkfutwV9PZe7NKaMqxDopWQXroKBoRk0+oNhyMupKs/ZZtJA=="],
 
     "accepts": ["accepts@2.0.0", "", { "dependencies": { "mime-types": "^3.0.0", "negotiator": "^1.0.0" } }, "sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng=="],
 
