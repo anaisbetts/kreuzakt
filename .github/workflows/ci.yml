@@ -17,7 +17,7 @@ on:
 
 jobs:
   check-and-build:
-    runs-on: ubuntu-latest
+    runs-on: boat
     steps:
       - uses: actions/checkout@v4
 
@@ -53,7 +53,7 @@ jobs:
     needs: check-and-build
     # Images: `main` on default branch; version tag + `latest` when a GitHub Release is published (one build, identical digests).
     if: success() && (github.ref == 'refs/heads/main' || github.event_name == 'release')
-    runs-on: ubuntu-latest
+    runs-on: boat
     permissions:
       contents: read
       packages: write
