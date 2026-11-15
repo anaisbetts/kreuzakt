@@ -63,10 +63,40 @@ function fallbackMetadata(originalFilename: string): GeneratedMetadata {
   };
 }
 
-function parseMetadataResponse(
+const CODE_FENCE_PATTERN = /```[\w-]*[^\S\n]*\n?([\s\S]*?)```/;
+
+// Some models wrap the JSON in a code fence or add prose around it, even in JSON mode.
+function parseJsonObject(content: string): Partial<GeneratedMetadata> {
+  const trimmed = content.trim();
+  const candidates = [trimmed];
+
+  const fenced = CODE_FENCE_PATTERN.exec(trimmed)?.[1]?.trim();
+  if (fenced) {
+    candidates.push(fenced);
+  }
+
+  const start = trimmed.indexOf("{");
+  const end = trimmed.lastIndexOf("}");
+  if (start !== -1 && end > start) {
+    candidates.push(trimmed.slice(start, end + 1));
+  }
+
+  for (const candidate of candidates) {
+    try {
+      const value: unknown = JSON.parse(candidate);
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        return value as Partial<GeneratedMetadata>;
+      }
+    } catch {}
+  }
+
+  throw new Error("Response did not contain a JSON object");
+}
+
+export function parseMetadataResponse(
   content: string | null | undefined,
   originalFilename: string,
-) {
+): GeneratedMetadata {
   if (!content) {
     logMetadataWarn(
       "LLM returned empty message content; using filename fallback",
@@ -76,7 +106,7 @@ function parseMetadataResponse(
   }
 
   try {
-    const parsed = JSON.parse(content) as Partial<GeneratedMetadata>;
+    const parsed = parseJsonObject(content);
 
     const title = parsed.title?.trim() || fallbackTitle(originalFilename);
     const description = parsed.description?.trim() || "";
