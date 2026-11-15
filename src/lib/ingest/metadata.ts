@@ -1,17 +1,20 @@
 import path from "node:path";
 
 import OpenAI from "openai";
+import { z } from "zod";
 
 import { appConfig } from "@/lib/config";
 import { getPreferredLanguage } from "@/lib/settings";
 import { isStemSupported } from "@/lib/stemming";
 
-export interface GeneratedMetadata {
-  title: string;
-  description: string;
-  document_date: string | null;
-  language: string;
-}
+const metadataSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  document_date: z.string().nullable(),
+  language: z.string(),
+});
+
+export type GeneratedMetadata = z.infer<typeof metadataSchema>;
 
 const LOG_PREFIX = "[metadata]";
 
@@ -172,16 +175,7 @@ const METADATA_JSON_SCHEMA_FORMAT = {
   type: "json_schema",
   json_schema: {
     name: "document_metadata",
-    schema: {
-      type: "object",
-      properties: {
-        title: { type: "string" },
-        description: { type: "string" },
-        document_date: { type: ["string", "null"] },
-        language: { type: "string" },
-      },
-      required: ["title", "description", "document_date", "language"],
-    },
+    schema: z.toJSONSchema(metadataSchema),
   },
 } as const;
 
