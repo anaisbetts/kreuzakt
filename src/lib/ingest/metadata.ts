@@ -166,6 +166,56 @@ export function buildMetadataSystemPrompt(
 Generate all text in the following language: ${trimmed}`;
 }
 
+// llama.cpp only enforces JSON output when given a schema; a bare json_object is a hint.
+// `strict` is left unset because not every OpenAI-compatible provider accepts it.
+const METADATA_JSON_SCHEMA_FORMAT = {
+  type: "json_schema",
+  json_schema: {
+    name: "document_metadata",
+    schema: {
+      type: "object",
+      properties: {
+        title: { type: "string" },
+        description: { type: "string" },
+        document_date: { type: ["string", "null"] },
+        language: { type: "string" },
+      },
+      required: ["title", "description", "document_date", "language"],
+    },
+  },
+} as const;
+
+// Providers that only support json_object answer json_schema with a 400 or 422.
+export async function requestMetadataCompletion(
+  client: OpenAI,
+  model: string,
+  messages: OpenAI.Chat.ChatCompletionMessageParam[],
+) {
+  try {
+    return await client.chat.completions.create({
+      model,
+      messages,
+      response_format: METADATA_JSON_SCHEMA_FORMAT,
+    });
+  } catch (error) {
+    const status = (error as { status?: unknown } | null)?.status;
+    if (status !== 400 && status !== 422) {
+      throw error;
+    }
+
+    logMetadataWarn(
+      "endpoint rejected the json_schema response format; retrying with json_object",
+      { status, error: error instanceof Error ? error.message : error },
+    );
+
+    return client.chat.completions.create({
+      model,
+      messages,
+      response_format: { type: "json_object" },
+    });
+  }
+}
+
 export async function generateDocumentMetadata(
   extractedText: string,
   originalFilename: string,
@@ -200,9 +250,10 @@ export async function generateDocumentMetadata(
       preferredLanguage,
     });
 
-    const response = await openai.chat.completions.create({
-      model: appConfig.metadataModel,
-      messages: [
+    const response = await requestMetadataCompletion(
+      openai,
+      appConfig.metadataModel,
+      [
         {
           role: "system",
           content: buildMetadataSystemPrompt(preferredLanguage),
@@ -212,8 +263,7 @@ export async function generateDocumentMetadata(
           content: extractedText,
         },
       ],
-      response_format: { type: "json_object" },
-    });
+    );
 
     const elapsedMs = Math.round(performance.now() - startedAt);
     const choice = response.choices[0];

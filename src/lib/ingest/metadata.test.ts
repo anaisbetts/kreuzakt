@@ -1,6 +1,11 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
+import OpenAI from "openai";
 
-import { buildMetadataSystemPrompt, parseMetadataResponse } from "./metadata";
+import {
+  buildMetadataSystemPrompt,
+  parseMetadataResponse,
+  requestMetadataCompletion,
+} from "./metadata";
 
 describe("buildMetadataSystemPrompt", () => {
   it("returns the base prompt when preferred language is unset", () => {
@@ -76,5 +81,61 @@ describe("parseMetadataResponse", () => {
     for (const content of ["I cannot do that.", "```json\n```", "[1, 2]"]) {
       expect(parseMetadataResponse(content, "scan_001.pdf")).toEqual(fallback);
     }
+  });
+});
+
+describe("requestMetadataCompletion", () => {
+  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+    { role: "user", content: "text" },
+  ];
+  const completion = { id: "chatcmpl-1", choices: [] };
+
+  function fakeClient(create: ReturnType<typeof mock>) {
+    return { chat: { completions: { create } } } as unknown as OpenAI;
+  }
+
+  function apiError(status: number) {
+    return OpenAI.APIError.generate(
+      status,
+      { message: `error ${status}` },
+      `${status} error`,
+      new Headers(),
+    );
+  }
+
+  function formatOf(create: ReturnType<typeof mock>, call: number) {
+    const params = (create.mock.calls as unknown[][])[call]?.[0] as {
+      response_format: { type: string };
+    };
+    return params.response_format.type;
+  }
+
+  it("retries in json_object mode when json_schema is rejected", async () => {
+    const create = mock()
+      .mockRejectedValueOnce(apiError(400))
+      .mockResolvedValueOnce(completion);
+
+    const response = await requestMetadataCompletion(
+      fakeClient(create),
+      "some-model",
+      messages,
+    );
+
+    expect(response).toBe(completion as never);
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(formatOf(create, 0)).toBe("json_schema");
+    expect(formatOf(create, 1)).toBe("json_object");
+  });
+
+  it("does not retry other failures", async () => {
+    const failure = apiError(500);
+    const create = mock(async () => {
+      throw failure;
+    });
+
+    await expect(
+      requestMetadataCompletion(fakeClient(create), "some-model", messages),
+    ).rejects.toBe(failure);
+    expect(create).toHaveBeenCalledTimes(1);
   });
 });
