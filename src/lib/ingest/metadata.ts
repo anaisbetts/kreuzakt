@@ -1,17 +1,20 @@
 import path from "node:path";
 
 import OpenAI from "openai";
+import { z } from "zod";
 
 import { appConfig } from "@/lib/config";
 import { getPreferredLanguage } from "@/lib/settings";
 import { isStemSupported } from "@/lib/stemming";
 
-export interface GeneratedMetadata {
-  title: string;
-  description: string;
-  document_date: string | null;
-  language: string;
-}
+const metadataSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  document_date: z.string().nullable(),
+  language: z.string(),
+});
+
+export type GeneratedMetadata = z.infer<typeof metadataSchema>;
 
 const LOG_PREFIX = "[metadata]";
 
@@ -63,10 +66,56 @@ function fallbackMetadata(originalFilename: string): GeneratedMetadata {
   };
 }
 
-function parseMetadataResponse(
+const THINKING_TAG_PATTERN = /<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi;
+const CODE_FENCE_PATTERN = /```[\w-]*[^\S\n]*\n?([\s\S]*?)```/g;
+const OPENING_FENCE_PATTERN = /```[\w-]*[^\S\n]*\n?/;
+
+// Some models wrap the JSON in a code fence, prepend <think> tags, or add prose around it.
+function parseJsonObject(content: string): Partial<GeneratedMetadata> {
+  const cleaned = content.replace(THINKING_TAG_PATTERN, "").trim();
+  const candidates = [cleaned];
+
+  for (const match of cleaned.matchAll(CODE_FENCE_PATTERN)) {
+    const fenced = match[1]?.trim();
+    if (fenced) {
+      candidates.push(fenced);
+    }
+  }
+
+  const openingFence = OPENING_FENCE_PATTERN.exec(cleaned);
+  const closingFenceIndex = cleaned.lastIndexOf("```");
+  if (openingFence) {
+    const contentStart = openingFence.index + openingFence[0].length;
+    if (closingFenceIndex > contentStart) {
+      const outerFenced = cleaned.slice(contentStart, closingFenceIndex).trim();
+      if (outerFenced) {
+        candidates.push(outerFenced);
+      }
+    }
+  }
+
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start !== -1 && end > start) {
+    candidates.push(cleaned.slice(start, end + 1));
+  }
+
+  for (const candidate of candidates) {
+    try {
+      const value: unknown = JSON.parse(candidate);
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        return value as Partial<GeneratedMetadata>;
+      }
+    } catch {}
+  }
+
+  throw new Error("Response did not contain a JSON object");
+}
+
+export function parseMetadataResponse(
   content: string | null | undefined,
   originalFilename: string,
-) {
+): GeneratedMetadata {
   if (!content) {
     logMetadataWarn(
       "LLM returned empty message content; using filename fallback",
@@ -76,10 +125,13 @@ function parseMetadataResponse(
   }
 
   try {
-    const parsed = JSON.parse(content) as Partial<GeneratedMetadata>;
+    const parsed = parseJsonObject(content);
 
-    const title = parsed.title?.trim() || fallbackTitle(originalFilename);
-    const description = parsed.description?.trim() || "";
+    const parsedTitle =
+      typeof parsed.title === "string" ? parsed.title.trim() : "";
+    const title = parsedTitle || fallbackTitle(originalFilename);
+    const description =
+      typeof parsed.description === "string" ? parsed.description.trim() : "";
     const document_date =
       typeof parsed.document_date === "string" && parsed.document_date.trim()
         ? parsed.document_date.trim()
@@ -90,7 +142,7 @@ function parseMetadataResponse(
         : "en";
     const language = isStemSupported(rawLanguage) ? rawLanguage : "en";
 
-    const usedTitleFallback = !parsed.title?.trim();
+    const usedTitleFallback = !parsedTitle;
     logMetadata("parsed LLM JSON successfully", {
       originalFilename,
       usedTitleFallback,
@@ -136,6 +188,51 @@ export function buildMetadataSystemPrompt(
 Generate all text in the following language: ${trimmed}`;
 }
 
+// Strip `$schema` because some OpenAI-compatible endpoints reject it in `json_schema.schema`.
+const { $schema: _metadataJsonSchemaDraft, ...METADATA_JSON_SCHEMA } =
+  z.toJSONSchema(metadataSchema, { target: "draft-7" });
+
+// llama.cpp only enforces JSON output when given a schema; a bare json_object is a hint.
+// `strict` is left unset because not every OpenAI-compatible provider accepts it.
+const METADATA_JSON_SCHEMA_FORMAT = {
+  type: "json_schema",
+  json_schema: {
+    name: "document_metadata",
+    schema: METADATA_JSON_SCHEMA,
+  },
+} as const;
+
+// Providers that only support json_object answer json_schema with a 400 or 422.
+export async function requestMetadataCompletion(
+  client: OpenAI,
+  model: string,
+  messages: OpenAI.Chat.ChatCompletionMessageParam[],
+) {
+  try {
+    return await client.chat.completions.create({
+      model,
+      messages,
+      response_format: METADATA_JSON_SCHEMA_FORMAT,
+    });
+  } catch (error) {
+    const status = (error as { status?: unknown } | null)?.status;
+    if (status !== 400 && status !== 422) {
+      throw error;
+    }
+
+    logMetadataWarn(
+      "json_schema request failed with 400/422; retrying with json_object",
+      { status, error: error instanceof Error ? error.message : error },
+    );
+
+    return client.chat.completions.create({
+      model,
+      messages,
+      response_format: { type: "json_object" },
+    });
+  }
+}
+
 export async function generateDocumentMetadata(
   extractedText: string,
   originalFilename: string,
@@ -170,9 +267,10 @@ export async function generateDocumentMetadata(
       preferredLanguage,
     });
 
-    const response = await openai.chat.completions.create({
-      model: appConfig.metadataModel,
-      messages: [
+    const response = await requestMetadataCompletion(
+      openai,
+      appConfig.metadataModel,
+      [
         {
           role: "system",
           content: buildMetadataSystemPrompt(preferredLanguage),
@@ -182,8 +280,7 @@ export async function generateDocumentMetadata(
           content: extractedText,
         },
       ],
-      response_format: { type: "json_object" },
-    });
+    );
 
     const elapsedMs = Math.round(performance.now() - startedAt);
     const choice = response.choices[0];
