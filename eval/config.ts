@@ -40,11 +40,15 @@ function buildLlmConfig(options: {
 }
 
 function vlmExtractionConfig(llm: VlmLlmConfig): Record<string, unknown> {
+  // Mirror the app's OCR prompt (OCR_VLM_PROMPT) so eval scores reflect what
+  // production actually sends; unset means Xberg's built-in template.
+  const vlmPrompt = appConfig.ocrPrompt;
   return {
     forceOcr: true,
     ocr: {
       backend: "vlm",
       vlmConfig: llm,
+      ...(vlmPrompt ? { vlmPrompt } : {}),
     },
   };
 }

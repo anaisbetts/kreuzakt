@@ -19,6 +19,7 @@ export const Default: Story = {
     ocrModel: "qwen/qwen3.7-flash",
     metadataModel: "openai/gpt-5.4",
     ocrEndpoint: "https://api.mistral.ai/v1",
+    ocrPromptDisplay: "Default (Xberg)",
     llmEndpoint: "https://openrouter.ai/api/v1",
     preferredLanguage: null,
     queue: {

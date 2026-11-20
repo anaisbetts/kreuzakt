@@ -57,7 +57,7 @@ I'm too lazy to do per-page math, but for reference: importing 440 documents fro
 When a file lands in `ingest`, the pipeline (`src/lib/ingest/pipeline.ts`) does this, in order:
 
 1. **Hash & dedupe** — SHA the file; if an archived original already has that hash, skip it (no double-ingest).
-2. **VLM extract** — Xberg reads the file with `forceOcr` and a vision model, returning plain text, mime type, and page count. The VLM client timeout defaults to 300s (override with `OCR_VLM_TIMEOUT_SECS`). If OCR fails transiently (rate limits, network, truncated response bodies), it retries once.
+2. **VLM extract** — Xberg reads the file with `forceOcr` and a vision model, returning plain text, mime type, and page count. The VLM client timeout defaults to 300s (override with `OCR_VLM_TIMEOUT_SECS`). If OCR fails transiently (rate limits, network, truncated response bodies), it retries once. The prompt sent with each page image is Xberg's built-in one; override it with `OCR_VLM_PROMPT`.
 3. **LLM metadata** — the extracted text goes to a second LLM call (JSON mode) that returns a title, description, document date, and ISO 639-1 language code. The system prompt honors your preferred UI language, so titles/descriptions come out in the language you read.
 4. **Insert + index** — a row goes into SQLite, and a stemmed copy goes into the FTS5 table so search matches word variants, not just exact strings.
 5. **Archive & clean up** — the original is copied into `originals/` (named by hash, so collisions are impossible), the ingest copy is deleted, and a `sharp` thumbnail is generated.
@@ -207,6 +207,7 @@ All path variables resolve relative to the working directory unless absolute. `D
 | `OCR_VLM_BASE_URL` | *(same as `OPENAI_BASE_URL`)* | Optional OpenAI-compatible base URL used only for VLM OCR (e.g. Mistral). When unset, OCR uses `OPENAI_BASE_URL`. |
 | `OCR_VLM_API_KEY` | *(same as `OPENROUTER_KEY` / `OPENAI_API_KEY`)* | Optional API key used only for VLM OCR. When unset, OCR uses the shared key. |
 | `OCR_VLM_TIMEOUT_SECS` | `300` | Per-page VLM OCR HTTP timeout. liter-llm's built-in default is 60s, which is too short for slower vision models and fails with `error decoding response body`. |
+| `OCR_VLM_PROMPT` | *(Xberg's built-in prompt)* | Custom instruction prompt for the OCR model, sent with each page image. Replaces Xberg's default "extract all visible text" prompt, so it also replaces its guardrails (verbatim text, LaTeX math, no commentary) — write those into your own prompt if you still want them. Supports [Jinja2](https://docs.xberg.io/guides/llm-integration/) templating, e.g. `{{ language }}`. Dev-only override: `OCR_VLM_DEV_PROMPT`. |
 | `METADATA_LLM_MODEL` | `openai/gpt-5.4` | Model used for title/description/date extraction. |
 | `PORT` | `3000` | Port inside the container. |
 | `TZ` | `UTC` | Timezone for date display (any [tz database name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)). Datetimes are stored UTC and rendered local via luxon, so this controls what you see, not what's stored. |

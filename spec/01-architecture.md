@@ -294,6 +294,7 @@ The full hash is stored in the database for dedup; the prefix in the filename is
 | `OCR_VLM_MODEL` | `qwen/qwen3.5-122b-a10b` | Kreuzberg VLM model for OCR on scanned docs |
 | `OCR_VLM_BASE_URL` | *(same as `OPENAI_BASE_URL`)* | Optional OpenAI-compatible endpoint used only for VLM OCR |
 | `OCR_VLM_API_KEY` | *(same as `OPENAI_API_KEY`)* | Optional API key used only for VLM OCR |
+| `OCR_VLM_PROMPT` | *(Xberg's built-in prompt)* | Custom instruction prompt for the VLM OCR model (Jinja2, e.g. `{{ language }}`); dev-only override `OCR_VLM_DEV_PROMPT` |
 | `METADATA_LLM_MODEL` | `qwen/qwen3.5-122b-a10b` | LLM model for metadata derivation |
 | `OPENAI_BASE_URL` | `https://openrouter.ai/api/v1` | OpenAI-compatible endpoint for metadata LLM calls (and OCR when `OCR_VLM_BASE_URL` is unset); can point at a local gateway |
 | `OPENAI_API_KEY` | — | API key for the OpenAI-compatible endpoint; use a placeholder value if your local endpoint ignores auth |

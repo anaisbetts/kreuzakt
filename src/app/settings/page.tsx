@@ -21,6 +21,7 @@ export default async function SettingsPage() {
       ocrModel={appConfig.ocrModel}
       metadataModel={appConfig.metadataModel}
       ocrEndpoint={appConfig.ocrBaseUrl}
+      ocrPromptDisplay={appConfig.ocrPrompt ? "Custom" : "Default (Xberg)"}
       llmEndpoint={appConfig.openaiBaseUrl}
       preferredLanguage={status.preferredLanguage}
       queue={{

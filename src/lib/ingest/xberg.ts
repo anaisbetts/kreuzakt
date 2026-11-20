@@ -102,7 +102,9 @@ function firstExtractedDocument(
   throw new Error(errorMessage);
 }
 
-function extractPageCount(document: XbergExtractedDocument): number | null {
+export function extractPageCount(
+  document: XbergExtractedDocument,
+): number | null {
   const fromCounts = document.counts?.pages;
   if (typeof fromCounts === "number" && fromCounts > 0) {
     return fromCounts;
@@ -133,14 +135,12 @@ function pdfMetadataFromFormat(
     return null;
   }
 
-  const record = format as FormatMetadata & {
-    pdf?: PdfMetadata;
-    0?: PdfMetadata;
-  };
-
-  if (record.format_type !== "pdf") {
+  // Xberg 1.4 flattened `FormatMetadata` into an internally-tagged union: the
+  // PDF payload's fields (`pageCount`, …) live on the variant itself instead of
+  // a nested `pdf` object, and the tag is `formatType` (was `format_type`).
+  if (format.formatType !== "pdf") {
     return null;
   }
 
-  return record.pdf ?? record[0] ?? null;
+  return format;
 }

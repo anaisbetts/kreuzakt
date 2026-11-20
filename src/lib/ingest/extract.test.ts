@@ -7,6 +7,7 @@ const BASE_CONFIG = {
   ocrTimeoutSecs: 300,
   ocrApiKey: "",
   ocrBaseUrl: "https://openrouter.ai/api/v1",
+  ocrPrompt: "",
 };
 
 describe("buildExtractOptions", () => {
@@ -62,5 +63,35 @@ describe("buildExtractOptions", () => {
       apiKey: "mistral-key",
       baseUrl: "https://api.mistral.ai/v1",
     });
+  });
+
+  it("leaves the prompt unset so Xberg uses its default template", () => {
+    const options = buildExtractOptions({
+      ...BASE_CONFIG,
+      ocrApiKey: "test-key",
+    });
+
+    expect(options?.ocr).not.toHaveProperty("vlmPrompt");
+  });
+
+  it("forwards a custom OCR prompt to Xberg", () => {
+    const prompt = "Transcribe only the handwriting.";
+    const options = buildExtractOptions({
+      ...BASE_CONFIG,
+      ocrApiKey: "test-key",
+      ocrPrompt: `  ${prompt}  `,
+    });
+
+    expect(options?.ocr?.vlmPrompt).toBe(prompt);
+  });
+
+  it("treats a whitespace-only prompt as unset", () => {
+    const options = buildExtractOptions({
+      ...BASE_CONFIG,
+      ocrApiKey: "test-key",
+      ocrPrompt: "   \n  ",
+    });
+
+    expect(options?.ocr).not.toHaveProperty("vlmPrompt");
   });
 });
