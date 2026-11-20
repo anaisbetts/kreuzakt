@@ -105,6 +105,19 @@ export const appConfig = {
     process.env.OCR_VLM_TIMEOUT_SECS,
     DEFAULT_OCR_VLM_TIMEOUT_SECS,
   ),
+  /**
+   * Custom instruction prompt for the VLM OCR model (Xberg's `ocr.vlmPrompt`).
+   * Sent alongside each page image, so it replaces Xberg's built-in "extract
+   * all visible text" prompt. Empty means "use Xberg's default" — the built-in
+   * prompt is well tuned (verbatim text, LaTeX math, no commentary), so only
+   * set this when you need different behaviour. Supports Xberg's Jinja2
+   * templating, e.g. `{{ language }}`.
+   */
+  ocrPrompt: fromEnvVar(
+    process.env.OCR_VLM_DEV_PROMPT,
+    process.env.OCR_VLM_PROMPT,
+    "",
+  ),
   /** VLM OCR endpoint; falls back to `openaiBaseUrl` when OCR_* overrides are unset. */
   ocrBaseUrl,
   /** VLM OCR API key; falls back to `openaiApiKey` when OCR_* overrides are unset. */

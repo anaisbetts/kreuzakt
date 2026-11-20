@@ -75,7 +75,8 @@ Text extraction via Xberg with intelligent backend routing.
 - **Office documents** (DOCX, XLSX, etc.): native Xberg extractors
 - **Hybrid PDFs** (mix of text and scanned pages): Xberg OCRs only the pages that lack a text layer
 - Page count is extracted where applicable
-- The VLM model is configurable via `OCR_VLM_MODEL` environment variable (default: `qwen/qwen3.5-122b-a10b`)
+- The VLM model is configurable via `OCR_VLM_MODEL` environment variable (default: `qwen/qwen3.7-flash`)
+- The instruction prompt sent with each page image is configurable via `OCR_VLM_PROMPT` (default: Xberg's built-in extraction prompt)
 
 ### F-08: LLM Metadata Generation
 

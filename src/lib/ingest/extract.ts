@@ -13,7 +13,7 @@ const VLM_MAX_IMAGE_DIMENSION = 1200;
 
 type XbergExtractConfig = Pick<
   AppConfig,
-  "ocrModel" | "ocrTimeoutSecs" | "ocrApiKey" | "ocrBaseUrl"
+  "ocrModel" | "ocrTimeoutSecs" | "ocrApiKey" | "ocrBaseUrl" | "ocrPrompt"
 >;
 
 export interface ExtractedDocument {
@@ -50,6 +50,7 @@ export function buildExtractOptions(
   if (!config.ocrApiKey) {
     return null;
   }
+  const vlmPrompt = config.ocrPrompt.trim();
 
   return {
     forceOcr: true,
@@ -64,6 +65,8 @@ export function buildExtractOptions(
         apiKey: config.ocrApiKey,
         timeoutSecs: config.ocrTimeoutSecs,
       },
+      // Omit when unset so Xberg keeps its own (well-tuned) default prompt.
+      ...(vlmPrompt ? { vlmPrompt } : {}),
     },
   };
 }

@@ -16,6 +16,7 @@ export type SystemStatusPageProps = {
   ocrModel: string;
   metadataModel: string;
   ocrEndpoint: string;
+  ocrPromptDisplay: string;
   llmEndpoint: string;
   preferredLanguage: string | null;
   queue: {
@@ -35,6 +36,7 @@ export function SystemStatusPage({
   ocrModel,
   metadataModel,
   ocrEndpoint,
+  ocrPromptDisplay,
   llmEndpoint,
   preferredLanguage,
   queue,
@@ -83,6 +85,7 @@ export function SystemStatusPage({
         <StatusRow label="OCR Model" value={ocrModel} />
         <StatusRow label="Metadata Model" value={metadataModel} />
         <StatusRow label="OCR Endpoint" value={ocrEndpoint} />
+        <StatusRow label="OCR Prompt" value={ocrPromptDisplay} />
         <StatusRow label="LLM Endpoint" value={llmEndpoint} />
       </div>
     </main>
