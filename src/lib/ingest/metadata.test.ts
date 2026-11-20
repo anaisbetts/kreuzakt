@@ -71,10 +71,36 @@ describe("parseMetadataResponse", () => {
 
     expect(
       parseMetadataResponse(
-        `\`\`\`json\n${JSON.stringify(tricky)}\n\`\`\``,
+        `Here is the {metadata}:\n\`\`\`json\n${JSON.stringify(tricky)}\n\`\`\``,
         "x.pdf",
       ),
     ).toEqual(tricky);
+  });
+
+  it("ignores <think> blocks before the JSON payload", () => {
+    const withThinking = `<think>Draft {"title": "Wrong"} inside \`\`\`json\n{"title":"Also Wrong"}\n\`\`\`</think>\n\`\`\`json\n${json}\n\`\`\``;
+    expect(parseMetadataResponse(withThinking, "scan_001.pdf")).toEqual(
+      metadata,
+    );
+  });
+
+  it("salvages valid fields when another field has a non-string value", () => {
+    expect(
+      parseMetadataResponse(
+        JSON.stringify({
+          title: "Water Bill 2024",
+          description: null,
+          document_date: "2024-03-01",
+          language: "de",
+        }),
+        "scan_001.pdf",
+      ),
+    ).toEqual({
+      title: "Water Bill 2024",
+      description: "",
+      document_date: "2024-03-01",
+      language: "de",
+    });
   });
 
   it("falls back to the filename when there is no JSON object", () => {
@@ -103,17 +129,18 @@ describe("requestMetadataCompletion", () => {
     );
   }
 
-  function formatOf(create: ReturnType<typeof mock>, call: number) {
+  function responseFormatOf(create: ReturnType<typeof mock>, call: number) {
     const params = (create.mock.calls as unknown[][])[call]?.[0] as {
-      response_format: { type: string };
+      response_format: {
+        type: string;
+        json_schema?: { name: string; schema: Record<string, unknown> };
+      };
     };
-    return params.response_format.type;
+    return params.response_format;
   }
 
-  it("retries in json_object mode when json_schema is rejected", async () => {
-    const create = mock()
-      .mockRejectedValueOnce(apiError(400))
-      .mockResolvedValueOnce(completion);
+  it("sends a json_schema without $schema", async () => {
+    const create = mock().mockResolvedValueOnce(completion);
 
     const response = await requestMetadataCompletion(
       fakeClient(create),
@@ -122,9 +149,36 @@ describe("requestMetadataCompletion", () => {
     );
 
     expect(response).toBe(completion as never);
-    expect(create).toHaveBeenCalledTimes(2);
-    expect(formatOf(create, 0)).toBe("json_schema");
-    expect(formatOf(create, 1)).toBe("json_object");
+    expect(create).toHaveBeenCalledTimes(1);
+
+    const format = responseFormatOf(create, 0);
+    expect(format.type).toBe("json_schema");
+    expect(format.json_schema?.name).toBe("document_metadata");
+    expect(format.json_schema?.schema).not.toHaveProperty("$schema");
+    expect(format.json_schema?.schema).toMatchObject({
+      type: "object",
+      required: ["title", "description", "document_date", "language"],
+      additionalProperties: false,
+    });
+  });
+
+  it("retries in json_object mode when json_schema is rejected with 400 or 422", async () => {
+    for (const status of [400, 422]) {
+      const create = mock()
+        .mockRejectedValueOnce(apiError(status))
+        .mockResolvedValueOnce(completion);
+
+      const response = await requestMetadataCompletion(
+        fakeClient(create),
+        "some-model",
+        messages,
+      );
+
+      expect(response).toBe(completion as never);
+      expect(create).toHaveBeenCalledTimes(2);
+      expect(responseFormatOf(create, 0).type).toBe("json_schema");
+      expect(responseFormatOf(create, 1).type).toBe("json_object");
+    }
   });
 
   it("does not retry other failures", async () => {

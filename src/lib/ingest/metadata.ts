@@ -66,22 +66,38 @@ function fallbackMetadata(originalFilename: string): GeneratedMetadata {
   };
 }
 
-const CODE_FENCE_PATTERN = /```[\w-]*[^\S\n]*\n?([\s\S]*?)```/;
+const THINKING_TAG_PATTERN = /<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi;
+const CODE_FENCE_PATTERN = /```[\w-]*[^\S\n]*\n?([\s\S]*?)```/g;
+const OPENING_FENCE_PATTERN = /```[\w-]*[^\S\n]*\n?/;
 
-// Some models wrap the JSON in a code fence or add prose around it, even in JSON mode.
+// Some models wrap the JSON in a code fence, prepend <think> tags, or add prose around it.
 function parseJsonObject(content: string): Partial<GeneratedMetadata> {
-  const trimmed = content.trim();
-  const candidates = [trimmed];
+  const cleaned = content.replace(THINKING_TAG_PATTERN, "").trim();
+  const candidates = [cleaned];
 
-  const fenced = CODE_FENCE_PATTERN.exec(trimmed)?.[1]?.trim();
-  if (fenced) {
-    candidates.push(fenced);
+  for (const match of cleaned.matchAll(CODE_FENCE_PATTERN)) {
+    const fenced = match[1]?.trim();
+    if (fenced) {
+      candidates.push(fenced);
+    }
   }
 
-  const start = trimmed.indexOf("{");
-  const end = trimmed.lastIndexOf("}");
+  const openingFence = OPENING_FENCE_PATTERN.exec(cleaned);
+  const closingFenceIndex = cleaned.lastIndexOf("```");
+  if (openingFence) {
+    const contentStart = openingFence.index + openingFence[0].length;
+    if (closingFenceIndex > contentStart) {
+      const outerFenced = cleaned.slice(contentStart, closingFenceIndex).trim();
+      if (outerFenced) {
+        candidates.push(outerFenced);
+      }
+    }
+  }
+
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
   if (start !== -1 && end > start) {
-    candidates.push(trimmed.slice(start, end + 1));
+    candidates.push(cleaned.slice(start, end + 1));
   }
 
   for (const candidate of candidates) {
@@ -111,8 +127,11 @@ export function parseMetadataResponse(
   try {
     const parsed = parseJsonObject(content);
 
-    const title = parsed.title?.trim() || fallbackTitle(originalFilename);
-    const description = parsed.description?.trim() || "";
+    const parsedTitle =
+      typeof parsed.title === "string" ? parsed.title.trim() : "";
+    const title = parsedTitle || fallbackTitle(originalFilename);
+    const description =
+      typeof parsed.description === "string" ? parsed.description.trim() : "";
     const document_date =
       typeof parsed.document_date === "string" && parsed.document_date.trim()
         ? parsed.document_date.trim()
@@ -123,7 +142,7 @@ export function parseMetadataResponse(
         : "en";
     const language = isStemSupported(rawLanguage) ? rawLanguage : "en";
 
-    const usedTitleFallback = !parsed.title?.trim();
+    const usedTitleFallback = !parsedTitle;
     logMetadata("parsed LLM JSON successfully", {
       originalFilename,
       usedTitleFallback,
@@ -169,13 +188,17 @@ export function buildMetadataSystemPrompt(
 Generate all text in the following language: ${trimmed}`;
 }
 
+// Strip `$schema` because some OpenAI-compatible endpoints reject it in `json_schema.schema`.
+const { $schema: _metadataJsonSchemaDraft, ...METADATA_JSON_SCHEMA } =
+  z.toJSONSchema(metadataSchema, { target: "draft-7" });
+
 // llama.cpp only enforces JSON output when given a schema; a bare json_object is a hint.
 // `strict` is left unset because not every OpenAI-compatible provider accepts it.
 const METADATA_JSON_SCHEMA_FORMAT = {
   type: "json_schema",
   json_schema: {
     name: "document_metadata",
-    schema: z.toJSONSchema(metadataSchema),
+    schema: METADATA_JSON_SCHEMA,
   },
 } as const;
 
@@ -198,7 +221,7 @@ export async function requestMetadataCompletion(
     }
 
     logMetadataWarn(
-      "endpoint rejected the json_schema response format; retrying with json_object",
+      "json_schema request failed with 400/422; retrying with json_object",
       { status, error: error instanceof Error ? error.message : error },
     );
 
